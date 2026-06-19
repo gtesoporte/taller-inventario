@@ -14,6 +14,10 @@ import ConfigScreen from './ConfigScreen';
 import DetalleParteScreen from './DetalleParteScreen';
 import DetalleAcondScreen from './DetalleAcondScreen';
 import UbicacionesScreen from './UbicacionesScreen';
+import EscanearQRScreen from './EscanearQRScreen';
+import BusquedaVozScreen from './BusquedaVozScreen';
+import FormParteScreen from './FormParteScreen';
+import FabricantesScreen from './FabricantesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -33,6 +37,9 @@ function PartesStack() {
       <Stack.Screen name="PartesLista" component={PartesScreen} />
       <Stack.Screen name="DetalleParte" component={DetalleParteScreen} />
       <Stack.Screen name="Ubicaciones" component={UbicacionesScreen} />
+      <Stack.Screen name="EscanearQR" component={EscanearQRScreen} />
+      <Stack.Screen name="BusquedaVoz" component={BusquedaVozScreen} />
+      <Stack.Screen name="FormParte" component={FormParteScreen} />
     </Stack.Navigator>
   );
 }
@@ -50,6 +57,15 @@ function MovStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MovLista" component={MovimientosScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function ConfigStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ConfigMain" component={ConfigScreen} />
+      <Stack.Screen name="Fabricantes" component={FabricantesScreen} />
     </Stack.Navigator>
   );
 }
@@ -74,8 +90,8 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Config"
-        component={ConfigScreen}
-        options={{ headerShown: false, tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>⚙️</Text> }}
+        component={ConfigStack}
+        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>⚙️</Text> }}
       />
       <Tab.Screen
         name="Admin"

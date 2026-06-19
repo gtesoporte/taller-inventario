@@ -3,17 +3,17 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
-import { suscribirPartes } from '../config/firestore';
-
-const FABRICANTES = ['Todos', 'MINDRAY', 'SNIBE', 'ORTHO', 'LIFOTRONIC', 'BIOMERIEUX', 'HORIBA', 'SIEMENS', 'BECKMAN', 'FUJIFILM'];
+import { suscribirPartes, getFabricantes } from '../config/firestore';
 
 export default function PartesScreen({ navigation }) {
   const [partes, setPartes] = useState([]);
+  const [fabricantes, setFabricantes] = useState(['Todos']);
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    getFabricantes().then(lista => setFabricantes(['Todos', ...lista]));
     const unsub = suscribirPartes((data) => { setPartes(data); setLoading(false); });
     return unsub;
   }, []);
@@ -25,7 +25,6 @@ export default function PartesScreen({ navigation }) {
     return matchTexto && matchFab;
   });
 
-  // Agrupar por fabricante
   const grupos = partesFiltradas.reduce((acc, p) => {
     const fab = p.fabricante?.toUpperCase() || 'SIN FABRICANTE';
     if (!acc[fab]) acc[fab] = [];
@@ -44,9 +43,15 @@ export default function PartesScreen({ navigation }) {
           <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
         </View>
         <View style={styles.headerBtns}>
-          <TouchableOpacity style={styles.iconBtn}><Text>📱</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}><Text>📷</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}><Text>🎙️</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
+            <Text>📱</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
+            <Text>📷</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
+            <Text>🎙️</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -63,9 +68,9 @@ export default function PartesScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
-      {/* Chips de fabricante */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
-        {FABRICANTES.map(fab => (
+      {/* Chips de fabricante — wrapped para web */}
+      <View style={styles.chipsContainer}>
+        {fabricantes.map(fab => (
           <TouchableOpacity
             key={fab}
             style={[styles.chip, fabricante === fab && styles.chipActive]}
@@ -74,7 +79,7 @@ export default function PartesScreen({ navigation }) {
             <Text style={[styles.chipText, fabricante === fab && styles.chipTextActive]}>{fab}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       {/* Lista agrupada */}
       <FlatList
@@ -88,20 +93,22 @@ export default function PartesScreen({ navigation }) {
             </View>
             {items.map(parte => (
               <TouchableOpacity key={parte.id} style={styles.card} onPress={() => navigation.navigate('DetalleParte', { id: parte.id })}>
-                {parte.foto ? (
-                  <Image source={{ uri: parte.foto }} style={styles.thumb} />
-                ) : (
-                  <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 22 }}>📦</Text></View>
-                )}
+                {parte.foto
+                  ? <Image source={{ uri: parte.foto }} style={styles.thumb} />
+                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 22 }}>📦</Text></View>
+                }
                 <View style={styles.cardBody}>
                   <Text style={styles.cardNombre}>{parte.nombre}</Text>
                   {parte.codigo ? <Text style={styles.cardCodigo}>{parte.codigo}</Text> : null}
                   <View style={styles.cardRow}>
                     {parte.ubicacion ? <Text style={styles.cardUbic}>📍 {parte.ubicacion}</Text> : null}
-                    <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{parte.fabricante?.toUpperCase() || ''}</Text></View>
+                    {parte.fabricante
+                      ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{parte.fabricante.toUpperCase()}</Text></View>
+                      : null
+                    }
                   </View>
                 </View>
-                <View style={[styles.cantBadge, parte.existenciaActual <= 0 && styles.cantBadgeRed]}>
+                <View style={[styles.cantBadge, (parte.existenciaActual ?? 0) <= 0 && styles.cantBadgeRed]}>
                   <Text style={styles.cantNum}>{parte.existenciaActual ?? 0}</Text>
                   <Text style={styles.cantLabel}>pzas</Text>
                 </View>
@@ -109,7 +116,9 @@ export default function PartesScreen({ navigation }) {
             ))}
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>{filtro ? 'Sin resultados.' : 'No hay refacciones registradas.'}</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>{filtro ? 'Sin resultados.' : 'No hay refacciones registradas.'}</Text>
+        }
         contentContainerStyle={{ paddingBottom: 80 }}
       />
     </View>
@@ -125,11 +134,11 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   headerBtns: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginTop: 12, borderRadius: 12, padding: 14, alignItems: 'center' },
+  nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
-  chipsRow: { marginBottom: 12, flexGrow: 0 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
+  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginBottom: 12 },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
   chipActive: { backgroundColor: AZUL, borderColor: AZUL },
   chipText: { fontSize: 12, fontWeight: '600', color: '#555' },
   chipTextActive: { color: '#fff' },

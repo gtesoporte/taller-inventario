@@ -112,6 +112,40 @@ export const addUbicacion = async (nombre) => {
   return addDoc(collection(db, 'ubicaciones'), { nombre, creadoEn: serverTimestamp() });
 };
 
+export const getPartesPorUbicacion = async (ubicacion) => {
+  const snap = await getDocs(query(collection(db, 'partes'), where('ubicacion', '==', ubicacion)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// --- FABRICANTES ---
+const FAB_DOC = () => doc(db, 'config', 'fabricantes');
+const FABRICANTES_DEFAULT = ['MINDRAY', 'SNIBE', 'ORTHO', 'LIFOTRONIC', 'BIOMERIEUX', 'HORIBA', 'SIEMENS', 'BECKMAN', 'FUJIFILM'];
+
+export const getFabricantes = async () => {
+  const snap = await getDoc(FAB_DOC());
+  if (snap.exists()) return snap.data().lista || FABRICANTES_DEFAULT;
+  await updateDoc(FAB_DOC(), { lista: FABRICANTES_DEFAULT }).catch(() =>
+    addDoc(collection(db, 'config'), { lista: FABRICANTES_DEFAULT })
+  );
+  return FABRICANTES_DEFAULT;
+};
+
+export const addFabricante = async (nombre) => {
+  const actual = await getFabricantes();
+  const nuevo = nombre.trim().toUpperCase();
+  if (actual.includes(nuevo)) return actual;
+  const nueva = [...actual, nuevo].sort();
+  const ref = FAB_DOC();
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    await updateDoc(ref, { lista: nueva });
+  } else {
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(ref, { lista: nueva });
+  }
+  return nueva;
+};
+
 // --- USUARIOS ---
 export const getUsuarios = async () => {
   const snap = await getDocs(collection(db, 'usuarios'));
