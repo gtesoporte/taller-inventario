@@ -243,6 +243,36 @@ export const deleteMovimiento = async (id) => {
   return deleteDoc(doc(db, 'movimientos', id));
 };
 
+// --- EQUIPOS ---
+export const suscribirEquipos = (callback) => {
+  return onSnapshot(collection(db, 'equipos'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', 'es'));
+    callback(data);
+  });
+};
+
+export const getEquipo = async (id) => {
+  const snap = await getDoc(doc(db, 'equipos', id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+export const addEquipo = async (data) => {
+  return addDoc(collection(db, 'equipos'), {
+    ...data,
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString(),
+  });
+};
+
+export const updateEquipo = async (id, data) => {
+  return updateDoc(doc(db, 'equipos', id), { ...data, actualizadoEn: new Date().toISOString() });
+};
+
+export const deleteEquipo = async (id) => {
+  return deleteDoc(doc(db, 'equipos', id));
+};
+
 // --- USUARIOS ---
 export const getUsuarios = async () => {
   const snap = await getDocs(collection(db, 'usuarios'));
