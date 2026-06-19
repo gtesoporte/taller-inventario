@@ -156,20 +156,15 @@ export default function DetalleAcondScreen({ route, navigation }) {
           ) : null}
         </View>
 
-        {progreso.map((p, idx) => {
-          const texto = p.texto || p.nota || p.descripcion || p.avance || p.comentario || p.mensaje || p.text || p.contenido || '';
-          const fecha = p.creadoEn || p.fecha || p.fechaCreacion || p.createdAt || p.timestamp || null;
+        {progreso.map((p) => {
+          const texto = p.texto || p.nota || p.descripcion || p.avance || p.comentario || p.text || '';
+          const fecha = p.creadoEn || p.fecha || p.createdAt || p.timestamp || null;
           return (
             <View key={p.id} style={styles.progresoItem}>
               <View style={styles.progresoDot} />
               <View style={styles.progresoCard}>
                 <Text style={styles.progresoFecha}>{formatFecha(fecha)}</Text>
                 <Text style={styles.progresoTexto}>{texto || '—'}</Text>
-                {idx === 0 && !texto && (
-                  <Text style={{ fontSize: 10, color: '#aaa', marginTop: 6 }}>
-                    Campos: {Object.keys(p).filter(k => k !== 'id').join(', ')}
-                  </Text>
-                )}
               </View>
             </View>
           );

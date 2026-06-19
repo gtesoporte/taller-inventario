@@ -55,16 +55,6 @@ export default function AcondicionamientoScreen({ navigation }) {
         <View>
           <Text style={styles.headerTitle}>🔧🔨 Acondicionamientos</Text>
           <Text style={styles.headerSub}>{items.length} proyectos registrados</Text>
-          {items.length === 0 && (
-            <Text style={{ color: 'rgba(255,200,200,0.9)', fontSize: 11, marginTop: 2 }}>
-              Sin datos en colección "acondicionamiento" ni "acondicionamientos"
-            </Text>
-          )}
-          {items.length > 0 && (
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, marginTop: 2 }}>
-              Colección: {items[0]?._col || 'desconocida'}
-            </Text>
-          )}
         </View>
         <TouchableOpacity style={styles.nuevoBtn} onPress={() => navigation.navigate('FormAcond')}>
           <Text style={styles.nuevoBtnText}>+ Nuevo</Text>

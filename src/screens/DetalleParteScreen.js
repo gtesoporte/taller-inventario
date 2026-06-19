@@ -46,7 +46,6 @@ export default function DetalleParteScreen({ route, navigation }) {
   const [parte, setParte] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [mostrarDebug, setMostrarDebug] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -99,8 +98,7 @@ export default function DetalleParteScreen({ route, navigation }) {
     );
   }
 
-  const { valor: existencia, campo: campoExist } = getExistencia(parte);
-  const camposTodos = Object.keys(parte).filter(k => k !== 'id');
+  const { valor: existencia } = getExistencia(parte);
 
   return (
     <View style={styles.container}>
@@ -150,28 +148,6 @@ export default function DetalleParteScreen({ route, navigation }) {
           <InfoRow label="Actualizada por"      value={extractNombre(parte.actualizadoPor)} />
         </View>
 
-        {/* Sección de diagnóstico — muestra qué campos existen realmente en Firestore */}
-        <TouchableOpacity onPress={() => setMostrarDebug(v => !v)} style={styles.debugToggle}>
-          <Text style={styles.debugToggleText}>{mostrarDebug ? '▲ Ocultar' : '▼ Ver campos del documento'}</Text>
-        </TouchableOpacity>
-        {mostrarDebug && (
-          <View style={styles.debugBox}>
-            <Text style={styles.debugTitle}>Campos en Firestore para esta refacción:</Text>
-            {camposTodos.map(c => {
-              const v = parte[c];
-              const display = v && typeof v === 'object' ? (v.toDate ? v.toDate().toISOString() : JSON.stringify(v)) : String(v ?? '');
-              return (
-                <Text key={c} style={styles.debugRow}>
-                  <Text style={styles.debugKey}>{c}</Text>: {display}
-                </Text>
-              );
-            })}
-            {campoExist
-              ? <Text style={[styles.debugRow, { color: '#1a7a1a', fontWeight: '700', marginTop: 8 }]}>✓ Campo de existencia detectado: "{campoExist}"</Text>
-              : <Text style={[styles.debugRow, { color: '#c00', marginTop: 8 }]}>✗ Ningún campo de existencia encontrado</Text>
-            }
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -200,10 +176,4 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f3f3' },
   infoLabel: { fontSize: 14, color: '#666', flex: 1 },
   infoVal: { fontSize: 14, fontWeight: '600', color: '#1a1a2e', maxWidth: '55%', textAlign: 'right' },
-  debugToggle: { marginTop: 20, padding: 10, alignItems: 'center' },
-  debugToggleText: { color: '#1565C0', fontSize: 13, fontWeight: '600' },
-  debugBox: { backgroundColor: '#fff', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#ddd' },
-  debugTitle: { fontSize: 12, fontWeight: '800', color: '#555', marginBottom: 10, letterSpacing: 0.5 },
-  debugRow: { fontSize: 13, color: '#333', marginBottom: 4, lineHeight: 18 },
-  debugKey: { fontWeight: '700', color: '#0B2447' },
 });
