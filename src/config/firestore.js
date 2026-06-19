@@ -58,19 +58,49 @@ export const getMovimientos = async () => {
 };
 
 export const addMovimiento = async (data) => {
-  return addDoc(collection(db, 'movimientos'), { ...data, creadoEn: serverTimestamp() });
+  return addDoc(collection(db, 'movimientos'), { ...data, creadoEn: new Date().toISOString() });
 };
 
 export const suscribirMovimientos = (callback) => {
   return onSnapshot(collection(db, 'movimientos'), snap => {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    data.sort((a, b) => {
-      const ta = a.creadoEn?.toMillis?.() ?? 0;
-      const tb = b.creadoEn?.toMillis?.() ?? 0;
-      return tb - ta;
-    });
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
     callback(data);
   });
+};
+
+export const registrarMovimiento = async (parteId, tipo, cantidad, nota, perfil) => {
+  const parteSnap = await getDoc(doc(db, 'partes', parteId));
+  if (!parteSnap.exists()) throw new Error('Parte no encontrada');
+  const d = parteSnap.data();
+  const existenciaActual = d.existencia ?? d.existenciaActual ?? 0;
+  const nuevaExistencia = tipo === 'entrada'
+    ? existenciaActual + cantidad
+    : Math.max(0, existenciaActual - cantidad);
+
+  await updateDoc(doc(db, 'partes', parteId), {
+    existencia: nuevaExistencia,
+    actualizadoEn: new Date().toISOString(),
+    ...(perfil ? { actualizadoPor: { nombre: perfil.nombre, email: perfil.email, uid: perfil.id } } : {}),
+  });
+
+  await addDoc(collection(db, 'movimientos'), {
+    parteId,
+    nombreParte: d.nombre || '',
+    codigoParte: d.codigo || null,
+    fabricante: d.fabricante || null,
+    ubicacion: d.ubicacion || null,
+    tipo,
+    cantidad,
+    nota: nota?.trim() || null,
+    existenciaAnterior: existenciaActual,
+    existenciaNueva: nuevaExistencia,
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+
+  return nuevaExistencia;
 };
 
 // --- ACONDICIONAMIENTO ---

@@ -1,71 +1,138 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, TextInput,
+} from 'react-native';
 import { suscribirMovimientos } from '../config/firestore';
 
 function formatFecha(ts) {
   if (!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-MX', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return ''; }
 }
 
-export default function MovimientosScreen({ navigation }) {
+export default function MovimientosScreen() {
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
-    const unsub = suscribirMovimientos((data) => { setMovimientos(data); setLoading(false); });
+    const unsub = suscribirMovimientos(data => { setMovimientos(data); setLoading(false); });
     return unsub;
   }, []);
 
-  const entradas = movimientos.filter(m => m.tipo === 'entrada').length;
-  const salidas = movimientos.filter(m => m.tipo === 'salida').length;
+  const filtrados = movimientos.filter(m => {
+    const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
+    const q = busqueda.toLowerCase();
+    const matchBusq = !busqueda
+      || m.nombreParte?.toLowerCase().includes(q)
+      || m.codigoParte?.toLowerCase().includes(q)
+      || m.fabricante?.toLowerCase().includes(q)
+      || m.ubicacion?.toLowerCase().includes(q)
+      || m.usuario?.toLowerCase().includes(q)
+      || m.nota?.toLowerCase().includes(q);
+    return matchTipo && matchBusq;
+  });
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
+  const totalEntradas = movimientos.filter(m => m.tipo === 'entrada').reduce((s, m) => s + (m.cantidad || 0), 0);
+  const totalSalidas  = movimientos.filter(m => m.tipo === 'salida').reduce((s, m) => s + (m.cantidad || 0), 0);
+
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>📋 Movimientos</Text>
         <View style={styles.sumRow}>
-          <View style={styles.sumChip}>
-            <Text style={styles.sumNum}>{entradas}</Text>
+          <TouchableOpacity
+            style={[styles.sumChip, filtroTipo === 'entrada' && styles.sumChipActive]}
+            onPress={() => setFiltroTipo(filtroTipo === 'entrada' ? 'todos' : 'entrada')}
+          >
+            <Text style={styles.sumNum}>{totalEntradas}</Text>
             <Text style={styles.sumLabel}>▲ Entradas</Text>
-          </View>
-          <View style={styles.sumChip}>
-            <Text style={[styles.sumNum, { color: '#FF6B6B' }]}>{salidas}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sumChip, filtroTipo === 'salida' && styles.sumChipActive]}
+            onPress={() => setFiltroTipo(filtroTipo === 'salida' ? 'todos' : 'salida')}
+          >
+            <Text style={[styles.sumNum, { color: '#FF6B6B' }]}>{totalSalidas}</Text>
             <Text style={styles.sumLabel}>▼ Salidas</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
+      <TextInput
+        style={styles.search}
+        placeholder="🔍  Buscar por refacción, usuario, nota..."
+        placeholderTextColor="#aaa"
+        value={busqueda}
+        onChangeText={setBusqueda}
+      />
+
       <FlatList
-        data={movimientos}
+        data={filtrados}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
           const esEntrada = item.tipo === 'entrada';
           return (
             <View style={[styles.card, { borderLeftColor: esEntrada ? '#4CAF50' : '#F44336' }]}>
-              <View style={styles.cardRow}>
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardNombre}>{item.nombreParte || 'Refacción'}</Text>
-                  <Text style={styles.cardFecha}>{formatFecha(item.creadoEn)}</Text>
-                  {item.usuario ? <Text style={styles.cardUsuario}>👤 {item.usuario}</Text> : null}
+              {/* Fila principal */}
+              <View style={styles.cardTop}>
+                <View style={[styles.tipoBadge, esEntrada ? styles.tipoBadgeEntrada : styles.tipoBadgeSalida]}>
+                  <Text style={styles.tipoBadgeText}>{esEntrada ? '▲ ENTRADA' : '▼ SALIDA'}</Text>
                 </View>
-                <Text style={[styles.cardCantidad, { color: esEntrada ? '#4CAF50' : '#F44336' }]}>
-                  {esEntrada ? '+' : '-'}{item.cantidad} pzas
+                <Text style={[styles.cardCantidad, { color: esEntrada ? '#2E7D32' : '#C62828' }]}>
+                  {esEntrada ? '+' : '-'}{item.cantidad} pz
                 </Text>
               </View>
+
+              {/* Nombre y código */}
+              <Text style={styles.cardNombre}>{item.nombreParte || '—'}</Text>
+              {(item.codigoParte || item.fabricante) && (
+                <Text style={styles.cardCodigo}>
+                  {[item.codigoParte, item.fabricante].filter(Boolean).join(' · ')}
+                </Text>
+              )}
+
+              {/* Meta */}
+              <View style={styles.metaRow}>
+                {item.ubicacion && <Text style={styles.metaItem}>📍 {item.ubicacion}</Text>}
+                {item.usuario && <Text style={styles.metaItem}>👤 {item.usuario}</Text>}
+              </View>
+
+              {/* Existencia antes → después */}
+              {item.existenciaAnterior !== undefined && (
+                <Text style={styles.existenciaFlow}>
+                  Existencia: {item.existenciaAnterior} → {item.existenciaNueva}
+                </Text>
+              )}
+
+              {/* Nota */}
+              {item.nota && (
+                <Text style={styles.nota}>💬 {item.nota}</Text>
+              )}
+
+              {/* Fecha */}
+              <Text style={styles.fecha}>{formatFecha(item.creadoEn)}</Text>
             </View>
           );
         }}
-        ListEmptyComponent={<Text style={styles.empty}>No hay movimientos registrados.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>
+            {busqueda || filtroTipo !== 'todos' ? 'Sin resultados.' : 'No hay movimientos registrados.'}
+          </Text>
+        }
         contentContainerStyle={{ padding: 14, paddingBottom: 80 }}
       />
-
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('FormMovimiento')}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -78,16 +145,23 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 16 },
   sumRow: { flexDirection: 'row', gap: 10 },
   sumChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sumChipActive: { backgroundColor: 'rgba(255,255,255,0.35)' },
   sumNum: { fontSize: 20, fontWeight: '800', color: '#fff' },
   sumLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
-  card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
-  cardInfo: { flex: 1 },
+  search: { margin: 14, marginBottom: 6, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
+  card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, padding: 14 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  tipoBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  tipoBadgeEntrada: { backgroundColor: '#E8F5E9' },
+  tipoBadgeSalida: { backgroundColor: '#FFEBEE' },
+  tipoBadgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  cardCantidad: { fontSize: 20, fontWeight: '900' },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
-  cardFecha: { fontSize: 11, color: '#aaa', marginTop: 3 },
-  cardUsuario: { fontSize: 12, color: '#666', marginTop: 3 },
-  cardCantidad: { fontSize: 18, fontWeight: '800' },
+  cardCodigo: { fontSize: 12, color: '#888', marginTop: 2 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
+  metaItem: { fontSize: 12, color: '#666' },
+  existenciaFlow: { fontSize: 12, color: '#1976D2', fontWeight: '600', marginTop: 4 },
+  nota: { fontSize: 13, color: '#555', fontStyle: 'italic', marginTop: 6, backgroundColor: '#F5F6FA', borderRadius: 8, padding: 8 },
+  fecha: { fontSize: 11, color: '#bbb', marginTop: 8 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 14 },
-  fab: { position: 'absolute', bottom: 24, right: 24, backgroundColor: '#1565C0', width: 54, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', shadowColor: '#1565C0', shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 30 },
 });
