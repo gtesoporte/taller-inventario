@@ -64,12 +64,20 @@ export default function EscanearQRScreen({ navigation, route }) {
   };
 
   const procesarQR = async (texto) => {
+    // Los QR pueden codificar la URL completa (?u=NombreUbicacion) o solo el nombre
+    let nombre = texto.trim();
+    try {
+      const url = new URL(texto);
+      const u = url.searchParams.get('u');
+      if (u) nombre = decodeURIComponent(u);
+    } catch {}
+
     setLoading(true);
-    setUbicacion(texto);
+    setUbicacion(nombre);
     try {
       const snap = await getDocs(collection(db, 'partes'));
       const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const ubic = texto.toLowerCase().trim();
+      const ubic = nombre.toLowerCase().trim();
       setPartes(todas.filter(p => (p.ubicacion || '').toLowerCase().trim() === ubic));
     } catch {
       setPartes([]);

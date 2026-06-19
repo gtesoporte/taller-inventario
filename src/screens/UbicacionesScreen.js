@@ -116,11 +116,18 @@ export default function UbicacionesScreen({ navigation }) {
     </body></html>`;
   };
 
+  const qrContent = (nombre) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}?u=${encodeURIComponent(nombre)}`;
+    }
+    return nombre;
+  };
+
   const imprimirUno = async (nombre) => {
     if (Platform.OS !== 'web') return;
     try {
       const QRCode = require('qrcode');
-      const dataUrl = await QRCode.toDataURL(nombre, { width: 600, margin: 1, color: { dark: '#0B2447', light: '#FFFFFF' } });
+      const dataUrl = await QRCode.toDataURL(qrContent(nombre), { width: 600, margin: 1, color: { dark: '#0B2447', light: '#FFFFFF' } });
       const win = window.open('', '_blank', 'width=420,height=520');
       if (!win) return;
       win.document.write(buildPrintWindow([{ nombre, dataUrl }]));
@@ -137,7 +144,7 @@ export default function UbicacionesScreen({ navigation }) {
       const entries = await Promise.all(
         items.map(async u => ({
           nombre: u.nombre,
-          dataUrl: await QRCode.toDataURL(u.nombre, { width: 600, margin: 1, color: { dark: '#0B2447', light: '#FFFFFF' } }),
+          dataUrl: await QRCode.toDataURL(qrContent(u.nombre), { width: 600, margin: 1, color: { dark: '#0B2447', light: '#FFFFFF' } }),
         }))
       );
       const win = window.open('', '_blank');

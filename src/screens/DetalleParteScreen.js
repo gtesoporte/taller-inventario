@@ -240,6 +240,7 @@ export default function DetalleParteScreen({ route, navigation }) {
           <InfoRow label="Fabricante"           value={parte.fabricante} />
           <InfoRow label="Código / N° de parte" value={parte.codigo} />
           <InfoRow label="Descripción"          value={parte.descripcion} />
+          <InfoRow label="Observaciones"        value={parte.observaciones} />
           <InfoRow label="Número de serie"      value={parte.numeroSerie} />
           <InfoRow label="Registrada por"       value={extractNombre(parte.creadoPor)} />
           <InfoRow label="Registrada"           value={formatFecha(parte.creadoEn)} />
