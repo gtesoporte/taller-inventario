@@ -26,11 +26,17 @@ export const getParte = async (id) => {
 };
 
 export const addParte = async (data) => {
-  return addDoc(collection(db, 'partes'), { ...data, creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() });
+  const { existenciaActual, ...resto } = data;
+  return addDoc(collection(db, 'partes'), {
+    ...resto,
+    existencia: existenciaActual ?? data.existencia ?? 0,
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString(),
+  });
 };
 
 export const updateParte = async (id, data) => {
-  return updateDoc(doc(db, 'partes', id), { ...data, actualizadoEn: serverTimestamp() });
+  return updateDoc(doc(db, 'partes', id), { ...data, actualizadoEn: new Date().toISOString() });
 };
 
 export const deleteParte = async (id) => {

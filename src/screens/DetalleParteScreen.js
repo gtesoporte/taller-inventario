@@ -28,11 +28,17 @@ function formatFecha(ts) {
 }
 
 function getExistencia(parte) {
-  const candidatos = ['existenciaActual', 'existencias', 'cantidad', 'stock', 'piezas', 'inventario', 'total', 'qty'];
+  const candidatos = ['existencia', 'existenciaActual', 'existencias', 'cantidad', 'stock', 'piezas', 'inventario', 'total', 'qty'];
   for (const campo of candidatos) {
     if (parte[campo] !== undefined && parte[campo] !== null) return { valor: parte[campo], campo };
   }
   return { valor: 0, campo: null };
+}
+
+function extractNombre(val) {
+  if (!val) return '';
+  if (typeof val === 'object') return val.nombre || val.email || JSON.stringify(val);
+  return String(val);
 }
 
 export default function DetalleParteScreen({ route, navigation }) {
@@ -138,9 +144,10 @@ export default function DetalleParteScreen({ route, navigation }) {
           <InfoRow label="Código / N° de parte" value={parte.codigo} />
           <InfoRow label="Descripción"          value={parte.descripcion} />
           <InfoRow label="Número de serie"      value={parte.numeroSerie} />
-          <InfoRow label="Registrada por"       value={parte.creadoPor} />
+          <InfoRow label="Registrada por"       value={extractNombre(parte.creadoPor)} />
           <InfoRow label="Registrada"           value={formatFecha(parte.creadoEn)} />
           <InfoRow label="Actualizada"          value={formatFecha(parte.actualizadoEn)} />
+          <InfoRow label="Actualizada por"      value={extractNombre(parte.actualizadoPor)} />
         </View>
 
         {/* Sección de diagnóstico — muestra qué campos existen realmente en Firestore */}

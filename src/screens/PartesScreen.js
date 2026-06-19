@@ -110,8 +110,8 @@ export default function PartesScreen({ navigation }) {
                     }
                   </View>
                 </View>
-                <View style={[styles.cantBadge, (parte.existenciaActual ?? parte.existencias ?? parte.cantidad ?? 0) <= 0 && styles.cantBadgeRed]}>
-                  <Text style={styles.cantNum}>{parte.existenciaActual ?? parte.existencias ?? parte.cantidad ?? 0}</Text>
+                <View style={[styles.cantBadge, (parte.existencia ?? parte.existenciaActual ?? parte.cantidad ?? 0) <= 0 && styles.cantBadgeRed]}>
+                  <Text style={styles.cantNum}>{parte.existencia ?? parte.existenciaActual ?? parte.cantidad ?? 0}</Text>
                   <Text style={styles.cantLabel}>pzas</Text>
                 </View>
               </TouchableOpacity>

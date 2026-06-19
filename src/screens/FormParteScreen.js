@@ -29,7 +29,7 @@ export default function FormParteScreen({ navigation, route }) {
         codigo: codigo.trim() || null,
         fabricante: fabricante || null,
         ubicacion: ubicacion.trim() || null,
-        existenciaActual: parseInt(existencia, 10) || 0,
+        existencia: parseInt(existencia, 10) || 0,
       });
       Alert.alert('Guardado', 'Refacción registrada correctamente.', [
         { text: 'OK', onPress: () => navigation.goBack() },

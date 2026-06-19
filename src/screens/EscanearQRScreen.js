@@ -93,8 +93,8 @@ export default function EscanearQRScreen({ navigation }) {
                     {item.codigo ? <Text style={styles.cardCodigo}>{item.codigo}</Text> : null}
                     {item.fabricante ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{item.fabricante.toUpperCase()}</Text></View> : null}
                   </View>
-                  <View style={[styles.cantBadge, (item.existenciaActual ?? 0) <= 0 && styles.cantRed]}>
-                    <Text style={styles.cantNum}>{item.existenciaActual ?? 0}</Text>
+                  <View style={[styles.cantBadge, (item.existencia ?? item.existenciaActual ?? 0) <= 0 && styles.cantRed]}>
+                    <Text style={styles.cantNum}>{item.existencia ?? item.existenciaActual ?? 0}</Text>
                     <Text style={styles.cantLabel}>pzas</Text>
                   </View>
                 </TouchableOpacity>
