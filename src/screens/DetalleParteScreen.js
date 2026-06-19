@@ -64,7 +64,7 @@ export default function DetalleParteScreen({ route, navigation }) {
         </View>
         <Text style={styles.nombre}>{parte.nombre?.toUpperCase()}</Text>
         <View style={styles.existenciaCard}>
-          <Text style={styles.existenciaNum}>{parte.existenciaActual ?? 0}</Text>
+          <Text style={styles.existenciaNum}>{parte.existenciaActual ?? parte.existencias ?? parte.cantidad ?? 0}</Text>
           <Text style={styles.existenciaLabel}> piezas en existencia</Text>
         </View>
       </View>

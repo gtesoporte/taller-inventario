@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { getUsuarios, updateUsuario } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 
@@ -48,7 +48,7 @@ export default function AdminScreen() {
         <Text style={styles.headerSub}>{usuarios.length} usuarios registrados</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosRow} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
+      <View style={styles.filtrosRow}>
         {ROLES.map(rol => {
           const cfg = ROL_COLORES[rol];
           return (
@@ -63,7 +63,7 @@ export default function AdminScreen() {
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
 
       <FlatList
         data={filtrados}
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-  filtrosRow: { marginTop: 12, flexGrow: 0, marginBottom: 4 },
+  filtrosRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginTop: 12, marginBottom: 4 },
   filtroBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
   filtroBtnActive: { backgroundColor: PURPLE, borderColor: PURPLE },
   filtroText: { fontSize: 12, fontWeight: '600', color: '#555' },

@@ -13,7 +13,9 @@ export default function PartesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getFabricantes().then(lista => setFabricantes(['Todos', ...lista]));
+    getFabricantes()
+      .then(lista => setFabricantes(['Todos', ...lista]))
+      .catch(() => {});
     const unsub = suscribirPartes((data) => { setPartes(data); setLoading(false); });
     return unsub;
   }, []);
@@ -108,8 +110,8 @@ export default function PartesScreen({ navigation }) {
                     }
                   </View>
                 </View>
-                <View style={[styles.cantBadge, (parte.existenciaActual ?? 0) <= 0 && styles.cantBadgeRed]}>
-                  <Text style={styles.cantNum}>{parte.existenciaActual ?? 0}</Text>
+                <View style={[styles.cantBadge, (parte.existenciaActual ?? parte.existencias ?? parte.cantidad ?? 0) <= 0 && styles.cantBadgeRed]}>
+                  <Text style={styles.cantNum}>{parte.existenciaActual ?? parte.existencias ?? parte.cantidad ?? 0}</Text>
                   <Text style={styles.cantLabel}>pzas</Text>
                 </View>
               </TouchableOpacity>

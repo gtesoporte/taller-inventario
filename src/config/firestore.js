@@ -38,8 +38,10 @@ export const deleteParte = async (id) => {
 };
 
 export const suscribirPartes = (callback) => {
-  return onSnapshot(query(collection(db, 'partes'), orderBy('nombre')), snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  return onSnapshot(collection(db, 'partes'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    callback(data);
   });
 };
 
@@ -54,8 +56,14 @@ export const addMovimiento = async (data) => {
 };
 
 export const suscribirMovimientos = (callback) => {
-  return onSnapshot(query(collection(db, 'movimientos'), orderBy('creadoEn', 'desc')), snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  return onSnapshot(collection(db, 'movimientos'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => {
+      const ta = a.creadoEn?.toMillis?.() ?? 0;
+      const tb = b.creadoEn?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+    callback(data);
   });
 };
 
@@ -85,8 +93,14 @@ export const updateAcondicionamiento = async (id, data) => {
 };
 
 export const suscribirAcondicionamientos = (callback) => {
-  return onSnapshot(query(collection(db, 'acondicionamiento'), orderBy('creadoEn', 'desc')), snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  return onSnapshot(collection(db, 'acondicionamiento'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => {
+      const ta = a.creadoEn?.toMillis?.() ?? a.fechaInicio?.toMillis?.() ?? 0;
+      const tb = b.creadoEn?.toMillis?.() ?? b.fechaInicio?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+    callback(data);
   });
 };
 
