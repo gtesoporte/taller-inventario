@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator,
 } from 'react-native';
-import { addEquipo, updateEquipo, suscribirFabricantes } from '../config/firestore';
+import { addEquipo, updateEquipo, suscribirFabricantes, getUbicaciones } from '../config/firestore';
 
 export default function FormEquipoScreen({ navigation, route }) {
   const { id, equipo } = route?.params || {};
@@ -12,13 +12,17 @@ export default function FormEquipoScreen({ navigation, route }) {
   const [modelo, setModelo] = useState(equipo?.modelo || '');
   const [fabricante, setFabricante] = useState(equipo?.fabricante || '');
   const [numeroSerie, setNumeroSerie] = useState(equipo?.numeroSerie || '');
+  const [ubicacion, setUbicacion] = useState(equipo?.ubicacion || '');
+  const [observaciones, setObservaciones] = useState(equipo?.observaciones || '');
   const [fabricantes, setFabricantes] = useState([]);
+  const [ubicaciones, setUbicaciones] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [guardado, setGuardado] = useState(false);
 
   useEffect(() => {
     const unsub = suscribirFabricantes(setFabricantes);
+    getUbicaciones().then(setUbicaciones).catch(() => {});
     return unsub;
   }, []);
 
@@ -34,6 +38,8 @@ export default function FormEquipoScreen({ navigation, route }) {
         modelo: modelo.trim(),
         fabricante: fabricante || null,
         numeroSerie: numeroSerie.trim() || null,
+        ubicacion: ubicacion.trim() || null,
+        observaciones: observaciones.trim() || null,
       };
       if (esEdicion) {
         await updateEquipo(id, data);
@@ -105,6 +111,44 @@ export default function FormEquipoScreen({ navigation, route }) {
           />
         </Campo>
 
+        <Campo label="UBICACIÓN">
+          {ubicaciones.length > 0 && (
+            <View style={styles.chipsWrap}>
+              {ubicaciones.map(u => (
+                <TouchableOpacity
+                  key={u.id}
+                  style={[styles.chip, ubicacion === u.nombre && styles.chipActive]}
+                  onPress={() => setUbicacion(prev => prev === u.nombre ? '' : u.nombre)}
+                >
+                  <Text style={[styles.chipText, ubicacion === u.nombre && styles.chipTextActive]}>
+                    📍 {u.nombre}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          <TextInput
+            style={[styles.input, { marginTop: 8 }]}
+            value={ubicacion}
+            onChangeText={setUbicacion}
+            placeholder={ubicaciones.length > 0 ? 'O escribe una nueva ubicación...' : 'Ej: Rack A · Cajón 3'}
+            placeholderTextColor="#bbb"
+          />
+        </Campo>
+
+        <Campo label="OBSERVACIONES">
+          <TextInput
+            style={[styles.input, styles.inputMultiline]}
+            value={observaciones}
+            onChangeText={setObservaciones}
+            placeholder="Notas adicionales sobre este equipo..."
+            placeholderTextColor="#bbb"
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+          />
+        </Campo>
+
         {!!error && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>⚠️ {error}</Text>
@@ -149,6 +193,7 @@ const styles = StyleSheet.create({
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   body: { flex: 1, padding: 16 },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
+  inputMultiline: { minHeight: 90, paddingTop: 12 },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
   chipActive: { backgroundColor: AZUL, borderColor: AZUL },

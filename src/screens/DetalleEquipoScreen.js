@@ -84,10 +84,17 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           <Fila label="Modelo" valor={equipo.modelo} />
           <Fila label="Fabricante" valor={equipo.fabricante || '—'} />
           <Fila label="Número de serie" valor={equipo.numeroSerie || '—'} />
+          <Fila label="Ubicación" valor={equipo.ubicacion || '—'} />
           <Fila label="Registrado" valor={formatFecha(equipo.creadoEn) || '—'} />
           {equipo.actualizadoEn && equipo.actualizadoEn !== equipo.creadoEn && (
             <Fila label="Actualizado" valor={formatFecha(equipo.actualizadoEn)} />
           )}
+          {equipo.observaciones ? (
+            <View style={obsStyles.box}>
+              <Text style={obsStyles.label}>Observaciones</Text>
+              <Text style={obsStyles.texto}>{equipo.observaciones}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Botones de acción */}
@@ -142,6 +149,12 @@ function Fila({ label, valor }) {
     </View>
   );
 }
+
+const obsStyles = StyleSheet.create({
+  box: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  label: { fontSize: 13, color: '#888', fontWeight: '600', marginBottom: 6 },
+  texto: { fontSize: 14, color: '#1a1a2e', lineHeight: 20 },
+});
 
 const filaStyles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
