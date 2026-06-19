@@ -62,10 +62,29 @@ export const addMovimiento = async (data) => {
 };
 
 export const suscribirMovimientos = (callback) => {
-  return onSnapshot(collection(db, 'movimientos'), snap => {
+  return onSnapshot(collection(db, 'movimientos'), async snap => {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
     data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
+
+    // Para movimientos sin nombre de parte, buscarlo por parteId
+    const sinNombre = data.filter(m => !m.nombreParte && !m.nombre && m.parteId);
+    if (sinNombre.length > 0) {
+      const ids = [...new Set(sinNombre.map(m => m.parteId))];
+      const parteSnaps = await Promise.all(ids.map(id => getDoc(doc(db, 'partes', id))));
+      const parteMap = {};
+      parteSnaps.forEach(s => { if (s.exists()) parteMap[s.id] = s.data(); });
+      data.forEach(m => {
+        if (!m.nombreParte && !m.nombre && m.parteId && parteMap[m.parteId]) {
+          const p = parteMap[m.parteId];
+          m.nombreParte = p.nombre || '';
+          if (!m.codigoParte && !m.codigo) m.codigoParte = p.codigo || null;
+          if (!m.fabricante) m.fabricante = p.fabricante || null;
+          if (!m.ubicacion) m.ubicacion = p.ubicacion || null;
+        }
+      });
+    }
+
     callback(data);
   });
 };
