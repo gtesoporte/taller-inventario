@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../config/firebase';
@@ -15,6 +15,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recuperar, setRecuperar] = useState(false);
+  const [emailRecuperar, setEmailRecuperar] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -28,6 +31,27 @@ export default function LoginScreen() {
       Alert.alert('Error', 'Correo o contraseña incorrectos.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRecuperar = async () => {
+    const correo = emailRecuperar.trim() || email.trim();
+    if (!correo) {
+      Alert.alert('Ingresa tu correo', 'Escribe el correo con el que te registraste.');
+      return;
+    }
+    setEnviando(true);
+    try {
+      await sendPasswordResetEmail(auth, correo);
+      Alert.alert(
+        'Correo enviado',
+        `Revisa la bandeja de ${correo}. Si la cuenta existe, recibirás un enlace para restablecer tu contraseña.`,
+        [{ text: 'OK', onPress: () => { setRecuperar(false); setEmailRecuperar(''); } }]
+      );
+    } catch {
+      Alert.alert('Error', 'No se pudo enviar el correo. Verifica que la dirección sea correcta.');
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -109,16 +133,56 @@ export default function LoginScreen() {
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={tab === 'login' ? handleLogin : handleRegister}
-          disabled={loading}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.btnText}>🔑 {tab === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</Text>
-          }
-        </TouchableOpacity>
+        {tab === 'login' && !recuperar && (
+          <TouchableOpacity
+            style={styles.forgotLink}
+            onPress={() => { setRecuperar(true); setEmailRecuperar(email.trim()); }}
+          >
+            <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+        )}
+
+        {recuperar && (
+          <View style={styles.recuperarBox}>
+            <Text style={styles.recuperarTitulo}>Recuperar contraseña</Text>
+            <Text style={styles.recuperarSub}>Te enviaremos un enlace para restablecer tu contraseña.</Text>
+            <TextInput
+              style={[styles.input, { marginTop: 10 }]}
+              placeholder="Correo electrónico"
+              value={emailRecuperar}
+              onChangeText={setEmailRecuperar}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor="#aaa"
+            />
+            <TouchableOpacity
+              style={[styles.btn, { marginTop: 12 }]}
+              onPress={handleRecuperar}
+              disabled={enviando}
+            >
+              {enviando
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.btnText}>Enviar correo de recuperación</Text>
+              }
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setRecuperar(false); setEmailRecuperar(''); }}>
+              <Text style={[styles.forgotText, { textAlign: 'center', marginTop: 12 }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!recuperar && (
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={tab === 'login' ? handleLogin : handleRegister}
+            disabled={loading}
+          >
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.btnText}>🔑 {tab === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</Text>
+            }
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.hint}>
           {tab === 'login' ? '¿Primera vez? Crea una cuenta arriba.' : '¿Ya tienes cuenta? Inicia sesión arriba.'}
@@ -167,4 +231,16 @@ const styles = StyleSheet.create({
   },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   hint: { textAlign: 'center', color: '#999', fontSize: 12, marginTop: 20 },
+  forgotLink: { alignSelf: 'flex-end', marginBottom: 12, marginTop: -4 },
+  forgotText: { color: '#1976D2', fontSize: 13, fontWeight: '600' },
+  recuperarBox: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  recuperarTitulo: { fontSize: 16, fontWeight: '800', color: '#0B2447', marginBottom: 4 },
+  recuperarSub: { fontSize: 13, color: '#666', lineHeight: 18 },
 });
