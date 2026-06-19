@@ -239,6 +239,10 @@ export const addFabricante = async (nombre) => {
   return nueva;
 };
 
+export const deleteMovimiento = async (id) => {
+  return deleteDoc(doc(db, 'movimientos', id));
+};
+
 // --- USUARIOS ---
 export const getUsuarios = async () => {
   const snap = await getDocs(collection(db, 'usuarios'));
