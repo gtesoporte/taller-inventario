@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, StyleSheet, FlatList,
   ActivityIndicator, Modal, Alert, Platform,
 } from 'react-native';
-import { getPartesPorUbicacion } from '../config/firestore';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 
 export default function EscanearQRScreen({ navigation, route }) {
@@ -65,8 +66,14 @@ export default function EscanearQRScreen({ navigation, route }) {
   const procesarQR = async (texto) => {
     setLoading(true);
     setUbicacion(texto);
-    const partesUbic = await getPartesPorUbicacion(texto);
-    setPartes(partesUbic);
+    try {
+      const snap = await getDocs(collection(db, 'partes'));
+      const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const ubic = texto.toLowerCase().trim();
+      setPartes(todas.filter(p => (p.ubicacion || '').toLowerCase().trim() === ubic));
+    } catch {
+      setPartes([]);
+    }
     setLoading(false);
   };
 
