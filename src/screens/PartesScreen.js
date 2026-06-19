@@ -21,7 +21,11 @@ export default function PartesScreen({ navigation }) {
   const partesFiltradas = partes.filter(p => {
     const q = filtro.toLowerCase();
     const matchTexto = !filtro || p.nombre?.toLowerCase().includes(q) || p.codigo?.toLowerCase().includes(q) || p.ubicacion?.toLowerCase().includes(q);
-    const matchFab = fabricante === 'Todos' || p.fabricante?.toUpperCase() === fabricante;
+    const matchFab = fabricante === 'Todos'
+      ? true
+      : fabricante === 'Sin fabricante'
+        ? !p.fabricante || p.fabricante.trim() === ''
+        : p.fabricante?.toUpperCase() === fabricante;
     return matchTexto && matchFab;
   });
 
@@ -79,6 +83,13 @@ export default function PartesScreen({ navigation }) {
             <Text style={[styles.chipText, fabricante === fab && styles.chipTextActive]}>{fab}</Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          key="sin-fabricante"
+          style={[styles.chip, styles.chipSinFab, fabricante === 'Sin fabricante' && styles.chipActive]}
+          onPress={() => setFabricante(fabricante === 'Sin fabricante' ? 'Todos' : 'Sin fabricante')}
+        >
+          <Text style={[styles.chipText, fabricante === 'Sin fabricante' && styles.chipTextActive]}>Sin fabricante</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Lista agrupada */}
@@ -139,6 +150,7 @@ const styles = StyleSheet.create({
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
   chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginBottom: 12 },
   chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
+  chipSinFab: { borderStyle: 'dashed', borderColor: '#bbb' },
   chipActive: { backgroundColor: AZUL, borderColor: AZUL },
   chipText: { fontSize: 12, fontWeight: '600', color: '#555' },
   chipTextActive: { color: '#fff' },
