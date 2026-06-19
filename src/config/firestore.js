@@ -183,6 +183,12 @@ export const getFabricantes = async () => {
   return FABRICANTES_DEFAULT;
 };
 
+export const suscribirFabricantes = (callback) => {
+  return onSnapshot(FAB_DOC(), snap => {
+    callback(snap.exists() ? (snap.data().lista || FABRICANTES_DEFAULT) : FABRICANTES_DEFAULT);
+  }, () => callback(FABRICANTES_DEFAULT));
+};
+
 export const addFabricante = async (nombre) => {
   const actual = await getFabricantes();
   const nuevo = nombre.trim().toUpperCase();

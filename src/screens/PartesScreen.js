@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
-import { suscribirPartes, getFabricantes } from '../config/firestore';
+import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
 
 export default function PartesScreen({ navigation }) {
   const [partes, setPartes] = useState([]);
@@ -13,11 +13,9 @@ export default function PartesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getFabricantes()
-      .then(lista => setFabricantes(['Todos', ...lista]))
-      .catch(() => {});
-    const unsub = suscribirPartes((data) => { setPartes(data); setLoading(false); });
-    return unsub;
+    const unsubFab = suscribirFabricantes(lista => setFabricantes(['Todos', ...lista]));
+    const unsubPartes = suscribirPartes((data) => { setPartes(data); setLoading(false); });
+    return () => { unsubFab(); unsubPartes(); };
   }, []);
 
   const partesFiltradas = partes.filter(p => {

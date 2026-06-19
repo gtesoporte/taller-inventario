@@ -3,37 +3,49 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
-import { addParte, getFabricantes } from '../config/firestore';
+import { addParte, updateParte, getFabricantes } from '../config/firestore';
 
 export default function FormParteScreen({ navigation, route }) {
-  const ubicPre = route?.params?.ubicacionPreseleccionada || '';
+  const { id, parte, ubicacionPreseleccionada } = route?.params || {};
+  const esEdicion = !!id && !!parte;
 
-  const [nombre, setNombre] = useState('');
-  const [codigo, setCodigo] = useState('');
-  const [fabricante, setFabricante] = useState('');
-  const [ubicacion, setUbicacion] = useState(ubicPre);
-  const [existencia, setExistencia] = useState('0');
+  const [nombre, setNombre] = useState(parte?.nombre || '');
+  const [codigo, setCodigo] = useState(parte?.codigo || '');
+  const [fabricante, setFabricante] = useState(parte?.fabricante || '');
+  const [ubicacion, setUbicacion] = useState(parte?.ubicacion || ubicacionPreseleccionada || '');
+  const [existencia, setExistencia] = useState(String(parte?.existencia ?? parte?.existenciaActual ?? 0));
   const [fabricantes, setFabricantes] = useState([]);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    getFabricantes().then(setFabricantes);
+    getFabricantes().then(setFabricantes).catch(() => {});
   }, []);
 
   const handleGuardar = async () => {
-    if (!nombre.trim()) { Alert.alert('Falta el nombre', 'El nombre de la refacción es obligatorio.'); return; }
+    if (!nombre.trim()) {
+      Alert.alert('Falta el nombre', 'El nombre de la refacción es obligatorio.');
+      return;
+    }
     setGuardando(true);
     try {
-      await addParte({
+      const data = {
         nombre: nombre.trim(),
         codigo: codigo.trim() || null,
         fabricante: fabricante || null,
         ubicacion: ubicacion.trim() || null,
         existencia: parseInt(existencia, 10) || 0,
-      });
-      Alert.alert('Guardado', 'Refacción registrada correctamente.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      };
+      if (esEdicion) {
+        await updateParte(id, data);
+        Alert.alert('Actualizado', 'Refacción actualizada correctamente.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        await addParte(data);
+        Alert.alert('Guardado', 'Refacción registrada correctamente.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
     } catch {
       Alert.alert('Error', 'No se pudo guardar la refacción.');
     } finally {
@@ -47,18 +59,34 @@ export default function FormParteScreen({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.volver}>← Cancelar</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>Nueva refacción</Text>
-        {ubicPre ? <Text style={styles.sub}>📍 {ubicPre}</Text> : null}
+        <Text style={styles.titulo}>{esEdicion ? 'Editar refacción' : 'Nueva refacción'}</Text>
+        {ubicacionPreseleccionada && !esEdicion
+          ? <Text style={styles.sub}>📍 {ubicacionPreseleccionada}</Text>
+          : null}
       </View>
 
       <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 60 }}>
-        <Campo label="NOMBRE *" placeholder="Ej: Lámpara de repuesto">
-          <TextInput style={styles.input} value={nombre} onChangeText={setNombre} placeholder="Ej: Lámpara de repuesto" placeholderTextColor="#bbb" />
+        <Campo label="NOMBRE *">
+          <TextInput
+            style={styles.input}
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Ej: Lámpara de repuesto"
+            placeholderTextColor="#bbb"
+          />
         </Campo>
-        <Campo label="CÓDIGO / PARTE N°" placeholder="">
-          <TextInput style={styles.input} value={codigo} onChangeText={setCodigo} placeholder="Ej: MND-3420A" placeholderTextColor="#bbb" />
+
+        <Campo label="CÓDIGO / PARTE N°">
+          <TextInput
+            style={styles.input}
+            value={codigo}
+            onChangeText={setCodigo}
+            placeholder="Ej: MND-3420A"
+            placeholderTextColor="#bbb"
+          />
         </Campo>
-        <Campo label="FABRICANTE" placeholder="">
+
+        <Campo label="FABRICANTE">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {fabricantes.map(f => (
@@ -72,18 +100,36 @@ export default function FormParteScreen({ navigation, route }) {
               ))}
             </View>
           </ScrollView>
+          {fabricante && !fabricantes.includes(fabricante) && (
+            <Text style={styles.fabCustom}>Fabricante actual: {fabricante}</Text>
+          )}
         </Campo>
+
         <Campo label="UBICACIÓN">
-          <TextInput style={styles.input} value={ubicacion} onChangeText={setUbicacion} placeholder="Ej: Estante A1" placeholderTextColor="#bbb" />
+          <TextInput
+            style={styles.input}
+            value={ubicacion}
+            onChangeText={setUbicacion}
+            placeholder="Ej: Estante A1"
+            placeholderTextColor="#bbb"
+          />
         </Campo>
-        <Campo label="EXISTENCIA INICIAL">
-          <TextInput style={styles.input} value={existencia} onChangeText={setExistencia} keyboardType="numeric" placeholder="0" placeholderTextColor="#bbb" />
+
+        <Campo label={esEdicion ? 'EXISTENCIA' : 'EXISTENCIA INICIAL'}>
+          <TextInput
+            style={styles.input}
+            value={existencia}
+            onChangeText={setExistencia}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor="#bbb"
+          />
         </Campo>
 
         <TouchableOpacity style={styles.btn} onPress={handleGuardar} disabled={guardando}>
           {guardando
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.btnText}>Guardar refacción</Text>
+            : <Text style={styles.btnText}>{esEdicion ? 'Guardar cambios' : 'Guardar refacción'}</Text>
           }
         </TouchableOpacity>
       </ScrollView>
@@ -113,6 +159,7 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: AZUL, borderColor: AZUL },
   chipText: { fontSize: 12, fontWeight: '700', color: '#555' },
   chipTextActive: { color: '#fff' },
+  fabCustom: { fontSize: 12, color: '#888', marginTop: 6, fontStyle: 'italic' },
   btn: { backgroundColor: '#1976D2', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 10 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
