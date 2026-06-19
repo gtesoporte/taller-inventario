@@ -12,15 +12,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        const p = await getUsuario(firebaseUser.uid);
-        setPerfil(p);
-      } else {
-        setUser(null);
+      try {
+        if (firebaseUser) {
+          setUser(firebaseUser);
+          const p = await getUsuario(firebaseUser.uid);
+          setPerfil(p);
+        } else {
+          setUser(null);
+          setPerfil(null);
+        }
+      } catch {
+        // Firestore error fetching profile — still allow navigation
+        if (firebaseUser) setUser(firebaseUser);
         setPerfil(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsub;
   }, []);
