@@ -6,13 +6,20 @@ import {
 import { getPartesPorUbicacion } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 
-export default function EscanearQRScreen({ navigation }) {
+export default function EscanearQRScreen({ navigation, route }) {
   const { perfil } = useAuth();
+  const { ubicacionInicial } = route?.params || {};
   const [escaneando, setEscaneando] = useState(false);
   const [ubicacion, setUbicacion] = useState(null);
   const [partes, setPartes] = useState([]);
   const [loading, setLoading] = useState(false);
   const scannerRef = useRef(null);
+
+  useEffect(() => {
+    if (ubicacionInicial) {
+      procesarQR(ubicacionInicial);
+    }
+  }, []);
 
   const iniciarEscaneo = () => {
     if (Platform.OS === 'web') {

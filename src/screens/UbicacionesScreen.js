@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert, Platform,
+  StyleSheet, ActivityIndicator, Platform,
 } from 'react-native';
-import { getUbicaciones, addUbicacion } from '../config/firestore';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { getUbicaciones, addUbicacion, deleteUbicacion } from '../config/firestore';
 
 export default function UbicacionesScreen({ navigation }) {
   const [ubicaciones, setUbicaciones] = useState([]);
@@ -11,16 +13,58 @@ export default function UbicacionesScreen({ navigation }) {
   const [nueva, setNueva] = useState('');
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
 
-  const cargar = () => getUbicaciones().then(data => { setUbicaciones(data); setLoading(false); });
+  const cargar = useCallback(async () => {
+    try {
+      const [ubics, partesSnap] = await Promise.all([
+        getUbicaciones(),
+        getDocs(collection(db, 'partes')),
+      ]);
+      const partes = partesSnap.docs.map(d => d.data());
+      const ubicsConConteo = ubics.map(u => {
+        const enUbic = partes.filter(p => p.ubicacion === u.nombre);
+        const piezas = enUbic.reduce(
+          (sum, p) => sum + (p.existencia ?? p.existenciaActual ?? p.cantidad ?? 0),
+          0
+        );
+        return { ...u, refacciones: enUbic.length, piezas };
+      });
+      ubicsConConteo.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+      setUbicaciones(ubicsConConteo);
+    } catch {}
+    setLoading(false);
+  }, []);
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const handleAgregar = async () => {
+    const nombre = nueva.trim();
+    if (!nombre) return;
+    setGuardando(true);
+    try {
+      await addUbicacion(nombre);
+      setNueva('');
+      await cargar();
+    } catch {
+      // silently retry next time
+    }
+    setGuardando(false);
+  };
+
+  const handleEliminar = async (item) => {
+    setEliminando(true);
+    try {
+      await deleteUbicacion(item.id);
+      setConfirmDelete(null);
+      await cargar();
+    } catch {}
+    setEliminando(false);
+  };
 
   const imprimirQR = async (nombre) => {
-    if (Platform.OS !== 'web') {
-      Alert.alert('Solo web', 'La impresión de QR está disponible en la versión web.');
-      return;
-    }
+    if (Platform.OS !== 'web') return;
     try {
       const QRCode = require('qrcode');
       const dataUrl = await QRCode.toDataURL(nombre, {
@@ -29,10 +73,7 @@ export default function UbicacionesScreen({ navigation }) {
         color: { dark: '#0B2447', light: '#FFFFFF' },
       });
       const win = window.open('', '_blank', 'width=420,height=560');
-      if (!win) {
-        Alert.alert('Ventanas bloqueadas', 'Permite ventanas emergentes en tu navegador para imprimir el QR.');
-        return;
-      }
+      if (!win) return;
       win.document.write(`<!DOCTYPE html><html><head><title>QR - ${nombre}</title>
       <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -44,32 +85,23 @@ export default function UbicacionesScreen({ navigation }) {
         @media print{body{padding:10px}}
       </style></head><body>
       <div class="card">
-        <img src="${dataUrl}" alt="QR ${nombre}" />
+        <img src="${dataUrl}" alt="QR" />
         <h2>${nombre}</h2>
         <p>Taller Inventario · Diagnóstica Internacional</p>
       </div>
       <script>setTimeout(function(){window.print();},400);<\/script>
       </body></html>`);
       win.document.close();
-    } catch {
-      Alert.alert('Error', 'No se pudo generar el código QR.');
-    }
-  };
-
-  const handleAgregar = async () => {
-    if (!nueva.trim()) return;
-    setGuardando(true);
-    await addUbicacion(nueva.trim());
-    setNueva('');
-    await cargar();
-    setGuardando(false);
+    } catch {}
   };
 
   const filtradas = ubicaciones.filter(u =>
     !filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
+  }
 
   return (
     <View style={styles.container}>
@@ -88,25 +120,32 @@ export default function UbicacionesScreen({ navigation }) {
           <View style={styles.nuevaRow}>
             <TextInput
               style={styles.nuevaInput}
-              placeholder="Ej: Rack A · Cajón 3 · Estante B"
+              placeholder="Ej: Rack A · Cajón 3"
+              placeholderTextColor="#bbb"
               value={nueva}
               onChangeText={setNueva}
+              onSubmitEditing={handleAgregar}
+              returnKeyType="done"
             />
             <TouchableOpacity style={styles.agregarBtn} onPress={handleAgregar} disabled={guardando}>
-              <Text style={styles.agregarText}>+ Agregar</Text>
+              {guardando
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.agregarText}>+ Agregar</Text>
+              }
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Buscador */}
+        {/* Buscador + Todos */}
         <View style={styles.searchRow}>
           <TextInput
             style={styles.search}
             placeholder="🔍  Buscar ubicación..."
+            placeholderTextColor="#aaa"
             value={filtro}
             onChangeText={setFiltro}
           />
-          <TouchableOpacity style={styles.todosBtn}>
+          <TouchableOpacity style={styles.todosBtn} onPress={() => setFiltro('')}>
             <Text style={styles.todosBtnText}>Todos</Text>
           </TouchableOpacity>
         </View>
@@ -115,23 +154,65 @@ export default function UbicacionesScreen({ navigation }) {
           data={filtradas}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardCheck} />
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('EscanearQR', { ubicacionInicial: item.nombre })}
+              activeOpacity={0.75}
+            >
+              <View style={styles.cardIcon}>
+                <Text style={{ fontSize: 20 }}>📍</Text>
+              </View>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardNombre}>{item.nombre}</Text>
-                <Text style={styles.cardSub}>{item.refacciones ?? 0} refacciones · {item.piezas ?? 0} pzas</Text>
+                <Text style={styles.cardSub}>
+                  {item.refacciones} refacción{item.refacciones !== 1 ? 'es' : ''} · {item.piezas} pz
+                </Text>
               </View>
-              <View style={styles.cardBtns}>
-                <TouchableOpacity style={styles.btnPrint} onPress={() => imprimirQR(item.nombre)}>
-                  <Text style={{ fontSize: 18 }}>🖨️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnDelete}>
-                  <Text style={{ fontSize: 18 }}>🗑️</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+
+              {confirmDelete === item.id ? (
+                <View style={styles.deleteConfirmRow}>
+                  <Text style={styles.deleteConfirmLabel}>¿Eliminar?</Text>
+                  <TouchableOpacity
+                    style={styles.deleteConfirmSi}
+                    onPress={() => handleEliminar(item)}
+                    disabled={eliminando}
+                  >
+                    {eliminando
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={styles.deleteConfirmSiText}>Sí</Text>
+                    }
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteConfirmNo}
+                    onPress={() => setConfirmDelete(null)}
+                    disabled={eliminando}
+                  >
+                    <Text style={styles.deleteConfirmNoText}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.cardBtns}>
+                  <TouchableOpacity
+                    style={styles.btnPrint}
+                    onPress={() => imprimirQR(item.nombre)}
+                  >
+                    <Text style={{ fontSize: 16 }}>🖨️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.btnDelete}
+                    onPress={() => setConfirmDelete(item.id)}
+                  >
+                    <Text style={{ fontSize: 16 }}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </TouchableOpacity>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>No hay ubicaciones registradas.</Text>}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {filtro ? 'Sin resultados.' : 'No hay ubicaciones registradas.'}
+            </Text>
+          }
           contentContainerStyle={{ paddingBottom: 40 }}
         />
       </View>
@@ -151,20 +232,26 @@ const styles = StyleSheet.create({
   nuevaBox: { backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
   nuevaLabel: { fontSize: 11, fontWeight: '800', color: '#888', letterSpacing: 0.5, marginBottom: 10 },
   nuevaRow: { flexDirection: 'row', gap: 10 },
-  nuevaInput: { flex: 1, backgroundColor: '#F5F6FA', borderRadius: 10, padding: 12, fontSize: 13, borderWidth: 1, borderColor: '#e0e0e0' },
-  agregarBtn: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
+  nuevaInput: { flex: 1, backgroundColor: '#F5F6FA', borderRadius: 10, padding: 12, fontSize: 13, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
+  agregarBtn: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center', minWidth: 90, alignItems: 'center' },
   agregarText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   searchRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  search: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e0e0e0' },
+  search: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
   todosBtn: { backgroundColor: AZUL, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' },
   todosBtnText: { color: '#fff', fontWeight: '700' },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.04, elevation: 1, gap: 10 },
-  cardCheck: { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc' },
+  cardIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
   cardInfo: { flex: 1 },
-  cardNombre: { fontSize: 16, fontWeight: '700', color: '#1a1a2e' },
+  cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSub: { fontSize: 12, color: '#888', marginTop: 2 },
-  cardBtns: { gap: 6 },
-  btnPrint: { backgroundColor: '#1976D2', borderRadius: 10, padding: 8, alignItems: 'center' },
-  btnDelete: { borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1.5, borderColor: '#F44336' },
+  cardBtns: { flexDirection: 'row', gap: 6 },
+  btnPrint: { backgroundColor: '#1976D2', borderRadius: 8, padding: 8, alignItems: 'center' },
+  btnDelete: { borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1.5, borderColor: '#F44336' },
+  deleteConfirmRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deleteConfirmLabel: { fontSize: 12, fontWeight: '700', color: '#C62828' },
+  deleteConfirmSi: { backgroundColor: '#C62828', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 36, alignItems: 'center' },
+  deleteConfirmSiText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  deleteConfirmNo: { backgroundColor: '#F5F6FA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#ddd' },
+  deleteConfirmNoText: { color: '#555', fontWeight: '700', fontSize: 13 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40 },
 });

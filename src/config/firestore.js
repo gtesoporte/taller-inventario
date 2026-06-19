@@ -162,7 +162,11 @@ export const getUbicaciones = async () => {
 };
 
 export const addUbicacion = async (nombre) => {
-  return addDoc(collection(db, 'ubicaciones'), { nombre, creadoEn: serverTimestamp() });
+  return addDoc(collection(db, 'ubicaciones'), { nombre, creadoEn: new Date().toISOString() });
+};
+
+export const deleteUbicacion = async (id) => {
+  return deleteDoc(doc(db, 'ubicaciones', id));
 };
 
 export const getPartesPorUbicacion = async (ubicacion) => {
