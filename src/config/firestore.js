@@ -75,27 +75,33 @@ export const suscribirMovimientos = (callback) => {
 
 // --- ACONDICIONAMIENTO ---
 export const getAcondicionamientos = async () => {
-  const snap = await getDocs(query(collection(db, 'acondicionamiento'), orderBy('creadoEn', 'desc')));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await getDocs(collection(db, 'acondicionamientos'));
+  const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  data.sort((a, b) => {
+    const ta = a.creadoEn ? new Date(a.creadoEn?.toDate?.() ?? a.creadoEn).getTime() : 0;
+    const tb = b.creadoEn ? new Date(b.creadoEn?.toDate?.() ?? b.creadoEn).getTime() : 0;
+    return tb - ta;
+  });
+  return data;
 };
 
 export const getAcondicionamiento = async (id) => {
-  const snap = await getDoc(doc(db, 'acondicionamiento', id));
+  const snap = await getDoc(doc(db, 'acondicionamientos', id));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 };
 
 export const addAcondicionamiento = async (data) => {
-  return addDoc(collection(db, 'acondicionamiento'), {
+  return addDoc(collection(db, 'acondicionamientos'), {
     ...data,
     estado: 'pendiente',
-    creadoEn: serverTimestamp(),
-    actualizadoEn: serverTimestamp(),
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString(),
     completadoEn: null,
   });
 };
 
 export const updateAcondicionamiento = async (id, data) => {
-  return updateDoc(doc(db, 'acondicionamiento', id), { ...data, actualizadoEn: serverTimestamp() });
+  return updateDoc(doc(db, 'acondicionamientos', id), { ...data, actualizadoEn: new Date().toISOString() });
 };
 
 const sortAcond = (data) => {
@@ -134,13 +140,19 @@ export const suscribirAcondicionamientos = (callback) => {
 // --- PROGRESO ---
 export const getProgreso = async (acondicionamientoId) => {
   const snap = await getDocs(
-    query(collection(db, 'progreso'), where('acondicionamientoId', '==', acondicionamientoId), orderBy('creadoEn', 'desc'))
+    query(collection(db, 'progreso'), where('acondicionamientoId', '==', acondicionamientoId))
   );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  data.sort((a, b) => {
+    const ta = a.creadoEn ? new Date(a.creadoEn?.toDate?.() ?? a.creadoEn).getTime() : 0;
+    const tb = b.creadoEn ? new Date(b.creadoEn?.toDate?.() ?? b.creadoEn).getTime() : 0;
+    return tb - ta;
+  });
+  return data;
 };
 
 export const addProgreso = async (data) => {
-  return addDoc(collection(db, 'progreso'), { ...data, creadoEn: serverTimestamp() });
+  return addDoc(collection(db, 'progreso'), { ...data, creadoEn: new Date().toISOString() });
 };
 
 // --- UBICACIONES ---

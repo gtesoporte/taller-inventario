@@ -31,14 +31,15 @@ export default function DetalleAcondScreen({ route, navigation }) {
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
+    if (!id) { setLoading(false); return; }
     Promise.all([
-      getAcondicionamiento(id),
-      getProgreso(id),
+      getAcondicionamiento(id).catch(() => null),
+      getProgreso(id).catch(() => []),
     ]).then(([acond, prog]) => {
       setItem(acond);
-      setProgreso(prog);
+      setProgreso(prog || []);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, [id]);
 
   const marcarCompletado = async () => {
@@ -66,7 +67,9 @@ export default function DetalleAcondScreen({ route, navigation }) {
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#6D28D9" /></View>;
   if (!item) return <View style={styles.center}><Text>No encontrado.</Text></View>;
 
-  const est = ESTADO_ESTILOS[item.estado] || ESTADO_ESTILOS.pendiente;
+  const estadoNorm = (item.estado || '').toLowerCase().replace(/[\s_-]/g, '');
+  const estadoKey = estadoNorm.includes('progres') ? 'en_progreso' : estadoNorm.includes('complet') ? 'completado' : 'pendiente';
+  const est = ESTADO_ESTILOS[estadoKey];
 
   return (
     <View style={styles.container}>
@@ -115,7 +118,7 @@ export default function DetalleAcondScreen({ route, navigation }) {
         </View>
 
         {/* Marcar completado */}
-        {item.estado !== 'completado' && (
+        {estadoKey !== 'completado' && (
           <TouchableOpacity style={styles.completarBtn} onPress={marcarCompletado}>
             <Text style={styles.completarText}>✅ Marcar completado</Text>
           </TouchableOpacity>
