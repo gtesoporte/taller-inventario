@@ -1,15 +1,20 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ConfigScreen({ navigation }) {
   const { user, perfil, logout } = useAuth();
+  const [confirmando, setConfirmando] = useState(false);
+  const [saliendo, setSaliendo] = useState(false);
 
-  const handleLogout = () => {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Salir', style: 'destructive', onPress: logout },
-    ]);
+  const handleLogout = async () => {
+    setSaliendo(true);
+    try {
+      await logout();
+    } catch {
+      setSaliendo(false);
+      setConfirmando(false);
+    }
   };
 
   const rolLower = (perfil?.rol || '').toLowerCase();
@@ -48,9 +53,27 @@ export default function ConfigScreen({ navigation }) {
         </View>
       )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
-      </TouchableOpacity>
+      {confirmando ? (
+        <View style={styles.confirmBox}>
+          <Text style={styles.confirmTitle}>¿Cerrar sesión?</Text>
+          <Text style={styles.confirmSub}>Tendrás que volver a iniciar sesión para acceder.</Text>
+          <View style={styles.confirmBtns}>
+            <TouchableOpacity style={styles.confirmCancelBtn} onPress={() => setConfirmando(false)} disabled={saliendo}>
+              <Text style={styles.confirmCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmSalirBtn} onPress={handleLogout} disabled={saliendo}>
+              {saliendo
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.confirmSalirText}>Salir</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => setConfirmando(true)}>
+          <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -70,4 +93,12 @@ const styles = StyleSheet.create({
   menuArrow: { fontSize: 22, color: '#bbb' },
   logoutBtn: { margin: 16, marginTop: 12, backgroundColor: '#FFEBEE', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#FFCDD2' },
   logoutText: { color: '#C62828', fontWeight: '700', fontSize: 15 },
+  confirmBox: { margin: 16, marginTop: 12, backgroundColor: '#fff', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: '#FFCDD2', shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
+  confirmTitle: { fontSize: 16, fontWeight: '800', color: '#C62828', marginBottom: 4 },
+  confirmSub: { fontSize: 13, color: '#666', marginBottom: 16 },
+  confirmBtns: { flexDirection: 'row', gap: 10 },
+  confirmCancelBtn: { flex: 1, backgroundColor: '#F5F6FA', borderRadius: 10, padding: 13, alignItems: 'center', borderWidth: 1, borderColor: '#e0e0e0' },
+  confirmCancelText: { color: '#555', fontWeight: '700', fontSize: 14 },
+  confirmSalirBtn: { flex: 1, backgroundColor: '#C62828', borderRadius: 10, padding: 13, alignItems: 'center' },
+  confirmSalirText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
