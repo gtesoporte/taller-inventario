@@ -50,6 +50,17 @@ export default function EquiposScreen({ navigation }) {
             <Text style={styles.headerTitle}>🔧 Taller Inventario</Text>
             <Text style={styles.headerSub}>{equipos.length} equipos registrados</Text>
           </View>
+          <View style={styles.headerBtns}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
+              <Text>📷</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
+              <Text>📱</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
+              <Text>🎙️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         {/* Tab toggle */}
         <View style={styles.invTabs}>
@@ -145,6 +156,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerBtns: { flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
