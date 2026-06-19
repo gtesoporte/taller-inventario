@@ -132,7 +132,7 @@ export default function EscanearQRScreen({ navigation }) {
         {escaneando ? (
           <>
             <View style={styles.scannerBox}>
-              <div id="qr-reader" style={{ width: '100%', borderRadius: 16, overflow: 'hidden' }} />
+              <View nativeID="qr-reader" style={{ width: '100%', minHeight: 300 }} />
             </View>
             <TouchableOpacity style={styles.cancelBtn} onPress={cancelarEscaneo}>
               <Text style={styles.cancelText}>✕ Cancelar escaneo</Text>
