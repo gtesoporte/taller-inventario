@@ -44,10 +44,10 @@ export default function PartesScreen({ navigation }) {
         </View>
         <View style={styles.headerBtns}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-            <Text>📱</Text>
+            <Text>📷</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-            <Text>📷</Text>
+            <Text>📱</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
             <Text>🎙️</Text>

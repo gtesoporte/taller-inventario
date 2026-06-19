@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { getUbicaciones, addUbicacion } from '../config/firestore';
 
@@ -15,6 +15,46 @@ export default function UbicacionesScreen({ navigation }) {
   const cargar = () => getUbicaciones().then(data => { setUbicaciones(data); setLoading(false); });
 
   useEffect(() => { cargar(); }, []);
+
+  const imprimirQR = async (nombre) => {
+    if (Platform.OS !== 'web') {
+      Alert.alert('Solo web', 'La impresión de QR está disponible en la versión web.');
+      return;
+    }
+    try {
+      const QRCode = require('qrcode');
+      const dataUrl = await QRCode.toDataURL(nombre, {
+        width: 300,
+        margin: 2,
+        color: { dark: '#0B2447', light: '#FFFFFF' },
+      });
+      const win = window.open('', '_blank', 'width=420,height=560');
+      if (!win) {
+        Alert.alert('Ventanas bloqueadas', 'Permite ventanas emergentes en tu navegador para imprimir el QR.');
+        return;
+      }
+      win.document.write(`<!DOCTYPE html><html><head><title>QR - ${nombre}</title>
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;text-align:center;padding:40px 20px;background:#fff}
+        .card{display:inline-block;border:2px solid #0B2447;border-radius:12px;padding:20px 30px}
+        img{width:220px;height:220px;display:block;margin:0 auto}
+        h2{margin-top:16px;font-size:18px;color:#0B2447;font-weight:bold;word-break:break-word}
+        p{color:#888;font-size:11px;margin-top:8px}
+        @media print{body{padding:10px}}
+      </style></head><body>
+      <div class="card">
+        <img src="${dataUrl}" alt="QR ${nombre}" />
+        <h2>${nombre}</h2>
+        <p>Taller Inventario · Diagnóstica Internacional</p>
+      </div>
+      <script>setTimeout(function(){window.print();},400);<\/script>
+      </body></html>`);
+      win.document.close();
+    } catch {
+      Alert.alert('Error', 'No se pudo generar el código QR.');
+    }
+  };
 
   const handleAgregar = async () => {
     if (!nueva.trim()) return;
@@ -82,7 +122,7 @@ export default function UbicacionesScreen({ navigation }) {
                 <Text style={styles.cardSub}>{item.refacciones ?? 0} refacciones · {item.piezas ?? 0} pzas</Text>
               </View>
               <View style={styles.cardBtns}>
-                <TouchableOpacity style={styles.btnPrint}>
+                <TouchableOpacity style={styles.btnPrint} onPress={() => imprimirQR(item.nombre)}>
                   <Text style={{ fontSize: 18 }}>🖨️</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnDelete}>
