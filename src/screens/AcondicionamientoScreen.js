@@ -5,6 +5,8 @@ import { suscribirAcondicionamientos } from '../config/firestore';
 const FILTROS = ['Todos', 'Pendientes', 'En progreso', 'Completados'];
 const ESTADO_MAP = { 'Pendientes': 'pendiente', 'En progreso': 'en_progreso', 'Completados': 'completado' };
 
+const normalizeEstado = (e) => (e || '').toLowerCase().replace(/[\s_-]/g, '').replace('é', 'e');
+
 const ESTADO_ESTILOS = {
   pendiente:   { bg: '#FFF3E0', text: '#E65100', label: '⏳ Pendiente' },
   en_progreso: { bg: '#F3F4F6', text: '#374151', label: '🔧 En progreso' },
@@ -31,15 +33,17 @@ export default function AcondicionamientoScreen({ navigation }) {
   const filtrados = items.filter(item => {
     const q = filtro.toLowerCase();
     const matchTexto = !filtro || item.nombre?.toLowerCase().includes(q) || item.equipo?.toLowerCase().includes(q) || item.ingeniero?.toLowerCase().includes(q) || item.numeroSerie?.toLowerCase().includes(q);
-    const matchEstado = estadoFiltro === 'Todos' || item.estado === ESTADO_MAP[estadoFiltro];
+    const estadoNorm = normalizeEstado(item.estado);
+    const filtroNorm = normalizeEstado(ESTADO_MAP[estadoFiltro] || '');
+    const matchEstado = estadoFiltro === 'Todos' || estadoNorm === filtroNorm || estadoNorm.includes(filtroNorm);
     return matchTexto && matchEstado;
   });
 
   const conteos = {
     Todos: items.length,
-    Pendientes: items.filter(i => i.estado === 'pendiente').length,
-    'En progreso': items.filter(i => i.estado === 'en_progreso').length,
-    Completados: items.filter(i => i.estado === 'completado').length,
+    Pendientes: items.filter(i => normalizeEstado(i.estado) === 'pendiente').length,
+    'En progreso': items.filter(i => normalizeEstado(i.estado).includes('progres')).length,
+    Completados: items.filter(i => normalizeEstado(i.estado).includes('complet')).length,
   };
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#7C3AED" /></View>;
@@ -51,6 +55,16 @@ export default function AcondicionamientoScreen({ navigation }) {
         <View>
           <Text style={styles.headerTitle}>🔧🔨 Acondicionamientos</Text>
           <Text style={styles.headerSub}>{items.length} proyectos registrados</Text>
+          {items.length === 0 && (
+            <Text style={{ color: 'rgba(255,200,200,0.9)', fontSize: 11, marginTop: 2 }}>
+              Sin datos en colección "acondicionamiento" ni "acondicionamientos"
+            </Text>
+          )}
+          {items.length > 0 && (
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, marginTop: 2 }}>
+              Colección: {items[0]?._col || 'desconocida'}
+            </Text>
+          )}
         </View>
         <TouchableOpacity style={styles.nuevoBtn} onPress={() => navigation.navigate('FormAcond')}>
           <Text style={styles.nuevoBtnText}>+ Nuevo</Text>
@@ -85,7 +99,8 @@ export default function AcondicionamientoScreen({ navigation }) {
         data={filtrados}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
-          const est = ESTADO_ESTILOS[item.estado] || ESTADO_ESTILOS.pendiente;
+          const estadoKey = Object.keys(ESTADO_ESTILOS).find(k => normalizeEstado(item.estado).includes(normalizeEstado(k))) || 'pendiente';
+          const est = ESTADO_ESTILOS[estadoKey];
           return (
             <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('DetalleAcond', { id: item.id })}>
               <View style={styles.cardInner}>

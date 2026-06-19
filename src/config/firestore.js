@@ -98,16 +98,37 @@ export const updateAcondicionamiento = async (id, data) => {
   return updateDoc(doc(db, 'acondicionamiento', id), { ...data, actualizadoEn: serverTimestamp() });
 };
 
-export const suscribirAcondicionamientos = (callback) => {
-  return onSnapshot(collection(db, 'acondicionamiento'), snap => {
-    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    data.sort((a, b) => {
-      const ta = a.creadoEn?.toMillis?.() ?? a.fechaInicio?.toMillis?.() ?? 0;
-      const tb = b.creadoEn?.toMillis?.() ?? b.fechaInicio?.toMillis?.() ?? 0;
-      return tb - ta;
-    });
-    callback(data);
+const sortAcond = (data) => {
+  data.sort((a, b) => {
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    return toMs(b.creadoEn ?? b.fechaInicio ?? b.fecha) - toMs(a.creadoEn ?? a.fechaInicio ?? a.fecha);
   });
+  return data;
+};
+
+export const suscribirAcondicionamientos = (callback) => {
+  const state = { singular: [], plural: [] };
+  const emit = () => {
+    const ids = new Set();
+    const merged = [...state.singular, ...state.plural].filter(d => {
+      if (ids.has(d.id)) return false;
+      ids.add(d.id);
+      return true;
+    });
+    callback(sortAcond(merged));
+  };
+
+  const unsub1 = onSnapshot(collection(db, 'acondicionamiento'), snap => {
+    state.singular = snap.docs.map(d => ({ id: d.id, _col: 'acondicionamiento', ...d.data() }));
+    emit();
+  }, () => {});
+
+  const unsub2 = onSnapshot(collection(db, 'acondicionamientos'), snap => {
+    state.plural = snap.docs.map(d => ({ id: d.id, _col: 'acondicionamientos', ...d.data() }));
+    emit();
+  }, () => {});
+
+  return () => { unsub1(); unsub2(); };
 };
 
 // --- PROGRESO ---

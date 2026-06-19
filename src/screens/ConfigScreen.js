@@ -2,8 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
-const ROLES_ADMIN = ['Administrador', 'Superadministrador'];
-
 export default function ConfigScreen({ navigation }) {
   const { user, perfil, logout } = useAuth();
 
@@ -14,7 +12,8 @@ export default function ConfigScreen({ navigation }) {
     ]);
   };
 
-  const esAdmin = ROLES_ADMIN.includes(perfil?.rol);
+  const rolLower = (perfil?.rol || '').toLowerCase();
+  const esAdmin = rolLower.includes('admin') || rolLower.includes('super');
 
   return (
     <View style={styles.container}>
