@@ -3,7 +3,7 @@ export const seleccionarFoto = (onFoto) => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.capture = 'environment'; // Abre cámara trasera en móvil
+  // Sin capture: el SO muestra diálogo para elegir cámara o galería
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
