@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Image,
 } from 'react-native';
 import { getEquipo, deleteEquipo } from '../config/firestore';
 
@@ -78,6 +78,11 @@ export default function DetalleEquipoScreen({ navigation, route }) {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+
+        {/* Foto */}
+        {equipo.foto ? (
+          <Image source={{ uri: equipo.foto }} style={styles.foto} resizeMode="cover" />
+        ) : null}
 
         {/* Detalles */}
         <View style={styles.seccion}>
@@ -173,6 +178,7 @@ const styles = StyleSheet.create({
   headerModelo: { fontSize: 24, fontWeight: '800', color: '#fff', textAlign: 'center' },
   fabBadge: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5, marginTop: 8 },
   fabBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  foto: { width: '100%', height: 220, borderRadius: 16, marginBottom: 16, backgroundColor: '#e0e0e0' },
   seccion: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16 },
   btnEditar: { backgroundColor: '#1565C0', borderRadius: 14, padding: 15, alignItems: 'center', marginBottom: 10 },
   btnEditarText: { color: '#fff', fontWeight: '700', fontSize: 15 },

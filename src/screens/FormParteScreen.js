@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Image,
 } from 'react-native';
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
+import { seleccionarFoto } from '../utils/fotoHelper';
 
 export default function FormParteScreen({ navigation, route }) {
   const { id, parte, ubicacionPreseleccionada } = route?.params || {};
@@ -15,6 +16,7 @@ export default function FormParteScreen({ navigation, route }) {
   const [ubicacion, setUbicacion] = useState(parte?.ubicacion || ubicacionPreseleccionada || '');
   const [existencia, setExistencia] = useState(String(parte?.existencia ?? parte?.existenciaActual ?? 0));
   const [observaciones, setObservaciones] = useState(parte?.observaciones || '');
+  const [foto, setFoto] = useState(parte?.foto || '');
   const [fabricantes, setFabricantes] = useState([]);
   const [ubicaciones, setUbicaciones] = useState([]);
   const [guardando, setGuardando] = useState(false);
@@ -41,6 +43,7 @@ export default function FormParteScreen({ navigation, route }) {
         ubicacion: ubicacion.trim() || null,
         existencia: parseInt(existencia, 10) || 0,
         observaciones: observaciones.trim() || null,
+        foto: foto || null,
       };
       if (esEdicion) {
         await updateParte(id, data);
@@ -149,6 +152,22 @@ export default function FormParteScreen({ navigation, route }) {
           />
         </Campo>
 
+        <Campo label="FOTOGRAFÍA">
+          {foto ? (
+            <View>
+              <Image source={{ uri: foto }} style={styles.fotoPreview} resizeMode="cover" />
+              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
+                <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto)}>
+              <Text style={styles.fotoAddIcon}>📷</Text>
+              <Text style={styles.fotoAddText}>Tomar foto o elegir imagen</Text>
+            </TouchableOpacity>
+          )}
+        </Campo>
+
         <Campo label="OBSERVACIONES">
           <TextInput
             style={[styles.input, styles.inputMultiline]}
@@ -214,6 +233,12 @@ const styles = StyleSheet.create({
   errorText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   exitoBox: { backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#A5D6A7' },
   exitoText: { color: '#2E7D32', fontSize: 13, fontWeight: '600' },
+  fotoPreview: { width: '100%', height: 200, borderRadius: 12, backgroundColor: '#e0e0e0' },
+  fotoAddBtn: { borderWidth: 2, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 12, padding: 24, alignItems: 'center', gap: 8, backgroundColor: '#fafafa' },
+  fotoAddIcon: { fontSize: 38 },
+  fotoAddText: { fontSize: 14, color: '#888', fontWeight: '600' },
+  fotoQuitarBtn: { marginTop: 8, backgroundColor: '#FFEBEE', borderRadius: 10, padding: 10, alignItems: 'center' },
+  fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
   btn: { backgroundColor: '#1976D2', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 10 },
   btnExito: { backgroundColor: '#2E7D32' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
