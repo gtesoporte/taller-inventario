@@ -1,11 +1,20 @@
-// Abre la cámara/galería en web y devuelve la imagen como base64 comprimida
+// Abre el selector de archivos del navegador (cámara/galería en móvil,
+// explorador de archivos en escritorio) y devuelve la imagen como base64 comprimida.
 export const seleccionarFoto = (onFoto) => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  // Sin capture: el SO muestra diálogo para elegir cámara o galería
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+
+  const limpiar = () => {
+    try { document.body.removeChild(input); } catch {}
+  };
+
   input.onchange = (e) => {
     const file = e.target.files[0];
+    limpiar();
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -23,5 +32,8 @@ export const seleccionarFoto = (onFoto) => {
     };
     reader.readAsDataURL(file);
   };
+
+  // Adjuntar al DOM antes de disparar — necesario en navegadores de escritorio
+  document.body.appendChild(input);
   input.click();
 };
