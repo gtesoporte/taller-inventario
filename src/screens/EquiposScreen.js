@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator,
+  StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
 import { suscribirEquipos, suscribirFabricantes } from '../config/firestore';
 
@@ -122,9 +122,10 @@ export default function EquiposScreen({ navigation }) {
                 style={styles.card}
                 onPress={() => navigation.navigate('DetalleEquipo', { id: equipo.id })}
               >
-                <View style={styles.equipoIcon}>
-                  <Text style={{ fontSize: 28 }}>🖥️</Text>
-                </View>
+                {equipo.foto
+                  ? <Image source={{ uri: equipo.foto }} style={styles.thumb} resizeMode="cover" />
+                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 28 }}>🖥️</Text></View>
+                }
                 <View style={styles.cardBody}>
                   <Text style={styles.cardNombre}>{equipo.modelo}</Text>
                   {equipo.numeroSerie
@@ -179,7 +180,8 @@ const styles = StyleSheet.create({
   grupoBadge: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
   grupoBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   card: { flexDirection: 'row', backgroundColor: '#fff', marginHorizontal: 14, marginBottom: 10, borderRadius: 14, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  equipoIcon: { width: 56, height: 56, borderRadius: 12, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  thumb: { width: 56, height: 56, borderRadius: 12, marginRight: 12 },
+  thumbPlaceholder: { backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
   cardBody: { flex: 1 },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSerie: { fontSize: 12, color: '#666', marginTop: 2 },
