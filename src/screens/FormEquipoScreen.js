@@ -148,10 +148,16 @@ export default function FormEquipoScreen({ navigation, route }) {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto)}>
-              <Text style={styles.fotoAddIcon}>📷</Text>
-              <Text style={styles.fotoAddText}>Tomar foto o elegir imagen</Text>
-            </TouchableOpacity>
+            <View style={styles.fotoBtnsRow}>
+              <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'camara')}>
+                <Text style={styles.fotoAddIcon}>📷</Text>
+                <Text style={styles.fotoAddText}>Cámara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'galeria')}>
+                <Text style={styles.fotoAddIcon}>🖼️</Text>
+                <Text style={styles.fotoAddText}>Galería</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </Campo>
 
@@ -214,7 +220,8 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
   inputMultiline: { minHeight: 90, paddingTop: 12 },
   fotoPreview: { width: '100%', height: 200, borderRadius: 12, backgroundColor: '#e0e0e0' },
-  fotoAddBtn: { borderWidth: 2, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 12, padding: 24, alignItems: 'center', gap: 8, backgroundColor: '#fafafa' },
+  fotoBtnsRow: { flexDirection: 'row', gap: 10 },
+  fotoAddBtn: { flex: 1, borderWidth: 2, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 12, paddingVertical: 20, alignItems: 'center', gap: 6, backgroundColor: '#fafafa' },
   fotoAddIcon: { fontSize: 38 },
   fotoAddText: { fontSize: 14, color: '#888', fontWeight: '600' },
   fotoQuitarBtn: { marginTop: 8, backgroundColor: '#FFEBEE', borderRadius: 10, padding: 10, alignItems: 'center' },

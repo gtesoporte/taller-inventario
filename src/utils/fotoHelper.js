@@ -1,9 +1,11 @@
-// Abre el selector de archivos del navegador (cámara/galería en móvil,
-// explorador de archivos en escritorio) y devuelve la imagen como base64 comprimida.
-export const seleccionarFoto = (onFoto) => {
+// fuente: 'camara' | 'galeria'
+// En móvil 'camara' abre la cámara trasera directamente.
+// En escritorio ambas fuentes abren el explorador de archivos.
+export const seleccionarFoto = (onFoto, fuente = 'galeria') => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
+  if (fuente === 'camara') input.capture = 'environment';
   input.style.position = 'fixed';
   input.style.opacity = '0';
   input.style.pointerEvents = 'none';
