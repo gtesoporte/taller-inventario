@@ -12,6 +12,7 @@ export default function FormEquipoScreen({ navigation, route }) {
 
   const [modelo, setModelo] = useState(equipo?.modelo || '');
   const [fabricante, setFabricante] = useState(equipo?.fabricante || '');
+  const [clasificacion, setClasificacion] = useState(equipo?.clasificacion || '');
   const [numeroSerie, setNumeroSerie] = useState(equipo?.numeroSerie || '');
   const [ubicacion, setUbicacion] = useState(equipo?.ubicacion || '');
   const [observaciones, setObservaciones] = useState(equipo?.observaciones || '');
@@ -39,6 +40,7 @@ export default function FormEquipoScreen({ navigation, route }) {
       const data = {
         modelo: modelo.trim(),
         fabricante: fabricante || null,
+        clasificacion: clasificacion || null,
         numeroSerie: numeroSerie.trim() || null,
         ubicacion: ubicacion.trim() || null,
         observaciones: observaciones.trim() || null,
@@ -101,6 +103,27 @@ export default function FormEquipoScreen({ navigation, route }) {
             placeholder="O escribe un fabricante nuevo..."
             placeholderTextColor="#bbb"
           />
+        </Campo>
+
+        <Campo label="CLASIFICACIÓN">
+          <View style={styles.chipsWrap}>
+            {[
+              { id: 'hueso', label: '💀 Hueso', color: '#E53935' },
+              { id: 'reacondicionamiento', label: '🔧 Reacondicionamiento', color: '#1565C0' },
+              { id: 'prestamo', label: '🤝 Préstamo', color: '#2E7D32' },
+            ].map(c => (
+              <TouchableOpacity
+                key={c.id}
+                style={[
+                  styles.chip,
+                  clasificacion === c.id && { backgroundColor: c.color, borderColor: c.color },
+                ]}
+                onPress={() => setClasificacion(prev => prev === c.id ? '' : c.id)}
+              >
+                <Text style={[styles.chipText, clasificacion === c.id && styles.chipTextActive]}>{c.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </Campo>
 
         <Campo label="NÚMERO DE SERIE">

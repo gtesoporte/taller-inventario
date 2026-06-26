@@ -262,6 +262,96 @@ export const deleteMovimiento = async (id) => {
   return deleteDoc(doc(db, 'movimientos', id));
 };
 
+// --- CAJUELAS ---
+export const CAJUELAS_LISTA = [
+  { id: 'mindray',     nombre: 'MINDRAY' },
+  { id: 'maglumi-x3',  nombre: 'MAGLUMI X3' },
+  { id: 'maglumi-800', nombre: 'MAGLUMI 800' },
+  { id: 'fuji',        nombre: 'FUJI' },
+  { id: 'autoscan',    nombre: 'AUTOSCAN' },
+  { id: 'minividas',   nombre: 'MINIVIDAS' },
+];
+
+export const RAZONES_CAJUELA = [
+  { id: 'dano_servicio',    label: 'Daño de pieza durante el servicio' },
+  { id: 'dano_no_reportado', label: 'Pieza dañada y no reportada por el cliente' },
+  { id: 'desgaste',         label: 'Desgaste en pieza existente sin alerta aparente' },
+  { id: 'otros',            label: 'Otros' },
+];
+
+export const suscribirCajuelaInventario = (cajuelaId, callback) => {
+  return onSnapshot(collection(db, 'cajuelaInventario'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(i => i.cajuelaId === cajuelaId);
+    data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    callback(data);
+  });
+};
+
+export const suscribirCajuelaMovimientos = (cajuelaId, callback) => {
+  return onSnapshot(collection(db, 'cajuelaMovimientos'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(m => m.cajuelaId === cajuelaId);
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
+    callback(data);
+  });
+};
+
+const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta) => {
+  const snap = await getDocs(collection(db, 'cajuelaInventario'));
+  const item = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .find(i => i.cajuelaId === cajuelaId && i.nombre === nombre);
+  if (item) {
+    await updateDoc(doc(db, 'cajuelaInventario', item.id), {
+      cantidad: Math.max(0, (item.cantidad || 0) + delta),
+    });
+  } else if (delta > 0) {
+    await addDoc(collection(db, 'cajuelaInventario'), {
+      cajuelaId, nombre, cantidad: delta, creadoEn: new Date().toISOString(),
+    });
+  }
+};
+
+export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil) => {
+  await _actualizarInventarioCajuela(cajuelaId, nombre, cantidad);
+  await addDoc(collection(db, 'cajuelaMovimientos'), {
+    cajuelaId, tipo: 'entrada', nombre, cantidad,
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
+export const addCajuelaSalida = async (cajuelaId, nombre, cantidad, razon, motivo, perfil) => {
+  await _actualizarInventarioCajuela(cajuelaId, nombre, -cantidad);
+  await addDoc(collection(db, 'cajuelaMovimientos'), {
+    cajuelaId, tipo: 'salida', nombre, cantidad, razon,
+    motivo: motivo?.trim() || null,
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
+// --- EQUIPO MOVIMIENTOS ---
+export const suscribirEquipoMovimientos = (equipoId, callback) => {
+  return onSnapshot(collection(db, 'equipoMovimientos'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(m => m.equipoId === equipoId);
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
+    callback(data);
+  });
+};
+
+export const addEquipoMovimiento = async (equipoId, tipo, nombre, cantidad, nota, perfil) => {
+  await addDoc(collection(db, 'equipoMovimientos'), {
+    equipoId, tipo, nombre, cantidad,
+    nota: nota?.trim() || null,
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
 // --- EQUIPOS ---
 export const suscribirEquipos = (callback) => {
   return onSnapshot(collection(db, 'equipos'), snap => {

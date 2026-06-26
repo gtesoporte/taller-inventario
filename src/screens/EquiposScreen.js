@@ -10,6 +10,7 @@ export default function EquiposScreen({ navigation }) {
   const [fabricantes, setFabricantes] = useState(['Todos']);
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
+  const [clasificacion, setClasificacion] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +18,12 @@ export default function EquiposScreen({ navigation }) {
     const unsubEq = suscribirEquipos((data) => { setEquipos(data); setLoading(false); });
     return () => { unsubFab(); unsubEq(); };
   }, []);
+
+  const CLASIF_MAP = {
+    hueso: { label: '💀 Hueso', color: '#E53935' },
+    reacondicionamiento: { label: '🔧 Reacondicionamiento', color: '#1565C0' },
+    prestamo: { label: '🤝 Préstamo', color: '#2E7D32' },
+  };
 
   const equiposFiltrados = equipos.filter(e => {
     const q = filtro.toLowerCase();
@@ -29,7 +36,8 @@ export default function EquiposScreen({ navigation }) {
       : fabricante === 'Sin fabricante'
         ? !e.fabricante || e.fabricante.trim() === ''
         : e.fabricante?.toUpperCase() === fabricante;
-    return matchTexto && matchFab;
+    const matchClasif = !clasificacion || e.clasificacion === clasificacion;
+    return matchTexto && matchFab && matchClasif;
   });
 
   const grupos = equiposFiltrados.reduce((acc, e) => {
@@ -86,6 +94,19 @@ export default function EquiposScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
+      {/* Chips de clasificación */}
+      <View style={styles.chipsContainer}>
+        {Object.entries(CLASIF_MAP).map(([id, { label, color }]) => (
+          <TouchableOpacity
+            key={id}
+            style={[styles.chip, clasificacion === id && { backgroundColor: color, borderColor: color }]}
+            onPress={() => setClasificacion(prev => prev === id ? '' : id)}
+          >
+            <Text style={[styles.chipText, clasificacion === id && styles.chipTextActive]}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Chips de fabricante */}
       <View style={styles.chipsContainer}>
         {fabricantes.map(fab => (
@@ -131,9 +152,16 @@ export default function EquiposScreen({ navigation }) {
                   {equipo.numeroSerie
                     ? <Text style={styles.cardSerie}>N/S: {equipo.numeroSerie}</Text>
                     : null}
-                  {equipo.fabricante
-                    ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{equipo.fabricante.toUpperCase()}</Text></View>
-                    : null}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+                    {equipo.fabricante
+                      ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{equipo.fabricante.toUpperCase()}</Text></View>
+                      : null}
+                    {equipo.clasificacion && CLASIF_MAP[equipo.clasificacion] && (
+                      <View style={[styles.fabBadge, { backgroundColor: CLASIF_MAP[equipo.clasificacion].color }]}>
+                        <Text style={styles.fabBadgeText}>{CLASIF_MAP[equipo.clasificacion].label}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
                 <Text style={styles.cardArrow}>›</Text>
               </TouchableOpacity>

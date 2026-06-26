@@ -21,6 +21,8 @@ import FabricantesScreen from './FabricantesScreen';
 import EquiposScreen from './EquiposScreen';
 import FormEquipoScreen from './FormEquipoScreen';
 import DetalleEquipoScreen from './DetalleEquipoScreen';
+import CajuelasScreen from './CajuelasScreen';
+import DetalleCajuelaScreen from './DetalleCajuelaScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -67,6 +69,15 @@ function MovStack() {
   );
 }
 
+function CajuelasStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CajuelasLista" component={CajuelasScreen} />
+      <Stack.Screen name="DetalleCajuela" component={DetalleCajuelaScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function ConfigStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -93,6 +104,11 @@ function MainTabs() {
         name="Movimientos"
         component={MovStack}
         options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text> }}
+      />
+      <Tab.Screen
+        name="Cajuelas"
+        component={CajuelasStack}
+        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🧰</Text> }}
       />
       <Tab.Screen
         name="Config"
