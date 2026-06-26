@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, ScrollView,
+  TextInput, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import { getDocs, collection } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import {
   suscribirCajuelaInventario, suscribirCajuelaMovimientos,
   addCajuelaEntrada, addCajuelaSalida, RAZONES_CAJUELA,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import { seleccionarFoto } from '../utils/fotoHelper';
 
 function formatFecha(ts) {
   if (!ts) return '';
@@ -31,14 +34,18 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const [tab, setTab] = useState('inventario');
   const [inventario, setInventario] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
+  const [partes, setPartes] = useState([]);
 
   // Panel de movimiento
   const [panelAbierto, setPanelAbierto] = useState(false);
   const [panelTipo, setPanelTipo] = useState('entrada');
   const [panelNombre, setPanelNombre] = useState('');
+  const [panelBusqueda, setPanelBusqueda] = useState('');
+  const [pickerAbierto, setPickerAbierto] = useState(false);
   const [panelCantidad, setPanelCantidad] = useState('1');
   const [panelRazon, setPanelRazon] = useState('');
   const [panelMotivo, setPanelMotivo] = useState('');
+  const [panelFoto, setPanelFoto] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [panelError, setPanelError] = useState('');
 
@@ -46,23 +53,47 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (!cajuelaId) return;
     const u1 = suscribirCajuelaInventario(cajuelaId, setInventario);
     const u2 = suscribirCajuelaMovimientos(cajuelaId, setMovimientos);
+    getDocs(collection(db, 'partes')).then(snap => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+      setPartes(data);
+    }).catch(() => {});
     return () => { u1(); u2(); };
   }, [cajuelaId]);
+
+  // Opciones del picker según tipo: entradas desde partes globales, salidas desde inventario cajuela
+  const opcionesEntrada = partes.filter(p =>
+    !panelBusqueda || p.nombre?.toLowerCase().includes(panelBusqueda.toLowerCase())
+  );
+  const opcionesSalida = inventario.filter(i =>
+    !panelBusqueda || i.nombre?.toLowerCase().includes(panelBusqueda.toLowerCase())
+  );
+  const opciones = panelTipo === 'salida' ? opcionesSalida : opcionesEntrada;
+
+  const seleccionarParte = (item) => {
+    setPanelNombre(item.nombre);
+    setPanelBusqueda('');
+    setPickerAbierto(false);
+    setPanelError('');
+  };
 
   const abrirPanel = (tipo) => {
     setPanelTipo(tipo);
     setPanelNombre('');
+    setPanelBusqueda('');
+    setPickerAbierto(false);
     setPanelCantidad('1');
     setPanelRazon('');
     setPanelMotivo('');
+    setPanelFoto('');
     setPanelError('');
     setPanelAbierto(true);
   };
 
   const confirmarMovimiento = async () => {
-    const nombre = panelNombre.trim();
+    const nom = panelNombre.trim();
     const cant = parseInt(panelCantidad, 10);
-    if (!nombre) { setPanelError('Escribe el nombre de la refacción.'); return; }
+    if (!nom) { setPanelError('Selecciona una refacción de la lista.'); return; }
     if (!cant || cant <= 0) { setPanelError('La cantidad debe ser mayor a 0.'); return; }
     if (panelTipo === 'salida' && !panelRazon) { setPanelError('Selecciona la razón de uso.'); return; }
     if (panelTipo === 'salida' && panelRazon === 'otros' && !panelMotivo.trim()) {
@@ -71,9 +102,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     setGuardando(true);
     try {
       if (panelTipo === 'entrada') {
-        await addCajuelaEntrada(cajuelaId, nombre, cant, perfil);
+        await addCajuelaEntrada(cajuelaId, nom, cant, perfil, panelFoto);
       } else {
-        await addCajuelaSalida(cajuelaId, nombre, cant, panelRazon, panelMotivo, perfil);
+        await addCajuelaSalida(cajuelaId, nom, cant, panelRazon, panelMotivo, perfil);
       }
       setPanelAbierto(false);
     } catch {
@@ -82,7 +113,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     setGuardando(false);
   };
 
-  // Estadísticas
+  // Estadísticas de salidas
   const salidas = movimientos.filter(m => m.tipo === 'salida');
   const totalSalidas = salidas.reduce((s, m) => s + (m.cantidad || 0), 0);
   const statsPorRazon = RAZONES_CAJUELA.map(r => ({
@@ -115,32 +146,112 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
 
       {/* Panel de movimiento */}
       {panelAbierto && (
-        <View style={[styles.panel, panelTipo === 'entrada' ? styles.panelEntrada : styles.panelSalida]}>
+        <ScrollView
+          style={[styles.panel, panelTipo === 'entrada' ? styles.panelEntrada : styles.panelSalida]}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 8 }}
+          nestedScrollEnabled
+        >
           <Text style={styles.panelTitulo}>
             {panelTipo === 'entrada' ? '▲ Registrar entrada' : '▼ Registrar uso'}
           </Text>
 
+          {/* Picker de refacción */}
           <Text style={styles.panelLabel}>REFACCIÓN *</Text>
-          <TextInput
-            style={styles.panelInput}
-            value={panelNombre}
-            onChangeText={v => { setPanelNombre(v); setPanelError(''); }}
-            placeholder="Nombre de la refacción"
-            placeholderTextColor="#bbb"
-          />
+          {panelNombre ? (
+            <View style={styles.parteSelBox}>
+              <Text style={styles.parteSelNombre}>✅ {panelNombre}</Text>
+              <TouchableOpacity onPress={() => { setPanelNombre(''); setPanelBusqueda(''); setPickerAbierto(false); }}>
+                <Text style={styles.parteSelX}>✕ cambiar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View>
+              <TextInput
+                style={styles.panelInput}
+                value={panelBusqueda}
+                onChangeText={v => { setPanelBusqueda(v); setPickerAbierto(true); setPanelError(''); }}
+                onFocus={() => setPickerAbierto(true)}
+                placeholder={
+                  panelTipo === 'salida'
+                    ? 'Buscar en inventario de cajuela...'
+                    : 'Buscar en refacciones del sistema...'
+                }
+                placeholderTextColor="#aaa"
+                autoCorrect={false}
+              />
+              {pickerAbierto && (
+                <View style={styles.pickerDropdown}>
+                  {opciones.slice(0, 7).map(item => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.pickerItem}
+                      onPress={() => seleccionarParte(item)}
+                    >
+                      <Text style={styles.pickerNombre}>{item.nombre}</Text>
+                      {item.fabricante
+                        ? <Text style={styles.pickerSub}>{item.fabricante}</Text>
+                        : null}
+                    </TouchableOpacity>
+                  ))}
+                  {opciones.length > 7 && (
+                    <Text style={styles.pickerMas}>
+                      +{opciones.length - 7} más · escribe para filtrar
+                    </Text>
+                  )}
+                  {opciones.length === 0 && (
+                    <Text style={styles.pickerVacio}>
+                      {panelTipo === 'salida'
+                        ? 'Sin piezas en esta cajuela.'
+                        : 'Sin refacciones encontradas.'}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
 
-          <Text style={[styles.panelLabel, { marginTop: 10 }]}>CANTIDAD *</Text>
+          {/* Cantidad */}
+          <Text style={[styles.panelLabel, { marginTop: 12 }]}>CANTIDAD *</Text>
           <TextInput
             style={[styles.panelInput, { width: 90 }]}
             value={panelCantidad}
             onChangeText={setPanelCantidad}
             keyboardType="numeric"
             selectTextOnFocus
+            onFocus={() => setPickerAbierto(false)}
           />
 
+          {/* Foto — solo en entradas */}
+          {panelTipo === 'entrada' && (
+            <>
+              <Text style={[styles.panelLabel, { marginTop: 12 }]}>FOTOGRAFÍA (OPCIONAL)</Text>
+              {panelFoto ? (
+                <View>
+                  <Image source={{ uri: panelFoto }} style={styles.fotoPreview} resizeMode="cover" />
+                  <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setPanelFoto('')}>
+                    <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.fotoBtnsRow}>
+                  <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setPanelFoto, 'camara')}>
+                    <Text style={styles.fotoAddIcon}>📷</Text>
+                    <Text style={styles.fotoAddText}>Cámara</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setPanelFoto, 'galeria')}>
+                    <Text style={styles.fotoAddIcon}>🖼️</Text>
+                    <Text style={styles.fotoAddText}>Galería</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Razón — solo en salidas */}
           {panelTipo === 'salida' && (
             <>
-              <Text style={[styles.panelLabel, { marginTop: 10 }]}>RAZÓN DE USO *</Text>
+              <Text style={[styles.panelLabel, { marginTop: 12 }]}>RAZÓN DE USO *</Text>
               <View style={styles.razonesWrap}>
                 {RAZONES_CAJUELA.map(r => (
                   <TouchableOpacity
@@ -154,7 +265,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
               </View>
               {panelRazon === 'otros' && (
                 <>
-                  <Text style={[styles.panelLabel, { marginTop: 10 }]}>MOTIVO ESPECÍFICO *</Text>
+                  <Text style={[styles.panelLabel, { marginTop: 12 }]}>MOTIVO ESPECÍFICO *</Text>
                   <TextInput
                     style={styles.panelInput}
                     value={panelMotivo}
@@ -185,7 +296,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
               }
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       )}
 
       {/* Contenido */}
@@ -195,9 +306,17 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           keyExtractor={i => i.id}
           renderItem={({ item }) => (
             <View style={styles.invCard}>
-              <Text style={styles.invNombre}>{item.nombre}</Text>
+              {item.foto
+                ? <Image source={{ uri: item.foto }} style={styles.invThumb} resizeMode="cover" />
+                : <View style={[styles.invThumb, styles.invThumbPlaceholder]}>
+                    <Text style={{ fontSize: 26 }}>🔩</Text>
+                  </View>
+              }
+              <Text style={styles.invNombre} numberOfLines={2}>{item.nombre}</Text>
               <View style={[styles.cantBadge, (item.cantidad || 0) <= 0 && styles.cantBadgeRed]}>
-                <Text style={styles.cantNum}>{item.cantidad || 0}</Text>
+                <Text style={[styles.cantNum, (item.cantidad || 0) <= 0 && { color: '#C62828' }]}>
+                  {item.cantidad || 0}
+                </Text>
                 <Text style={styles.cantLabel}>pz</Text>
               </View>
             </View>
@@ -213,7 +332,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
         />
       ) : (
         <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
-          {/* Stats */}
+          {/* Estadísticas */}
           {totalSalidas > 0 && (
             <View style={styles.statsBox}>
               <Text style={styles.statsTitle}>📊 Estadísticas de uso</Text>
@@ -254,15 +373,28 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                       {esEntrada ? '+' : '-'}{m.cantidad} pz
                     </Text>
                   </View>
+
                   <Text style={styles.movNombre}>{m.nombre}</Text>
+
+                  {m.foto ? (
+                    <Image source={{ uri: m.foto }} style={styles.movFoto} resizeMode="cover" />
+                  ) : null}
+
                   {razonObj && (
                     <View style={[styles.razonTag, { backgroundColor: COLORES_RAZON[m.razon] + '22' }]}>
                       <Text style={[styles.razonTagText, { color: COLORES_RAZON[m.razon] }]}>{razonObj.label}</Text>
                     </View>
                   )}
                   {m.motivo ? <Text style={styles.movMotivo}>💬 {m.motivo}</Text> : null}
-                  {m.usuario ? <Text style={styles.movMeta}>👤 {m.usuario}</Text> : null}
-                  <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
+
+                  <View style={styles.movMeta}>
+                    {m.usuario ? (
+                      <View style={styles.usuarioBadge}>
+                        <Text style={styles.usuarioText}>👤 {m.usuario}</Text>
+                      </View>
+                    ) : null}
+                    <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
+                  </View>
                 </View>
               );
             })
@@ -296,29 +428,57 @@ const styles = StyleSheet.create({
   tabBtnActive: { backgroundColor: '#fff' },
   tabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   tabTextActive: { color: AZUL },
+
   // Panel
-  panel: { padding: 16, borderBottomWidth: 1 },
+  panel: { maxHeight: 460, borderBottomWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
   panelEntrada: { backgroundColor: '#E8F5E9', borderBottomColor: '#A5D6A7' },
   panelSalida: { backgroundColor: '#FFF3E0', borderBottomColor: '#FFCC80' },
   panelTitulo: { fontSize: 14, fontWeight: '800', color: '#1a1a2e', marginBottom: 10 },
-  panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 5 },
+  panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
+
+  // Picker
+  parteSelBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 1.5, borderColor: '#4CAF50' },
+  parteSelNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', flex: 1 },
+  parteSelX: { fontSize: 12, color: '#888', marginLeft: 10, fontWeight: '600' },
+  pickerDropdown: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginTop: 4, overflow: 'hidden' },
+  pickerItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  pickerNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  pickerSub: { fontSize: 11, color: '#888', marginTop: 2 },
+  pickerMas: { fontSize: 12, color: '#888', padding: 10, textAlign: 'center', fontStyle: 'italic' },
+  pickerVacio: { fontSize: 13, color: '#aaa', padding: 14, textAlign: 'center' },
+
+  // Foto en panel
+  fotoPreview: { width: '100%', height: 140, borderRadius: 10, backgroundColor: '#e0e0e0' },
+  fotoQuitarBtn: { marginTop: 6, backgroundColor: '#FFEBEE', borderRadius: 8, padding: 8, alignItems: 'center' },
+  fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 12 },
+  fotoBtnsRow: { flexDirection: 'row', gap: 8 },
+  fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 14, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
+  fotoAddIcon: { fontSize: 26 },
+  fotoAddText: { fontSize: 12, color: '#888', fontWeight: '600' },
+
+  // Razones
   razonesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   razonChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#ddd', backgroundColor: '#fff' },
   razonChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 8 },
-  panelBtns: { flexDirection: 'row', gap: 10, marginTop: 12 },
+
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 10 },
+  panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 6 },
   panelCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
   panelCancelarText: { color: '#555', fontWeight: '700' },
   panelConfirmar: { flex: 2, borderRadius: 10, padding: 12, alignItems: 'center' },
   panelConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+
   // Inventario
-  invCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, alignItems: 'center' },
+  invCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, alignItems: 'center', gap: 12 },
+  invThumb: { width: 52, height: 52, borderRadius: 10 },
+  invThumbPlaceholder: { backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
   invNombre: { flex: 1, fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
   cantBadge: { backgroundColor: '#E8F5E9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center', minWidth: 44 },
   cantBadgeRed: { backgroundColor: '#FFEBEE' },
   cantNum: { fontSize: 16, fontWeight: '800', color: '#2e7d32' },
   cantLabel: { fontSize: 9, color: '#888' },
+
   // Stats
   statsBox: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 14 },
   statsTitle: { fontSize: 14, fontWeight: '800', color: '#1a1a2e', marginBottom: 4 },
@@ -328,6 +488,7 @@ const styles = StyleSheet.create({
   statLabel: { flex: 1, fontSize: 12, color: '#444' },
   statCant: { fontSize: 13, fontWeight: '700', color: '#1a1a2e', minWidth: 40, textAlign: 'right' },
   statPct: { fontSize: 12, color: '#888', minWidth: 36, textAlign: 'right' },
+
   // Movimientos
   movCard: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, borderLeftWidth: 4 },
   movTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
@@ -336,18 +497,23 @@ const styles = StyleSheet.create({
   tipoBadgeS: { backgroundColor: '#FFEBEE' },
   tipoText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   movCant: { fontSize: 18, fontWeight: '900' },
-  movNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', marginBottom: 6 },
+  movNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', marginBottom: 8 },
+  movFoto: { width: '100%', height: 120, borderRadius: 10, marginBottom: 8, backgroundColor: '#e0e0e0' },
   razonTag: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 6 },
   razonTagText: { fontSize: 12, fontWeight: '700' },
-  movMotivo: { fontSize: 13, color: '#555', fontStyle: 'italic', marginBottom: 4 },
-  movMeta: { fontSize: 12, color: '#888', marginBottom: 2 },
-  movFecha: { fontSize: 11, color: '#bbb', marginTop: 4 },
+  movMotivo: { fontSize: 13, color: '#555', fontStyle: 'italic', marginBottom: 8 },
+  movMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
+  usuarioBadge: { backgroundColor: '#EEF2F7', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  usuarioText: { fontSize: 12, fontWeight: '700', color: '#444' },
+  movFecha: { fontSize: 11, color: '#bbb' },
+
   // FABs
   fabs: { position: 'absolute', bottom: 20, left: 16, right: 16, flexDirection: 'row', gap: 12 },
   fab: { flex: 1, borderRadius: 14, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 4 },
   fabEntrada: { backgroundColor: '#2E7D32' },
   fabSalida: { backgroundColor: '#C62828' },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+
   // Empty
   emptyBox: { alignItems: 'center', marginTop: 40, gap: 8 },
   emptyIcon: { fontSize: 40 },

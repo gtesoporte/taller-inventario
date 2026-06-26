@@ -298,25 +298,28 @@ export const suscribirCajuelaMovimientos = (cajuelaId, callback) => {
   });
 };
 
-const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta) => {
+const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta, foto) => {
   const snap = await getDocs(collection(db, 'cajuelaInventario'));
   const item = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     .find(i => i.cajuelaId === cajuelaId && i.nombre === nombre);
   if (item) {
-    await updateDoc(doc(db, 'cajuelaInventario', item.id), {
-      cantidad: Math.max(0, (item.cantidad || 0) + delta),
-    });
+    const updates = { cantidad: Math.max(0, (item.cantidad || 0) + delta) };
+    if (foto) updates.foto = foto;
+    await updateDoc(doc(db, 'cajuelaInventario', item.id), updates);
   } else if (delta > 0) {
     await addDoc(collection(db, 'cajuelaInventario'), {
-      cajuelaId, nombre, cantidad: delta, creadoEn: new Date().toISOString(),
+      cajuelaId, nombre, cantidad: delta,
+      foto: foto || null,
+      creadoEn: new Date().toISOString(),
     });
   }
 };
 
-export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil) => {
-  await _actualizarInventarioCajuela(cajuelaId, nombre, cantidad);
+export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil, foto) => {
+  await _actualizarInventarioCajuela(cajuelaId, nombre, cantidad, foto);
   await addDoc(collection(db, 'cajuelaMovimientos'), {
     cajuelaId, tipo: 'entrada', nombre, cantidad,
+    foto: foto || null,
     usuario: perfil?.nombre || perfil?.email || 'Sistema',
     creadoEn: new Date().toISOString(),
   });
