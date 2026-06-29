@@ -3,11 +3,10 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   TextInput, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
-import { getDocs, collection } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import {
   suscribirCajuelaInventario, suscribirCajuelaMovimientos,
   addCajuelaEntrada, addCajuelaSalida, RAZONES_CAJUELA,
+  updateCajuelaInventarioItem, deleteCajuelaInventarioItem,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { seleccionarFoto } from '../utils/fotoHelper';
@@ -28,20 +27,36 @@ const COLORES_RAZON = {
   otros: '#546E7A',
 };
 
+function FotoButtons({ onFoto }) {
+  return (
+    <View style={styles.fotoBtnsRow}>
+      <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(onFoto, 'camara')}>
+        <Text style={styles.fotoAddIcon}>📷</Text>
+        <Text style={styles.fotoAddText}>Cámara</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(onFoto, 'galeria')}>
+        <Text style={styles.fotoAddIcon}>🖼️</Text>
+        <Text style={styles.fotoAddText}>Galería / PC</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function DetalleCajuelaScreen({ navigation, route }) {
   const { cajuelaId, nombre } = route?.params || {};
   const { perfil } = useAuth();
   const [tab, setTab] = useState('inventario');
   const [inventario, setInventario] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
-  const [partes, setPartes] = useState([]);
 
-  // Panel de movimiento
+  // ── Panel movimiento ─────────────────────────────────────────
   const [panelAbierto, setPanelAbierto] = useState(false);
   const [panelTipo, setPanelTipo] = useState('entrada');
-  const [panelNombre, setPanelNombre] = useState('');
+  // Entrada: panelBusqueda ES el nombre (texto libre + sugerencias del inventario)
+  // Salida:  panelNombre es la selección obligatoria del inventario
   const [panelBusqueda, setPanelBusqueda] = useState('');
-  const [pickerAbierto, setPickerAbierto] = useState(false);
+  const [panelNombre, setPanelNombre] = useState('');
+  const [sugsVisible, setSugsVisible] = useState(false);
   const [panelCantidad, setPanelCantidad] = useState('1');
   const [panelRazon, setPanelRazon] = useState('');
   const [panelMotivo, setPanelMotivo] = useState('');
@@ -49,39 +64,39 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const [guardando, setGuardando] = useState(false);
   const [panelError, setPanelError] = useState('');
 
+  // ── Panel edición de ítem ────────────────────────────────────
+  const [editItem, setEditItem] = useState(null);
+  const [editNombre, setEditNombre] = useState('');
+  const [editCantidad, setEditCantidad] = useState('');
+  const [editFoto, setEditFoto] = useState('');
+  const [editGuardando, setEditGuardando] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   useEffect(() => {
     if (!cajuelaId) return;
     const u1 = suscribirCajuelaInventario(cajuelaId, setInventario);
     const u2 = suscribirCajuelaMovimientos(cajuelaId, setMovimientos);
-    getDocs(collection(db, 'partes')).then(snap => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
-      setPartes(data);
-    }).catch(() => {});
     return () => { u1(); u2(); };
   }, [cajuelaId]);
 
-  // Opciones del picker según tipo: entradas desde partes globales, salidas desde inventario cajuela
-  const opcionesEntrada = partes.filter(p =>
-    !panelBusqueda || p.nombre?.toLowerCase().includes(panelBusqueda.toLowerCase())
-  );
+  // Sugerencias para entrada (inventario cajuela filtrado por lo que se escribe)
+  const sugerencias = panelBusqueda
+    ? inventario.filter(i => i.nombre?.toLowerCase().includes(panelBusqueda.toLowerCase()))
+    : inventario;
+
+  // Opciones para salida (inventario cajuela filtrado)
   const opcionesSalida = inventario.filter(i =>
     !panelBusqueda || i.nombre?.toLowerCase().includes(panelBusqueda.toLowerCase())
   );
-  const opciones = panelTipo === 'salida' ? opcionesSalida : opcionesEntrada;
 
-  const seleccionarParte = (item) => {
-    setPanelNombre(item.nombre);
-    setPanelBusqueda('');
-    setPickerAbierto(false);
-    setPanelError('');
-  };
-
+  // ── Handlers de movimiento ───────────────────────────────────
   const abrirPanel = (tipo) => {
+    setEditItem(null);
     setPanelTipo(tipo);
-    setPanelNombre('');
     setPanelBusqueda('');
-    setPickerAbierto(false);
+    setPanelNombre('');
+    setSugsVisible(false);
     setPanelCantidad('1');
     setPanelRazon('');
     setPanelMotivo('');
@@ -91,9 +106,16 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   };
 
   const confirmarMovimiento = async () => {
-    const nom = panelNombre.trim();
+    const nom = panelTipo === 'entrada'
+      ? panelBusqueda.trim()
+      : panelNombre.trim();
     const cant = parseInt(panelCantidad, 10);
-    if (!nom) { setPanelError('Selecciona una refacción de la lista.'); return; }
+    if (!nom) {
+      setPanelError(panelTipo === 'entrada'
+        ? 'Escribe el nombre de la refacción.'
+        : 'Selecciona una refacción de la lista.');
+      return;
+    }
     if (!cant || cant <= 0) { setPanelError('La cantidad debe ser mayor a 0.'); return; }
     if (panelTipo === 'salida' && !panelRazon) { setPanelError('Selecciona la razón de uso.'); return; }
     if (panelTipo === 'salida' && panelRazon === 'otros' && !panelMotivo.trim()) {
@@ -113,7 +135,48 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     setGuardando(false);
   };
 
-  // Estadísticas de salidas
+  // ── Handlers de edición ──────────────────────────────────────
+  const abrirEdicion = (item) => {
+    setPanelAbierto(false);
+    setEditItem(item);
+    setEditNombre(item.nombre);
+    setEditCantidad(String(item.cantidad ?? 0));
+    setEditFoto(item.foto || '');
+    setEditError('');
+    setConfirmDelete(false);
+  };
+
+  const guardarEdicion = async () => {
+    const nom = editNombre.trim();
+    const cant = parseInt(editCantidad, 10);
+    if (!nom) { setEditError('El nombre no puede estar vacío.'); return; }
+    if (isNaN(cant) || cant < 0) { setEditError('Cantidad inválida.'); return; }
+    setEditGuardando(true);
+    try {
+      await updateCajuelaInventarioItem(editItem.id, {
+        nombre: nom,
+        cantidad: cant,
+        foto: editFoto || null,
+      });
+      setEditItem(null);
+    } catch {
+      setEditError('Error al guardar. Intenta de nuevo.');
+    }
+    setEditGuardando(false);
+  };
+
+  const eliminarItem = async () => {
+    setEditGuardando(true);
+    try {
+      await deleteCajuelaInventarioItem(editItem.id);
+      setEditItem(null);
+    } catch {
+      setEditError('Error al eliminar.');
+      setEditGuardando(false);
+    }
+  };
+
+  // ── Estadísticas ─────────────────────────────────────────────
   const salidas = movimientos.filter(m => m.tipo === 'salida');
   const totalSalidas = salidas.reduce((s, m) => s + (m.cantidad || 0), 0);
   const statsPorRazon = RAZONES_CAJUELA.map(r => ({
@@ -121,9 +184,12 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     cantidad: salidas.filter(m => m.razon === r.id).reduce((s, m) => s + (m.cantidad || 0), 0),
   })).filter(r => r.cantidad > 0);
 
+  const panelVisible = panelAbierto || !!editItem;
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+
+      {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.volver}>← Cajuelas</Text>
@@ -144,10 +210,10 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Panel de movimiento */}
+      {/* ── Panel: NUEVO MOVIMIENTO ── */}
       {panelAbierto && (
         <ScrollView
-          style={[styles.panel, panelTipo === 'entrada' ? styles.panelEntrada : styles.panelSalida]}
+          style={[styles.panel, panelTipo === 'entrada' ? styles.panelE : styles.panelS]}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: 8 }}
           nestedScrollEnabled
@@ -156,59 +222,79 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             {panelTipo === 'entrada' ? '▲ Registrar entrada' : '▼ Registrar uso'}
           </Text>
 
-          {/* Picker de refacción */}
+          {/* Picker / campo de refacción */}
           <Text style={styles.panelLabel}>REFACCIÓN *</Text>
-          {panelNombre ? (
-            <View style={styles.parteSelBox}>
-              <Text style={styles.parteSelNombre}>✅ {panelNombre}</Text>
-              <TouchableOpacity onPress={() => { setPanelNombre(''); setPanelBusqueda(''); setPickerAbierto(false); }}>
-                <Text style={styles.parteSelX}>✕ cambiar</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+
+          {panelTipo === 'entrada' ? (
+            /* ─ ENTRADA: texto libre + sugerencias del inventario ─ */
             <View>
               <TextInput
                 style={styles.panelInput}
                 value={panelBusqueda}
-                onChangeText={v => { setPanelBusqueda(v); setPickerAbierto(true); setPanelError(''); }}
-                onFocus={() => setPickerAbierto(true)}
-                placeholder={
-                  panelTipo === 'salida'
-                    ? 'Buscar en inventario de cajuela...'
-                    : 'Buscar en refacciones del sistema...'
-                }
+                onChangeText={v => { setPanelBusqueda(v); setSugsVisible(true); setPanelError(''); }}
+                onFocus={() => setSugsVisible(true)}
+                placeholder="Escribe o busca una refacción..."
                 placeholderTextColor="#aaa"
                 autoCorrect={false}
               />
-              {pickerAbierto && (
-                <View style={styles.pickerDropdown}>
-                  {opciones.slice(0, 7).map(item => (
+              {sugsVisible && sugerencias.length > 0 && (
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownHint}>Sugerencias del inventario de esta cajuela:</Text>
+                  {sugerencias.slice(0, 6).map(i => (
                     <TouchableOpacity
-                      key={item.id}
-                      style={styles.pickerItem}
-                      onPress={() => seleccionarParte(item)}
+                      key={i.id}
+                      style={styles.dropdownItem}
+                      onPress={() => { setPanelBusqueda(i.nombre); setSugsVisible(false); }}
                     >
-                      <Text style={styles.pickerNombre}>{item.nombre}</Text>
-                      {item.fabricante
-                        ? <Text style={styles.pickerSub}>{item.fabricante}</Text>
-                        : null}
+                      <Text style={styles.dropdownNombre}>{i.nombre}</Text>
+                      <Text style={styles.dropdownCant}>{i.cantidad} pz</Text>
                     </TouchableOpacity>
                   ))}
-                  {opciones.length > 7 && (
-                    <Text style={styles.pickerMas}>
-                      +{opciones.length - 7} más · escribe para filtrar
-                    </Text>
-                  )}
-                  {opciones.length === 0 && (
-                    <Text style={styles.pickerVacio}>
-                      {panelTipo === 'salida'
-                        ? 'Sin piezas en esta cajuela.'
-                        : 'Sin refacciones encontradas.'}
-                    </Text>
+                  {sugerencias.length > 6 && (
+                    <Text style={styles.dropdownMas}>+{sugerencias.length - 6} más · escribe para filtrar</Text>
                   )}
                 </View>
               )}
             </View>
+          ) : (
+            /* ─ SALIDA: selección obligatoria del inventario ─ */
+            panelNombre ? (
+              <View style={styles.selBox}>
+                <Text style={styles.selNombre}>✅ {panelNombre}</Text>
+                <TouchableOpacity onPress={() => { setPanelNombre(''); setPanelBusqueda(''); }}>
+                  <Text style={styles.selX}>✕ cambiar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                <TextInput
+                  style={styles.panelInput}
+                  value={panelBusqueda}
+                  onChangeText={v => { setPanelBusqueda(v); setPanelError(''); }}
+                  placeholder="Buscar en inventario de cajuela..."
+                  placeholderTextColor="#aaa"
+                  autoCorrect={false}
+                />
+                <View style={styles.dropdown}>
+                  {opcionesSalida.length === 0
+                    ? <Text style={styles.dropdownVacio}>Sin piezas en esta cajuela.</Text>
+                    : opcionesSalida.slice(0, 7).map(i => (
+                      <TouchableOpacity
+                        key={i.id}
+                        style={styles.dropdownItem}
+                        onPress={() => { setPanelNombre(i.nombre); setPanelBusqueda(''); setPanelError(''); }}
+                      >
+                        <Text style={styles.dropdownNombre}>{i.nombre}</Text>
+                        <Text style={styles.dropdownCant}>{i.cantidad} pz</Text>
+                      </TouchableOpacity>
+                    ))
+                  }
+                  {opcionesSalida.length > 7 && (
+                    <Text style={styles.dropdownMas}>+{opcionesSalida.length - 7} más · escribe para filtrar</Text>
+                  )}
+                </View>
+              </View>
+            )
           )}
 
           {/* Cantidad */}
@@ -219,7 +305,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             onChangeText={setPanelCantidad}
             keyboardType="numeric"
             selectTextOnFocus
-            onFocus={() => setPickerAbierto(false)}
+            onFocus={() => setSugsVisible(false)}
           />
 
           {/* Foto — solo en entradas */}
@@ -227,23 +313,14 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             <>
               <Text style={[styles.panelLabel, { marginTop: 12 }]}>FOTOGRAFÍA (OPCIONAL)</Text>
               {panelFoto ? (
-                <View>
+                <>
                   <Image source={{ uri: panelFoto }} style={styles.fotoPreview} resizeMode="cover" />
                   <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setPanelFoto('')}>
                     <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
                   </TouchableOpacity>
-                </View>
+                </>
               ) : (
-                <View style={styles.fotoBtnsRow}>
-                  <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setPanelFoto, 'camara')}>
-                    <Text style={styles.fotoAddIcon}>📷</Text>
-                    <Text style={styles.fotoAddText}>Cámara</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setPanelFoto, 'galeria')}>
-                    <Text style={styles.fotoAddIcon}>🖼️</Text>
-                    <Text style={styles.fotoAddText}>Galería</Text>
-                  </TouchableOpacity>
-                </View>
+                <FotoButtons onFoto={setPanelFoto} />
               )}
             </>
           )}
@@ -282,24 +359,103 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           {!!panelError && <Text style={styles.panelError}>⚠️ {panelError}</Text>}
 
           <View style={styles.panelBtns}>
-            <TouchableOpacity style={styles.panelCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
-              <Text style={styles.panelCancelarText}>Cancelar</Text>
+            <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
+              <Text style={styles.btnCancelarText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.panelConfirmar, { backgroundColor: panelTipo === 'entrada' ? '#2E7D32' : '#C62828' }]}
+              style={[styles.btnConfirmar, { backgroundColor: panelTipo === 'entrada' ? '#2E7D32' : '#C62828' }]}
               onPress={confirmarMovimiento}
               disabled={guardando}
             >
               {guardando
                 ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={styles.panelConfirmarText}>Confirmar</Text>
+                : <Text style={styles.btnConfirmarText}>Confirmar</Text>
               }
             </TouchableOpacity>
           </View>
         </ScrollView>
       )}
 
-      {/* Contenido */}
+      {/* ── Panel: EDITAR ÍTEM ── */}
+      {editItem && (
+        <ScrollView
+          style={[styles.panel, styles.panelEdit]}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 8 }}
+          nestedScrollEnabled
+        >
+          <Text style={styles.panelTitulo}>✏️ Editar refacción</Text>
+
+          <Text style={styles.panelLabel}>NOMBRE</Text>
+          <TextInput
+            style={styles.panelInput}
+            value={editNombre}
+            onChangeText={v => { setEditNombre(v); setEditError(''); }}
+            placeholder="Nombre de la refacción"
+            placeholderTextColor="#bbb"
+          />
+
+          <Text style={[styles.panelLabel, { marginTop: 12 }]}>EXISTENCIA (corrección)</Text>
+          <TextInput
+            style={[styles.panelInput, { width: 90 }]}
+            value={editCantidad}
+            onChangeText={setEditCantidad}
+            keyboardType="numeric"
+            selectTextOnFocus
+          />
+          <Text style={styles.correccionHint}>Establece la cantidad real actual (sin crear movimiento).</Text>
+
+          <Text style={[styles.panelLabel, { marginTop: 12 }]}>FOTOGRAFÍA</Text>
+          {editFoto ? (
+            <>
+              <Image source={{ uri: editFoto }} style={styles.fotoPreview} resizeMode="cover" />
+              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setEditFoto('')}>
+                <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <FotoButtons onFoto={setEditFoto} />
+          )}
+
+          {!!editError && <Text style={styles.panelError}>⚠️ {editError}</Text>}
+
+          <View style={styles.panelBtns}>
+            <TouchableOpacity style={styles.btnCancelar} onPress={() => setEditItem(null)} disabled={editGuardando}>
+              <Text style={styles.btnCancelarText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btnConfirmar, { backgroundColor: '#1565C0' }]} onPress={guardarEdicion} disabled={editGuardando}>
+              {editGuardando
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.btnConfirmarText}>Guardar</Text>
+              }
+            </TouchableOpacity>
+          </View>
+
+          {/* Eliminar ítem */}
+          {!confirmDelete ? (
+            <TouchableOpacity style={styles.btnEliminarItem} onPress={() => setConfirmDelete(true)}>
+              <Text style={styles.btnEliminarItemText}>🗑️ Eliminar del inventario</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.confirmBox}>
+              <Text style={styles.confirmText}>¿Eliminar "{editItem.nombre}" del inventario?</Text>
+              <View style={styles.panelBtns}>
+                <TouchableOpacity style={styles.btnCancelar} onPress={() => setConfirmDelete(false)}>
+                  <Text style={styles.btnCancelarText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.btnConfirmar, { backgroundColor: '#C62828' }]} onPress={eliminarItem} disabled={editGuardando}>
+                  {editGuardando
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.btnConfirmarText}>Eliminar</Text>
+                  }
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* ── Contenido: INVENTARIO ── */}
       {tab === 'inventario' ? (
         <FlatList
           data={inventario}
@@ -308,8 +464,8 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             <View style={styles.invCard}>
               {item.foto
                 ? <Image source={{ uri: item.foto }} style={styles.invThumb} resizeMode="cover" />
-                : <View style={[styles.invThumb, styles.invThumbPlaceholder]}>
-                    <Text style={{ fontSize: 26 }}>🔩</Text>
+                : <View style={[styles.invThumb, styles.invThumbPh]}>
+                    <Text style={{ fontSize: 24 }}>🔩</Text>
                   </View>
               }
               <Text style={styles.invNombre} numberOfLines={2}>{item.nombre}</Text>
@@ -319,6 +475,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                 </Text>
                 <Text style={styles.cantLabel}>pz</Text>
               </View>
+              <TouchableOpacity style={styles.editBtn} onPress={() => abrirEdicion(item)}>
+                <Text style={styles.editBtnText}>✏️</Text>
+              </TouchableOpacity>
             </View>
           )}
           ListEmptyComponent={
@@ -331,8 +490,8 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           contentContainerStyle={{ padding: 14, paddingBottom: 120 }}
         />
       ) : (
+        /* ── Contenido: MOVIMIENTOS ── */
         <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
-          {/* Estadísticas */}
           {totalSalidas > 0 && (
             <View style={styles.statsBox}>
               <Text style={styles.statsTitle}>📊 Estadísticas de uso</Text>
@@ -342,15 +501,12 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                   <View style={[styles.statDot, { backgroundColor: COLORES_RAZON[r.id] }]} />
                   <Text style={styles.statLabel} numberOfLines={2}>{r.label}</Text>
                   <Text style={styles.statCant}>{r.cantidad} pz</Text>
-                  <Text style={styles.statPct}>
-                    {Math.round((r.cantidad / totalSalidas) * 100)}%
-                  </Text>
+                  <Text style={styles.statPct}>{Math.round((r.cantidad / totalSalidas) * 100)}%</Text>
                 </View>
               ))}
             </View>
           )}
 
-          {/* Lista de movimientos */}
           {movimientos.length === 0
             ? (
               <View style={styles.emptyBox}>
@@ -373,20 +529,14 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                       {esEntrada ? '+' : '-'}{m.cantidad} pz
                     </Text>
                   </View>
-
                   <Text style={styles.movNombre}>{m.nombre}</Text>
-
-                  {m.foto ? (
-                    <Image source={{ uri: m.foto }} style={styles.movFoto} resizeMode="cover" />
-                  ) : null}
-
+                  {m.foto ? <Image source={{ uri: m.foto }} style={styles.movFoto} resizeMode="cover" /> : null}
                   {razonObj && (
                     <View style={[styles.razonTag, { backgroundColor: COLORES_RAZON[m.razon] + '22' }]}>
                       <Text style={[styles.razonTagText, { color: COLORES_RAZON[m.razon] }]}>{razonObj.label}</Text>
                     </View>
                   )}
                   {m.motivo ? <Text style={styles.movMotivo}>💬 {m.motivo}</Text> : null}
-
                   <View style={styles.movMeta}>
                     {m.usuario ? (
                       <View style={styles.usuarioBadge}>
@@ -402,13 +552,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
         </ScrollView>
       )}
 
-      {/* FABs */}
-      {!panelAbierto && (
+      {/* ── FABs ── */}
+      {!panelVisible && (
         <View style={styles.fabs}>
-          <TouchableOpacity style={[styles.fab, styles.fabEntrada]} onPress={() => abrirPanel('entrada')}>
+          <TouchableOpacity style={[styles.fab, styles.fabE]} onPress={() => abrirPanel('entrada')}>
             <Text style={styles.fabText}>▲ Entrada</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.fab, styles.fabSalida]} onPress={() => abrirPanel('salida')}>
+          <TouchableOpacity style={[styles.fab, styles.fabS]} onPress={() => abrirPanel('salida')}>
             <Text style={styles.fabText}>▼ Uso</Text>
           </TouchableOpacity>
         </View>
@@ -429,55 +579,71 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   tabTextActive: { color: AZUL },
 
-  // Panel
-  panel: { maxHeight: 460, borderBottomWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
-  panelEntrada: { backgroundColor: '#E8F5E9', borderBottomColor: '#A5D6A7' },
-  panelSalida: { backgroundColor: '#FFF3E0', borderBottomColor: '#FFCC80' },
+  // Panels
+  panel: { maxHeight: 480, borderBottomWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
+  panelE: { backgroundColor: '#E8F5E9', borderBottomColor: '#A5D6A7' },
+  panelS: { backgroundColor: '#FFF3E0', borderBottomColor: '#FFCC80' },
+  panelEdit: { backgroundColor: '#E3F2FD', borderBottomColor: '#90CAF9' },
   panelTitulo: { fontSize: 14, fontWeight: '800', color: '#1a1a2e', marginBottom: 10 },
   panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 10 },
+  panelBtns: { flexDirection: 'row', gap: 10, marginTop: 12, marginBottom: 4 },
 
-  // Picker
-  parteSelBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 1.5, borderColor: '#4CAF50' },
-  parteSelNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', flex: 1 },
-  parteSelX: { fontSize: 12, color: '#888', marginLeft: 10, fontWeight: '600' },
-  pickerDropdown: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginTop: 4, overflow: 'hidden' },
-  pickerItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  pickerNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
-  pickerSub: { fontSize: 11, color: '#888', marginTop: 2 },
-  pickerMas: { fontSize: 12, color: '#888', padding: 10, textAlign: 'center', fontStyle: 'italic' },
-  pickerVacio: { fontSize: 13, color: '#aaa', padding: 14, textAlign: 'center' },
+  // Dropdown
+  dropdown: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginTop: 4, overflow: 'hidden' },
+  dropdownHint: { fontSize: 10, color: '#aaa', fontWeight: '700', letterSpacing: 0.4, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
+  dropdownItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  dropdownNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', flex: 1 },
+  dropdownCant: { fontSize: 13, color: '#888', fontWeight: '600' },
+  dropdownMas: { fontSize: 12, color: '#aaa', padding: 10, textAlign: 'center', fontStyle: 'italic' },
+  dropdownVacio: { fontSize: 13, color: '#aaa', padding: 14, textAlign: 'center' },
 
-  // Foto en panel
-  fotoPreview: { width: '100%', height: 140, borderRadius: 10, backgroundColor: '#e0e0e0' },
-  fotoQuitarBtn: { marginTop: 6, backgroundColor: '#FFEBEE', borderRadius: 8, padding: 8, alignItems: 'center' },
+  // Selección salida
+  selBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 1.5, borderColor: '#4CAF50' },
+  selNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', flex: 1 },
+  selX: { fontSize: 12, color: '#888', marginLeft: 10, fontWeight: '600' },
+
+  // Foto
+  fotoPreview: { width: '100%', height: 130, borderRadius: 10, backgroundColor: '#e0e0e0' },
+  fotoQuitarBtn: { marginTop: 6, backgroundColor: '#FFEBEE', borderRadius: 8, padding: 8, alignItems: 'center', marginBottom: 4 },
   fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 12 },
   fotoBtnsRow: { flexDirection: 'row', gap: 8 },
-  fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 14, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
-  fotoAddIcon: { fontSize: 26 },
-  fotoAddText: { fontSize: 12, color: '#888', fontWeight: '600' },
+  fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
+  fotoAddIcon: { fontSize: 24 },
+  fotoAddText: { fontSize: 11, color: '#888', fontWeight: '600' },
 
   // Razones
   razonesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   razonChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#ddd', backgroundColor: '#fff' },
   razonChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
 
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 10 },
-  panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 6 },
-  panelCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
-  panelCancelarText: { color: '#555', fontWeight: '700' },
-  panelConfirmar: { flex: 2, borderRadius: 10, padding: 12, alignItems: 'center' },
-  panelConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  // Corrección hint
+  correccionHint: { fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 4 },
+
+  // Eliminar ítem
+  btnEliminarItem: { marginTop: 10, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FFCDD2', backgroundColor: '#FFEBEE' },
+  btnEliminarItemText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
+  confirmBox: { marginTop: 10, backgroundColor: '#FFF3E0', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FFCC80' },
+  confirmText: { fontSize: 13, fontWeight: '700', color: '#E65100', marginBottom: 10 },
+
+  // Buttons
+  btnCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
+  btnCancelarText: { color: '#555', fontWeight: '700' },
+  btnConfirmar: { flex: 2, borderRadius: 10, padding: 12, alignItems: 'center' },
+  btnConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
   // Inventario
-  invCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, alignItems: 'center', gap: 12 },
-  invThumb: { width: 52, height: 52, borderRadius: 10 },
-  invThumbPlaceholder: { backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
+  invCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, alignItems: 'center', gap: 10 },
+  invThumb: { width: 50, height: 50, borderRadius: 10 },
+  invThumbPh: { backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
   invNombre: { flex: 1, fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
   cantBadge: { backgroundColor: '#E8F5E9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center', minWidth: 44 },
   cantBadgeRed: { backgroundColor: '#FFEBEE' },
   cantNum: { fontSize: 16, fontWeight: '800', color: '#2e7d32' },
   cantLabel: { fontSize: 9, color: '#888' },
+  editBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
+  editBtnText: { fontSize: 16 },
 
   // Stats
   statsBox: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 14 },
@@ -510,8 +676,8 @@ const styles = StyleSheet.create({
   // FABs
   fabs: { position: 'absolute', bottom: 20, left: 16, right: 16, flexDirection: 'row', gap: 12 },
   fab: { flex: 1, borderRadius: 14, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 4 },
-  fabEntrada: { backgroundColor: '#2E7D32' },
-  fabSalida: { backgroundColor: '#C62828' },
+  fabE: { backgroundColor: '#2E7D32' },
+  fabS: { backgroundColor: '#C62828' },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   // Empty

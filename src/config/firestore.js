@@ -325,6 +325,14 @@ export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil, fot
   });
 };
 
+export const updateCajuelaInventarioItem = async (id, data) => {
+  return updateDoc(doc(db, 'cajuelaInventario', id), data);
+};
+
+export const deleteCajuelaInventarioItem = async (id) => {
+  return deleteDoc(doc(db, 'cajuelaInventario', id));
+};
+
 export const addCajuelaSalida = async (cajuelaId, nombre, cantidad, razon, motivo, perfil) => {
   await _actualizarInventarioCajuela(cajuelaId, nombre, -cantidad);
   await addDoc(collection(db, 'cajuelaMovimientos'), {

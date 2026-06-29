@@ -1,11 +1,12 @@
 // fuente: 'camara' | 'galeria'
-// En móvil 'camara' abre la cámara trasera directamente.
-// En escritorio ambas fuentes abren el explorador de archivos.
+// En móvil 'camara' abre la cámara trasera; en escritorio abre explorador de archivos.
+const esMobil = () => typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export const seleccionarFoto = (onFoto, fuente = 'galeria') => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  if (fuente === 'camara') input.capture = 'environment';
+  if (fuente === 'camara' && esMobil()) input.capture = 'environment';
   input.style.position = 'fixed';
   input.style.opacity = '0';
   input.style.pointerEvents = 'none';
