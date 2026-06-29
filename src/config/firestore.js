@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -260,6 +261,17 @@ export const addFabricante = async (nombre) => {
 
 export const deleteMovimiento = async (id) => {
   return deleteDoc(doc(db, 'movimientos', id));
+};
+
+// --- CAJUELA CONFIG (foto por cajuela) ---
+export const suscribirCajuelaConfig = (cajuelaId, callback) => {
+  return onSnapshot(doc(db, 'cajuelaConfig', cajuelaId), snap => {
+    callback(snap.exists() ? snap.data() : {});
+  });
+};
+
+export const updateCajuelaConfig = async (cajuelaId, data) => {
+  return setDoc(doc(db, 'cajuelaConfig', cajuelaId), data, { merge: true });
 };
 
 // --- CAJUELAS ---

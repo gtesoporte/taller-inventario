@@ -1,28 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { CAJUELAS_LISTA, suscribirCajuelaInventario, suscribirCajuelaMovimientos } from '../config/firestore';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { CAJUELAS_LISTA, suscribirCajuelaInventario, suscribirCajuelaConfig } from '../config/firestore';
 
 function useCajuelaResumen(cajuelaId) {
   const [refacciones, setRefacciones] = useState(0);
   const [piezas, setPiezas] = useState(0);
+  const [foto, setFoto] = useState(null);
   useEffect(() => {
-    const unsub = suscribirCajuelaInventario(cajuelaId, items => {
+    const u1 = suscribirCajuelaInventario(cajuelaId, items => {
       setRefacciones(items.length);
       setPiezas(items.reduce((s, i) => s + (i.cantidad || 0), 0));
     });
-    return unsub;
+    const u2 = suscribirCajuelaConfig(cajuelaId, config => {
+      setFoto(config.foto || null);
+    });
+    return () => { u1(); u2(); };
   }, [cajuelaId]);
-  return { refacciones, piezas };
+  return { refacciones, piezas, foto };
 }
 
 function CajuelaCard({ cajuela, navigation }) {
-  const { refacciones, piezas } = useCajuelaResumen(cajuela.id);
+  const { refacciones, piezas, foto } = useCajuelaResumen(cajuela.id);
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate('DetalleCajuela', { cajuelaId: cajuela.id, nombre: cajuela.nombre })}
     >
-      <View style={styles.cardIcon}><Text style={{ fontSize: 30 }}>🧰</Text></View>
+      <View style={styles.cardIcon}>
+        {foto
+          ? <Image source={{ uri: foto }} style={styles.cajuelaThumb} resizeMode="cover" />
+          : <Text style={{ fontSize: 30 }}>🧰</Text>
+        }
+      </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardNombre}>{cajuela.nombre}</Text>
         <Text style={styles.cardSub}>
@@ -58,7 +67,8 @@ const styles = StyleSheet.create({
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, elevation: 2 },
-  cardIcon: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  cardIcon: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center', marginRight: 14, overflow: 'hidden' },
+  cajuelaThumb: { width: 56, height: 56, borderRadius: 14 },
   cardBody: { flex: 1 },
   cardNombre: { fontSize: 17, fontWeight: '800', color: '#1a1a2e' },
   cardSub: { fontSize: 12, color: '#888', marginTop: 4 },

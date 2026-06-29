@@ -7,6 +7,7 @@ import {
   suscribirCajuelaInventario, suscribirCajuelaMovimientos,
   addCajuelaEntrada, addCajuelaSalida, RAZONES_CAJUELA,
   updateCajuelaInventarioItem, deleteCajuelaInventarioItem,
+  suscribirCajuelaConfig, updateCajuelaConfig,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { seleccionarFoto } from '../utils/fotoHelper';
@@ -48,6 +49,8 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const [tab, setTab] = useState('inventario');
   const [inventario, setInventario] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
+  const [cajuelaFoto, setCajuelaFoto] = useState(null);
+  const [guardandoFoto, setGuardandoFoto] = useState(false);
 
   // ── Panel movimiento ─────────────────────────────────────────
   const [panelAbierto, setPanelAbierto] = useState(false);
@@ -77,7 +80,8 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (!cajuelaId) return;
     const u1 = suscribirCajuelaInventario(cajuelaId, setInventario);
     const u2 = suscribirCajuelaMovimientos(cajuelaId, setMovimientos);
-    return () => { u1(); u2(); };
+    const u3 = suscribirCajuelaConfig(cajuelaId, config => setCajuelaFoto(config.foto || null));
+    return () => { u1(); u2(); u3(); };
   }, [cajuelaId]);
 
   // Sugerencias para entrada (inventario cajuela filtrado por lo que se escribe)
@@ -176,6 +180,17 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     }
   };
 
+  // ── Foto de cajuela ──────────────────────────────────────────
+  const cambiarFotoCajuela = () => {
+    seleccionarFoto(async (fotoBase64) => {
+      setGuardandoFoto(true);
+      try {
+        await updateCajuelaConfig(cajuelaId, { foto: fotoBase64 });
+      } catch {}
+      setGuardandoFoto(false);
+    }, 'galeria');
+  };
+
   // ── Estadísticas ─────────────────────────────────────────────
   const salidas = movimientos.filter(m => m.tipo === 'salida');
   const totalSalidas = salidas.reduce((s, m) => s + (m.cantidad || 0), 0);
@@ -194,7 +209,21 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.volver}>← Cajuelas</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>🧰 {nombre}</Text>
+        <View style={styles.headerTop}>
+          {/* Foto de la cajuela — toca para cambiar */}
+          <TouchableOpacity style={styles.cajuelaFotoBtn} onPress={cambiarFotoCajuela} disabled={guardandoFoto}>
+            {cajuelaFoto
+              ? <Image source={{ uri: cajuelaFoto }} style={styles.cajuelaFotoImg} resizeMode="cover" />
+              : <View style={styles.cajuelaFotoPlaceholder}>
+                  <Text style={{ fontSize: 34 }}>🧰</Text>
+                </View>
+            }
+            <View style={styles.cajuelaFotoCamara}>
+              <Text style={{ fontSize: 13 }}>{guardandoFoto ? '⏳' : '📷'}</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.titulo}>{nombre}</Text>
+        </View>
         <View style={styles.tabs}>
           {['inventario', 'movimientos'].map(t => (
             <TouchableOpacity
@@ -571,8 +600,13 @@ const AZUL = '#0B2447';
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 },
-  titulo: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 14 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 10 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
+  cajuelaFotoBtn: { position: 'relative' },
+  cajuelaFotoImg: { width: 56, height: 56, borderRadius: 14 },
+  cajuelaFotoPlaceholder: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  cajuelaFotoCamara: { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#fff', borderRadius: 10, width: 22, height: 22, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 3 },
+  titulo: { fontSize: 22, fontWeight: '800', color: '#fff', flex: 1 },
   tabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3 },
   tabBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   tabBtnActive: { backgroundColor: '#fff' },
