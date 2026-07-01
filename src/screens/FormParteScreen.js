@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
+import ImagenViewer from '../components/ImagenViewer';
 
 export default function FormParteScreen({ navigation, route }) {
   const { id, parte, ubicacionPreseleccionada } = route?.params || {};
@@ -155,7 +156,9 @@ export default function FormParteScreen({ navigation, route }) {
         <Campo label="FOTOGRAFÍA">
           {foto ? (
             <View>
-              <Image source={{ uri: foto }} style={styles.fotoPreview} resizeMode="cover" />
+              <ImagenViewer uri={foto}>
+                <Image source={{ uri: foto }} style={styles.fotoPreview} resizeMode="cover" />
+              </ImagenViewer>
               <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
                 <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
               </TouchableOpacity>

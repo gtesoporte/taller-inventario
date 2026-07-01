@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import ImagenViewer from '../components/ImagenViewer';
 import { getParte, deleteParte, registrarMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 
@@ -226,7 +227,9 @@ export default function DetalleParteScreen({ route, navigation }) {
         {parte.foto ? (
           <>
             <Text style={styles.seccion}>📷 FOTO DE REFERENCIA</Text>
-            <Image source={{ uri: String(parte.foto) }} style={styles.foto} resizeMode="cover" />
+            <ImagenViewer uri={String(parte.foto)}>
+              <Image source={{ uri: String(parte.foto) }} style={styles.foto} resizeMode="cover" />
+            </ImagenViewer>
           </>
         ) : null}
 

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import ImagenViewer from '../components/ImagenViewer';
 
 const CLASIF_MAP = {
   hueso: { label: '💀 Hueso', color: '#E53935' },
@@ -132,7 +133,9 @@ export default function DetalleEquipoScreen({ navigation, route }) {
 
         {/* Foto */}
         {equipo.foto ? (
-          <Image source={{ uri: equipo.foto }} style={styles.foto} resizeMode="cover" />
+          <ImagenViewer uri={equipo.foto}>
+            <Image source={{ uri: equipo.foto }} style={styles.foto} resizeMode="cover" />
+          </ImagenViewer>
         ) : null}
 
         {/* Detalles */}

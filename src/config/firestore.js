@@ -276,12 +276,14 @@ export const updateCajuelaConfig = async (cajuelaId, data) => {
 
 // --- CAJUELAS ---
 export const CAJUELAS_LISTA = [
-  { id: 'mindray',     nombre: 'MINDRAY' },
-  { id: 'maglumi-x3',  nombre: 'MAGLUMI X3' },
-  { id: 'maglumi-800', nombre: 'MAGLUMI 800' },
-  { id: 'fuji',        nombre: 'FUJI' },
-  { id: 'autoscan',    nombre: 'AUTOSCAN' },
-  { id: 'minividas',   nombre: 'MINIVIDAS' },
+  { id: 'mindray',      nombre: 'CAJUELA MINDRAY BOLSA' },
+  { id: 'mindray-caja', nombre: 'CAJUELA MINDRAY CAJA' },
+  { id: 'maglumi-x3',   nombre: 'MAGLUMI X3' },
+  { id: 'maglumi-800',  nombre: 'MAGLUMI 800' },
+  { id: 'fuji',         nombre: 'CAJUELA FUJI NX500' },
+  { id: 'fuji-nx600',   nombre: 'CAJUELA FUJI NX600' },
+  { id: 'autoscan',     nombre: 'AUTOSCAN' },
+  { id: 'minividas',    nombre: 'MINIVIDAS' },
 ];
 
 export const RAZONES_CAJUELA = [
@@ -352,6 +354,34 @@ export const addCajuelaSalida = async (cajuelaId, nombre, cantidad, razon, motiv
     motivo: motivo?.trim() || null,
     usuario: perfil?.nombre || perfil?.email || 'Sistema',
     creadoEn: new Date().toISOString(),
+  });
+};
+
+// --- CAJUELA RETIROS ---
+export const suscribirCajuelaRetiroActivo = (cajuelaId, callback) => {
+  return onSnapshot(collection(db, 'cajuelaRetiros'), snap => {
+    const activo = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .find(r => r.cajuelaId === cajuelaId && r.estado === 'activo') || null;
+    callback(activo);
+  });
+};
+
+export const addCajuelaRetiro = async (cajuelaId, perfil) => {
+  return addDoc(collection(db, 'cajuelaRetiros'), {
+    cajuelaId,
+    usuarioNombre: perfil?.nombre || perfil?.email || 'Sistema',
+    estado: 'activo',
+    fechaRetiro: new Date().toISOString(),
+    fechaDevolucion: null,
+    piezasUsadas: null,
+  });
+};
+
+export const completarCajuelaRetiro = async (retiroId, piezasUsadas) => {
+  return updateDoc(doc(db, 'cajuelaRetiros', retiroId), {
+    estado: 'devuelto',
+    piezasUsadas,
+    fechaDevolucion: new Date().toISOString(),
   });
 };
 
