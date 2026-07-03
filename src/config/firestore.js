@@ -284,6 +284,7 @@ export const CAJUELAS_LISTA = [
   { id: 'fuji-nx600',   nombre: 'CAJUELA FUJI NX600' },
   { id: 'autoscan',     nombre: 'AUTOSCAN' },
   { id: 'minividas',    nombre: 'MINIVIDAS' },
+  { id: 'micros',       nombre: 'CAJUELA MICROS' },
 ];
 
 export const RAZONES_CAJUELA = [
