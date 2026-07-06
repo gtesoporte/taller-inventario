@@ -4,8 +4,11 @@ import {
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
 import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
+import { useAuth } from '../context/AuthContext';
+import { esAdmin } from '../utils/permisos';
 
 export default function PartesScreen({ navigation }) {
+  const { perfil } = useAuth();
   const [partes, setPartes] = useState([]);
   const [fabricantes, setFabricantes] = useState(['Todos']);
   const [filtro, setFiltro] = useState('');
@@ -70,9 +73,11 @@ export default function PartesScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.nuevaBtn} onPress={() => navigation.navigate('FormParte')}>
-        <Text style={styles.nuevaBtnText}>+ Nueva refacción</Text>
-      </TouchableOpacity>
+      {esAdmin(perfil) && (
+        <TouchableOpacity style={styles.nuevaBtn} onPress={() => navigation.navigate('FormParte')}>
+          <Text style={styles.nuevaBtnText}>+ Nueva refacción</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Buscador */}
       <TextInput

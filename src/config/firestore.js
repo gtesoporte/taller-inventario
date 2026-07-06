@@ -276,15 +276,15 @@ export const updateCajuelaConfig = async (cajuelaId, data) => {
 
 // --- CAJUELAS ---
 export const CAJUELAS_LISTA = [
-  { id: 'mindray',      nombre: 'CAJUELA MINDRAY BOLSA' },
-  { id: 'mindray-caja', nombre: 'CAJUELA MINDRAY CAJA' },
+  { id: 'mindray',      nombre: 'MINDRAY BOLSA' },
+  { id: 'mindray-caja', nombre: 'MINDRAY CAJA' },
   { id: 'maglumi-x3',   nombre: 'MAGLUMI X3' },
   { id: 'maglumi-800',  nombre: 'MAGLUMI 800' },
-  { id: 'fuji',         nombre: 'CAJUELA FUJI NX500' },
-  { id: 'fuji-nx600',   nombre: 'CAJUELA FUJI NX600' },
+  { id: 'fuji',         nombre: 'FUJI NX500' },
+  { id: 'fuji-nx600',   nombre: 'FUJI NX600' },
   { id: 'autoscan',     nombre: 'AUTOSCAN' },
   { id: 'minividas',    nombre: 'MINIVIDAS' },
-  { id: 'micros',       nombre: 'CAJUELA MICROS' },
+  { id: 'micros',       nombre: 'MICROS' },
 ];
 
 export const RAZONES_CAJUELA = [
@@ -313,7 +313,7 @@ export const suscribirCajuelaMovimientos = (cajuelaId, callback) => {
   });
 };
 
-const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta, foto) => {
+const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta, foto, categoria) => {
   const snap = await getDocs(collection(db, 'cajuelaInventario'));
   const item = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     .find(i => i.cajuelaId === cajuelaId && i.nombre === nombre);
@@ -325,13 +325,14 @@ const _actualizarInventarioCajuela = async (cajuelaId, nombre, delta, foto) => {
     await addDoc(collection(db, 'cajuelaInventario'), {
       cajuelaId, nombre, cantidad: delta,
       foto: foto || null,
+      categoria: categoria || null,
       creadoEn: new Date().toISOString(),
     });
   }
 };
 
-export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil, foto) => {
-  await _actualizarInventarioCajuela(cajuelaId, nombre, cantidad, foto);
+export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil, foto, categoria) => {
+  await _actualizarInventarioCajuela(cajuelaId, nombre, cantidad, foto, categoria);
   await addDoc(collection(db, 'cajuelaMovimientos'), {
     cajuelaId, tipo: 'entrada', nombre, cantidad,
     foto: foto || null,
@@ -339,6 +340,16 @@ export const addCajuelaEntrada = async (cajuelaId, nombre, cantidad, perfil, fot
     creadoEn: new Date().toISOString(),
   });
 };
+
+// --- MINIVIDAS: categorías de inventario ---
+export const CATEGORIAS_MINIVIDAS = ['KIT DE TEMPERATURA', 'KIT CLEANER TOOL', 'KIT DE AJUSTES'];
+
+export function categorizarMinividas(nombre) {
+  const n = (nombre || '').toUpperCase();
+  if (n.includes('CLEANER TOOL')) return 'KIT CLEANER TOOL';
+  if (n.includes('TEMPERATURA')) return 'KIT DE TEMPERATURA';
+  return 'KIT DE AJUSTES';
+}
 
 export const updateCajuelaInventarioItem = async (id, data) => {
   return updateDoc(doc(db, 'cajuelaInventario', id), data);
@@ -368,21 +379,37 @@ export const suscribirCajuelaRetiroActivo = (cajuelaId, callback) => {
 };
 
 export const addCajuelaRetiro = async (cajuelaId, perfil) => {
-  return addDoc(collection(db, 'cajuelaRetiros'), {
+  const usuario = perfil?.nombre || perfil?.email || 'Sistema';
+  const ref = await addDoc(collection(db, 'cajuelaRetiros'), {
     cajuelaId,
-    usuarioNombre: perfil?.nombre || perfil?.email || 'Sistema',
+    usuarioNombre: usuario,
     estado: 'activo',
     fechaRetiro: new Date().toISOString(),
     fechaDevolucion: null,
     piezasUsadas: null,
   });
+  await addDoc(collection(db, 'cajuelaMovimientos'), {
+    cajuelaId,
+    tipo: 'retiro',
+    usuario,
+    creadoEn: new Date().toISOString(),
+  });
+  return ref;
 };
 
-export const completarCajuelaRetiro = async (retiroId, piezasUsadas) => {
-  return updateDoc(doc(db, 'cajuelaRetiros', retiroId), {
+export const completarCajuelaRetiro = async (retiroId, cajuelaId, piezasUsadas, perfil) => {
+  const usuario = perfil?.nombre || perfil?.email || 'Sistema';
+  await updateDoc(doc(db, 'cajuelaRetiros', retiroId), {
     estado: 'devuelto',
     piezasUsadas,
     fechaDevolucion: new Date().toISOString(),
+  });
+  await addDoc(collection(db, 'cajuelaMovimientos'), {
+    cajuelaId,
+    tipo: 'devolucion',
+    usuario,
+    piezasUsadas,
+    creadoEn: new Date().toISOString(),
   });
 };
 

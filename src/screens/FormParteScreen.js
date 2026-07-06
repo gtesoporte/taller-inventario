@@ -6,8 +6,11 @@ import {
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import ImagenViewer from '../components/ImagenViewer';
+import { useAuth } from '../context/AuthContext';
+import { esAdmin } from '../utils/permisos';
 
 export default function FormParteScreen({ navigation, route }) {
+  const { perfil } = useAuth();
   const { id, parte, ubicacionPreseleccionada } = route?.params || {};
   const esEdicion = !!id && !!parte;
 
@@ -62,6 +65,24 @@ export default function FormParteScreen({ navigation, route }) {
 
   const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean);
   const chipUbicActivo = ubicacionesNombres.includes(ubicacion);
+
+  if (!esAdmin(perfil)) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.volver}>← Volver</Text>
+          </TouchableOpacity>
+          <Text style={styles.titulo}>Acceso restringido</Text>
+        </View>
+        <View style={{ padding: 20 }}>
+          <Text style={{ color: '#666', fontSize: 14 }}>
+            Solo los administradores pueden crear o editar refacciones.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

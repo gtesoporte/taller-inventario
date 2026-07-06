@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, ScrollView, Image,
+  TextInput, ActivityIndicator, ScrollView, Image, Alert,
 } from 'react-native';
 import {
   suscribirCajuelaInventario, suscribirCajuelaMovimientos,
@@ -9,6 +9,7 @@ import {
   updateCajuelaInventarioItem, deleteCajuelaInventarioItem,
   suscribirCajuelaConfig, updateCajuelaConfig,
   suscribirCajuelaRetiroActivo, addCajuelaRetiro, completarCajuelaRetiro,
+  CATEGORIAS_MINIVIDAS, categorizarMinividas,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { seleccionarFoto } from '../utils/fotoHelper';
@@ -39,6 +40,27 @@ const COLORES_RAZON = {
   otros: '#546E7A',
 };
 
+function InvCard({ item, onEdit }) {
+  return (
+    <View style={styles.invCard}>
+      <ImagenViewer uri={item.foto || null}>
+        {item.foto
+          ? <Image source={{ uri: item.foto }} style={styles.invThumb} resizeMode="cover" />
+          : <View style={[styles.invThumb, styles.invThumbPh]}><Text style={{ fontSize: 22 }}>🔩</Text></View>
+        }
+      </ImagenViewer>
+      <Text style={styles.invNombre} numberOfLines={2}>{item.nombre}</Text>
+      <View style={[styles.cantBadge, (item.cantidad || 0) <= 0 && styles.cantBadgeRed]}>
+        <Text style={[styles.cantNum, (item.cantidad || 0) <= 0 && { color: '#C62828' }]}>{item.cantidad || 0}</Text>
+        <Text style={styles.cantLabel}>pz</Text>
+      </View>
+      <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(item)}>
+        <Text style={styles.editBtnText}>✏️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 function FotoButtons({ onFoto }) {
   return (
     <View style={styles.fotoBtnsRow}>
@@ -57,6 +79,7 @@ function FotoButtons({ onFoto }) {
 export default function DetalleCajuelaScreen({ navigation, route }) {
   const { cajuelaId, nombre } = route?.params || {};
   const { perfil } = useAuth();
+  const esMinividas = cajuelaId === 'minividas';
 
   const [tab, setTab] = useState('inventario');
   const [inventario, setInventario] = useState([]);
@@ -75,6 +98,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const [panelRazon, setPanelRazon] = useState('');
   const [panelMotivo, setPanelMotivo] = useState('');
   const [panelFoto, setPanelFoto] = useState('');
+  const [panelCategoria, setPanelCategoria] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [panelError, setPanelError] = useState('');
 
@@ -83,6 +107,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const [editNombre, setEditNombre] = useState('');
   const [editCantidad, setEditCantidad] = useState('');
   const [editFoto, setEditFoto] = useState('');
+  const [editCategoria, setEditCategoria] = useState('');
   const [editGuardando, setEditGuardando] = useState(false);
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -104,6 +129,15 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     return () => { u1(); u2(); u3(); u4(); };
   }, [cajuelaId]);
 
+  // ── Migración: asignar categoría a ítems existentes de MINIVIDAS sin categoría ──
+  useEffect(() => {
+    if (!esMinividas) return;
+    const sinCategoria = inventario.filter(i => !i.categoria);
+    sinCategoria.forEach(i => {
+      updateCajuelaInventarioItem(i.id, { categoria: categorizarMinividas(i.nombre) }).catch(() => {});
+    });
+  }, [esMinividas, inventario]);
+
   // ── Foto cajuela ─────────────────────────────────────────────
   const cambiarFotoCajuela = () => {
     seleccionarFoto(async (b64) => {
@@ -122,11 +156,22 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   );
 
   // ── Handlers movimiento ───────────────────────────────────────
+  const intentarAbrirUso = () => {
+    if (!retiroActivo) {
+      Alert.alert(
+        'Cajuela no retirada',
+        'Primero debes dar salida a la cajuela ("📤 Dar salida a toda la cajuela") antes de registrar el uso de piezas.'
+      );
+      return;
+    }
+    abrirPanel('salida');
+  };
+
   const abrirPanel = (tipo) => {
     setEditItem(null); setRetiroPanel(null);
     setPanelTipo(tipo); setPanelBusqueda(''); setPanelNombre('');
     setSugsVisible(false); setPanelCantidad('1');
-    setPanelRazon(''); setPanelMotivo(''); setPanelFoto(''); setPanelError('');
+    setPanelRazon(''); setPanelMotivo(''); setPanelFoto(''); setPanelCategoria(''); setPanelError('');
     setPanelAbierto(true);
   };
 
@@ -137,9 +182,10 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (!cant || cant <= 0) { setPanelError('La cantidad debe ser mayor a 0.'); return; }
     if (panelTipo === 'salida' && !panelRazon) { setPanelError('Selecciona la razón de uso.'); return; }
     if (panelTipo === 'salida' && panelRazon === 'otros' && !panelMotivo.trim()) { setPanelError('Escribe el motivo específico.'); return; }
+    if (esMinividas && panelTipo === 'entrada' && !panelCategoria) { setPanelError('Selecciona la categoría.'); return; }
     setGuardando(true);
     try {
-      if (panelTipo === 'entrada') await addCajuelaEntrada(cajuelaId, nom, cant, perfil, panelFoto);
+      if (panelTipo === 'entrada') await addCajuelaEntrada(cajuelaId, nom, cant, perfil, panelFoto, esMinividas ? panelCategoria : undefined);
       else await addCajuelaSalida(cajuelaId, nom, cant, panelRazon, panelMotivo, perfil);
       setPanelAbierto(false);
     } catch { setPanelError('Error al guardar. Intenta de nuevo.'); }
@@ -152,6 +198,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     setEditItem(item); setEditNombre(item.nombre);
     setEditCantidad(String(item.cantidad ?? 0));
     setEditFoto(item.foto || ''); setEditError(''); setConfirmDelete(false);
+    setEditCategoria(item.categoria || (esMinividas ? categorizarMinividas(item.nombre) : ''));
   };
 
   const guardarEdicion = async () => {
@@ -161,7 +208,10 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (isNaN(cant) || cant < 0) { setEditError('Cantidad inválida.'); return; }
     setEditGuardando(true);
     try {
-      await updateCajuelaInventarioItem(editItem.id, { nombre: nom, cantidad: cant, foto: editFoto || null });
+      await updateCajuelaInventarioItem(editItem.id, {
+        nombre: nom, cantidad: cant, foto: editFoto || null,
+        ...(esMinividas ? { categoria: editCategoria } : {}),
+      });
       setEditItem(null);
     } catch { setEditError('Error al guardar.'); }
     setEditGuardando(false);
@@ -187,7 +237,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (!retiroActivo) return;
     setProcesandoRetiro(true); setRetiroError('');
     try {
-      await completarCajuelaRetiro(retiroActivo.id, false);
+      await completarCajuelaRetiro(retiroActivo.id, cajuelaId, false, perfil);
       setRetiroPanel(null);
     } catch { setRetiroError('Error al registrar. Intenta de nuevo.'); }
     setProcesandoRetiro(false);
@@ -197,7 +247,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
     if (!retiroActivo) return;
     setProcesandoRetiro(true); setRetiroError('');
     try {
-      await completarCajuelaRetiro(retiroActivo.id, true);
+      await completarCajuelaRetiro(retiroActivo.id, cajuelaId, true, perfil);
       setRetiroPanel(null);
       setTab('movimientos');
       setTimeout(() => abrirPanel('salida'), 80);
@@ -312,6 +362,21 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             onChangeText={setPanelCantidad} keyboardType="numeric" selectTextOnFocus
             onFocus={() => setSugsVisible(false)} />
 
+          {esMinividas && panelTipo === 'entrada' && (
+            <>
+              <Text style={[styles.panelLabel, { marginTop: 14 }]}>CATEGORÍA *</Text>
+              <View style={styles.razonesWrap}>
+                {CATEGORIAS_MINIVIDAS.map(cat => (
+                  <TouchableOpacity key={cat}
+                    style={[styles.razonChip, panelCategoria === cat && styles.razonChipActiveAzul]}
+                    onPress={() => { setPanelCategoria(cat); setPanelError(''); }}>
+                    <Text style={[styles.razonChipText, panelCategoria === cat && { color: '#fff' }]}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
           {panelTipo === 'entrada' && (
             <>
               <Text style={[styles.panelLabel, { marginTop: 14 }]}>FOTOGRAFÍA (OPCIONAL)</Text>
@@ -377,6 +442,20 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           <TextInput style={[styles.panelInput, { width: 90 }]} value={editCantidad}
             onChangeText={setEditCantidad} keyboardType="numeric" selectTextOnFocus />
           <Text style={styles.correccionHint}>Establece la cantidad real actual (sin crear movimiento).</Text>
+          {esMinividas && (
+            <>
+              <Text style={[styles.panelLabel, { marginTop: 14 }]}>CATEGORÍA</Text>
+              <View style={styles.razonesWrap}>
+                {CATEGORIAS_MINIVIDAS.map(cat => (
+                  <TouchableOpacity key={cat}
+                    style={[styles.razonChip, editCategoria === cat && styles.razonChipActiveAzul]}
+                    onPress={() => setEditCategoria(cat)}>
+                    <Text style={[styles.razonChipText, editCategoria === cat && { color: '#fff' }]}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
           <Text style={[styles.panelLabel, { marginTop: 14 }]}>FOTOGRAFÍA</Text>
           {editFoto ? (
             <>
@@ -527,36 +606,43 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
 
           {/* Inventario */}
           {tab === 'inventario' ? (
-            <FlatList
-              data={inventario}
-              keyExtractor={i => i.id}
-              renderItem={({ item }) => (
-                <View style={styles.invCard}>
-                  <ImagenViewer uri={item.foto || null}>
-                    {item.foto
-                      ? <Image source={{ uri: item.foto }} style={styles.invThumb} resizeMode="cover" />
-                      : <View style={[styles.invThumb, styles.invThumbPh]}><Text style={{ fontSize: 22 }}>🔩</Text></View>
-                    }
-                  </ImagenViewer>
-                  <Text style={styles.invNombre} numberOfLines={2}>{item.nombre}</Text>
-                  <View style={[styles.cantBadge, (item.cantidad || 0) <= 0 && styles.cantBadgeRed]}>
-                    <Text style={[styles.cantNum, (item.cantidad || 0) <= 0 && { color: '#C62828' }]}>{item.cantidad || 0}</Text>
-                    <Text style={styles.cantLabel}>pz</Text>
+            esMinividas ? (
+              <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
+                {inventario.length === 0 ? (
+                  <View style={styles.emptyBox}>
+                    <Text style={styles.emptyIcon}>📦</Text>
+                    <Text style={styles.emptyText}>Sin refacciones en inventario.</Text>
+                    <Text style={styles.emptyHint}>Usa "▲ Entrada" para agregar refacciones.</Text>
                   </View>
-                  <TouchableOpacity style={styles.editBtn} onPress={() => abrirEdicion(item)}>
-                    <Text style={styles.editBtnText}>✏️</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              ListEmptyComponent={
-                <View style={styles.emptyBox}>
-                  <Text style={styles.emptyIcon}>📦</Text>
-                  <Text style={styles.emptyText}>Sin refacciones en inventario.</Text>
-                  <Text style={styles.emptyHint}>Usa "▲ Entrada" para agregar refacciones.</Text>
-                </View>
-              }
-              contentContainerStyle={{ padding: 14, paddingBottom: 120 }}
-            />
+                ) : CATEGORIAS_MINIVIDAS.map(cat => {
+                  const items = inventario.filter(i => (i.categoria || categorizarMinividas(i.nombre)) === cat);
+                  if (items.length === 0) return null;
+                  return (
+                    <View key={cat}>
+                      <View style={styles.grupoHeaderCajuela}>
+                        <Text style={styles.grupoNombreCajuela}>{cat}</Text>
+                        <View style={styles.grupoBadge}><Text style={styles.grupoBadgeText}>{items.length}</Text></View>
+                      </View>
+                      {items.map(item => <InvCard key={item.id} item={item} onEdit={abrirEdicion} />)}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={inventario}
+                keyExtractor={i => i.id}
+                renderItem={({ item }) => <InvCard item={item} onEdit={abrirEdicion} />}
+                ListEmptyComponent={
+                  <View style={styles.emptyBox}>
+                    <Text style={styles.emptyIcon}>📦</Text>
+                    <Text style={styles.emptyText}>Sin refacciones en inventario.</Text>
+                    <Text style={styles.emptyHint}>Usa "▲ Entrada" para agregar refacciones.</Text>
+                  </View>
+                }
+                contentContainerStyle={{ padding: 14, paddingBottom: 120 }}
+              />
+            )
           ) : (
             /* Movimientos */
             <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
@@ -580,6 +666,29 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                     <Text style={styles.emptyText}>Sin movimientos registrados.</Text>
                   </View>
                 : movimientos.map(m => {
+                  if (m.tipo === 'retiro' || m.tipo === 'devolucion') {
+                    const esRetiro = m.tipo === 'retiro';
+                    return (
+                      <View key={m.id} style={[styles.movCard, { borderLeftColor: esRetiro ? '#E65100' : '#1565C0' }]}>
+                        <View style={styles.movTop}>
+                          <View style={[styles.tipoBadge, { backgroundColor: esRetiro ? '#FFF3E0' : '#E3F2FD' }]}>
+                            <Text style={[styles.tipoText, { color: esRetiro ? '#E65100' : '#1565C0' }]}>
+                              {esRetiro ? '📤 RETIRO DE CAJUELA' : '📥 DEVOLUCIÓN DE CAJUELA'}
+                            </Text>
+                          </View>
+                        </View>
+                        {!esRetiro && (
+                          <Text style={styles.movNombre}>
+                            {m.piezasUsadas ? 'Se usaron piezas de la cajuela' : 'Sin piezas usadas'}
+                          </Text>
+                        )}
+                        <View style={styles.movMeta}>
+                          {m.usuario ? <View style={styles.usuarioBadge}><Text style={styles.usuarioText}>👤 {m.usuario}</Text></View> : null}
+                          <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
+                        </View>
+                      </View>
+                    );
+                  }
                   const esEntrada = m.tipo === 'entrada';
                   const razonObj = RAZONES_CAJUELA.find(r => r.id === m.razon);
                   return (
@@ -622,7 +731,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             <TouchableOpacity style={[styles.fab, styles.fabE]} onPress={() => abrirPanel('entrada')}>
               <Text style={styles.fabText}>▲ Entrada</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.fab, styles.fabS]} onPress={() => abrirPanel('salida')}>
+            <TouchableOpacity style={[styles.fab, styles.fabS, !retiroActivo && styles.fabDisabled]} onPress={intentarAbrirUso}>
               <Text style={styles.fabText}>▼ Uso</Text>
             </TouchableOpacity>
           </View>
@@ -723,6 +832,7 @@ const styles = StyleSheet.create({
   // Razones
   razonesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   razonChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#ddd', backgroundColor: '#fff' },
+  razonChipActiveAzul: { backgroundColor: '#1565C0', borderColor: '#1565C0' },
   razonChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
   correccionHint: { fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 4 },
 
@@ -735,6 +845,12 @@ const styles = StyleSheet.create({
   btnEliminarItemText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
   confirmBox: { marginTop: 10, backgroundColor: '#FFF3E0', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FFCC80' },
   confirmText: { fontSize: 13, fontWeight: '700', color: '#E65100', marginBottom: 10 },
+
+  // Grupos por categoría (MINIVIDAS)
+  grupoHeaderCajuela: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, marginTop: 4 },
+  grupoNombreCajuela: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
+  grupoBadge: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
+  grupoBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 
   // Inventario
   invCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, alignItems: 'center', gap: 10 },
@@ -781,6 +897,7 @@ const styles = StyleSheet.create({
   fab: { flex: 1, borderRadius: 14, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 4 },
   fabE: { backgroundColor: '#2E7D32' },
   fabS: { backgroundColor: '#C62828' },
+  fabDisabled: { backgroundColor: '#BDBDBD' },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   // Empty

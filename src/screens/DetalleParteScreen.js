@@ -6,6 +6,7 @@ import {
 import ImagenViewer from '../components/ImagenViewer';
 import { getParte, deleteParte, registrarMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import { esAdmin } from '../utils/permisos';
 
 function InfoRow({ label, value }) {
   if (value === null || value === undefined || value === '') return null;
@@ -119,6 +120,7 @@ export default function DetalleParteScreen({ route, navigation }) {
   const existencia = existenciaLocal ?? getExistencia(parte).valor;
   const esEntradaActiva = movOp === 'entrada';
   const esSalidaActiva = movOp === 'salida';
+  const puedeEditar = esAdmin(perfil);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -129,10 +131,12 @@ export default function DetalleParteScreen({ route, navigation }) {
             <Text style={styles.volver}>← Volver</Text>
           </TouchableOpacity>
           <View style={styles.headerBtns}>
-            <TouchableOpacity style={styles.editarBtn} onPress={() => navigation.navigate('FormParte', { id, parte })}>
-              <Text style={styles.editarText}>✏️ Editar</Text>
-            </TouchableOpacity>
-            {confirmEliminar ? (
+            {puedeEditar && (
+              <TouchableOpacity style={styles.editarBtn} onPress={() => navigation.navigate('FormParte', { id, parte })}>
+                <Text style={styles.editarText}>✏️ Editar</Text>
+              </TouchableOpacity>
+            )}
+            {puedeEditar && (confirmEliminar ? (
               <View style={styles.eliminarConfirm}>
                 <TouchableOpacity style={styles.eliminarSiBtn} onPress={handleEliminar} disabled={eliminando}>
                   {eliminando
@@ -148,7 +152,7 @@ export default function DetalleParteScreen({ route, navigation }) {
               <TouchableOpacity style={styles.eliminarBtn} onPress={() => setConfirmEliminar(true)}>
                 <Text style={{ fontSize: 18 }}>🗑️</Text>
               </TouchableOpacity>
-            )}
+            ))}
           </View>
         </View>
 
