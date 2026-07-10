@@ -1,3 +1,3 @@
-export const ROLES_ADMIN = ['Administrador', 'Superadministrador'];
-
-export const esAdmin = (perfil) => ROLES_ADMIN.includes(perfil?.rol);
+// Comparación case-insensitive: los roles en Firestore no siempre respetan
+// mayúsculas/minúsculas de forma consistente.
+export const esAdmin = (perfil) => (perfil?.rol || '').toLowerCase().includes('admin');

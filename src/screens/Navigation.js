@@ -23,6 +23,9 @@ import FormEquipoScreen from './FormEquipoScreen';
 import DetalleEquipoScreen from './DetalleEquipoScreen';
 import CajuelasScreen from './CajuelasScreen';
 import DetalleCajuelaScreen from './DetalleCajuelaScreen';
+import GaleriaScreen from './GaleriaScreen';
+import DetalleCategoriaGaleriaScreen from './DetalleCategoriaGaleriaScreen';
+import DetalleSubcategoriaGaleriaScreen from './DetalleSubcategoriaGaleriaScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -78,6 +81,16 @@ function CajuelasStack() {
   );
 }
 
+function GaleriaStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GaleriaLista" component={GaleriaScreen} />
+      <Stack.Screen name="DetalleCategoriaGaleria" component={DetalleCategoriaGaleriaScreen} />
+      <Stack.Screen name="DetalleSubcategoriaGaleria" component={DetalleSubcategoriaGaleriaScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function ConfigStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -109,6 +122,11 @@ function MainTabs() {
         name="Cajuelas"
         component={CajuelasStack}
         options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🧰</Text> }}
+      />
+      <Tab.Screen
+        name="Galería"
+        component={GaleriaStack}
+        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🖼️</Text> }}
       />
       <Tab.Screen
         name="Config"

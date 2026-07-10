@@ -477,3 +477,80 @@ export const getUsuario = async (uid) => {
 export const updateUsuario = async (uid, data) => {
   return updateDoc(doc(db, 'usuarios', uid), data);
 };
+
+// --- GALERÍA: CATEGORÍAS ---
+export const suscribirGaleriaCategorias = (callback) => {
+  return onSnapshot(collection(db, 'galeriaCategorias'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    callback(data);
+  });
+};
+
+export const addGaleriaCategoria = async (nombre, perfil) => {
+  return addDoc(collection(db, 'galeriaCategorias'), {
+    nombre: nombre.trim(),
+    creadoPor: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
+export const deleteGaleriaCategoria = async (id) => {
+  const subSnap = await getDocs(query(collection(db, 'galeriaSubcategorias'), where('categoriaId', '==', id)));
+  for (const subDoc of subSnap.docs) {
+    await deleteGaleriaSubcategoria(subDoc.id);
+  }
+  await deleteDoc(doc(db, 'galeriaCategorias', id));
+};
+
+// --- GALERÍA: SUBCATEGORÍAS ---
+export const suscribirGaleriaSubcategorias = (categoriaId, callback) => {
+  return onSnapshot(collection(db, 'galeriaSubcategorias'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(s => s.categoriaId === categoriaId);
+    data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    callback(data);
+  });
+};
+
+export const addGaleriaSubcategoria = async (categoriaId, nombre, perfil) => {
+  return addDoc(collection(db, 'galeriaSubcategorias'), {
+    categoriaId,
+    nombre: nombre.trim(),
+    creadoPor: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
+export const deleteGaleriaSubcategoria = async (id) => {
+  const imgSnap = await getDocs(query(collection(db, 'galeriaImagenes'), where('subcategoriaId', '==', id)));
+  for (const imgDoc of imgSnap.docs) {
+    await deleteDoc(doc(db, 'galeriaImagenes', imgDoc.id));
+  }
+  await deleteDoc(doc(db, 'galeriaSubcategorias', id));
+};
+
+// --- GALERÍA: IMÁGENES ---
+export const suscribirGaleriaImagenes = (subcategoriaId, callback) => {
+  return onSnapshot(collection(db, 'galeriaImagenes'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(i => i.subcategoriaId === subcategoriaId);
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
+    callback(data);
+  });
+};
+
+export const addGaleriaImagen = async (subcategoriaId, foto, nota, perfil) => {
+  return addDoc(collection(db, 'galeriaImagenes'), {
+    subcategoriaId,
+    foto,
+    nota: nota?.trim() || null,
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
+export const deleteGaleriaImagen = async (id) => {
+  return deleteDoc(doc(db, 'galeriaImagenes', id));
+};
