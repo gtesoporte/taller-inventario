@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator, Alert, Image,
 } from 'react-native';
-import { suscribirGaleriaCategorias, addGaleriaCategoria, deleteGaleriaCategoria } from '../config/firestore';
+import { suscribirGaleriaCategorias, addGaleriaCategoria, updateGaleriaCategoria, deleteGaleriaCategoria } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
+import { seleccionarFoto } from '../utils/fotoHelper';
 
 export default function GaleriaScreen({ navigation }) {
   const { perfil } = useAuth();
@@ -15,21 +16,23 @@ export default function GaleriaScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [panelAbierto, setPanelAbierto] = useState(false);
   const [nombre, setNombre] = useState('');
+  const [foto, setFoto] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [cambiandoFotoId, setCambiandoFotoId] = useState(null);
 
   useEffect(() => {
     const unsub = suscribirGaleriaCategorias(data => { setCategorias(data); setLoading(false); });
     return unsub;
   }, []);
 
-  const abrirNueva = () => { setNombre(''); setError(''); setPanelAbierto(true); };
+  const abrirNueva = () => { setNombre(''); setFoto(''); setError(''); setPanelAbierto(true); };
 
   const confirmarNueva = async () => {
     if (!nombre.trim()) { setError('El nombre es obligatorio.'); return; }
     setGuardando(true);
     try {
-      await addGaleriaCategoria(nombre, perfil);
+      await addGaleriaCategoria(nombre, perfil, foto);
       setPanelAbierto(false);
     } catch { setError('Error al guardar. Intenta de nuevo.'); }
     setGuardando(false);
@@ -44,6 +47,14 @@ export default function GaleriaScreen({ navigation }) {
         { text: 'Eliminar', style: 'destructive', onPress: () => deleteGaleriaCategoria(categoria.id).catch(() => {}) },
       ]
     );
+  };
+
+  const cambiarIcono = (categoria) => {
+    seleccionarFoto(async (b64) => {
+      setCambiandoFotoId(categoria.id);
+      try { await updateGaleriaCategoria(categoria.id, { foto: b64 }); } catch {}
+      setCambiandoFotoId(null);
+    }, 'galeria');
   };
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
@@ -72,6 +83,28 @@ export default function GaleriaScreen({ navigation }) {
             placeholderTextColor="#bbb"
             autoFocus
           />
+
+          <Text style={[styles.panelLabel, { marginTop: 14 }]}>ÍCONO (OPCIONAL)</Text>
+          {foto ? (
+            <View style={styles.iconoPreviewRow}>
+              <Image source={{ uri: foto }} style={styles.iconoPreview} resizeMode="cover" />
+              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
+                <Text style={styles.fotoQuitarText}>🗑️ Quitar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.fotoBtnsRow}>
+              <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'camara')}>
+                <Text style={styles.fotoAddIcon}>📷</Text>
+                <Text style={styles.fotoAddText}>Cámara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'galeria')}>
+                <Text style={styles.fotoAddIcon}>🖼️</Text>
+                <Text style={styles.fotoAddText}>Galería / PC</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {!!error && <Text style={styles.panelError}>⚠️ {error}</Text>}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
@@ -92,7 +125,22 @@ export default function GaleriaScreen({ navigation }) {
             style={styles.card}
             onPress={() => navigation.navigate('DetalleCategoriaGaleria', { categoriaId: item.id, nombre: item.nombre })}
           >
-            <View style={styles.cardIcon}><Text style={{ fontSize: 26 }}>📁</Text></View>
+            <TouchableOpacity
+              style={styles.cardIcon}
+              onPress={puedeAdministrar ? () => cambiarIcono(item) : undefined}
+              disabled={!puedeAdministrar}
+            >
+              {cambiandoFotoId === item.id ? (
+                <ActivityIndicator size="small" color="#1565C0" />
+              ) : item.foto ? (
+                <Image source={{ uri: item.foto }} style={styles.cardIconImg} resizeMode="cover" />
+              ) : (
+                <Text style={{ fontSize: 26 }}>📁</Text>
+              )}
+              {puedeAdministrar && (
+                <View style={styles.cardIconCam}><Text style={{ fontSize: 10 }}>📷</Text></View>
+              )}
+            </TouchableOpacity>
             <View style={styles.cardBody}>
               <Text style={styles.cardNombre}>{item.nombre}</Text>
             </View>
@@ -136,7 +184,17 @@ const styles = StyleSheet.create({
   btnConfirmar: { flex: 2, backgroundColor: '#1976D2', borderRadius: 10, padding: 12, alignItems: 'center' },
   btnConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, elevation: 2 },
-  cardIcon: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  cardIcon: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center', marginRight: 14, position: 'relative', overflow: 'visible' },
+  cardIconImg: { width: 48, height: 48, borderRadius: 12 },
+  cardIconCam: { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#fff', borderRadius: 8, width: 18, height: 18, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 3 },
+  iconoPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconoPreview: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#e0e0e0' },
+  fotoQuitarBtn: { backgroundColor: '#FFEBEE', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 12 },
+  fotoBtnsRow: { flexDirection: 'row', gap: 8 },
+  fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
+  fotoAddIcon: { fontSize: 24 },
+  fotoAddText: { fontSize: 11, color: '#888', fontWeight: '600' },
   cardBody: { flex: 1 },
   cardNombre: { fontSize: 16, fontWeight: '800', color: '#1a1a2e' },
   cardArrow: { fontSize: 24, color: '#ccc', marginLeft: 8 },

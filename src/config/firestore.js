@@ -487,12 +487,17 @@ export const suscribirGaleriaCategorias = (callback) => {
   });
 };
 
-export const addGaleriaCategoria = async (nombre, perfil) => {
+export const addGaleriaCategoria = async (nombre, perfil, foto) => {
   return addDoc(collection(db, 'galeriaCategorias'), {
     nombre: nombre.trim(),
+    foto: foto || null,
     creadoPor: perfil?.nombre || perfil?.email || 'Sistema',
     creadoEn: new Date().toISOString(),
   });
+};
+
+export const updateGaleriaCategoria = async (id, data) => {
+  return updateDoc(doc(db, 'galeriaCategorias', id), data);
 };
 
 export const deleteGaleriaCategoria = async (id) => {
