@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, TextInput,
+  View, ScrollView, TouchableOpacity, StyleSheet,
+  ActivityIndicator, Alert,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import {
   getAcondicionamiento, updateAcondicionamiento,
   getProgreso, addProgreso,
@@ -43,10 +45,10 @@ export default function DetalleAcondScreen({ route, navigation }) {
   }, [id]);
 
   const marcarCompletado = async () => {
-    Alert.alert('Marcar completado', '¿Confirmas que este acondicionamiento está terminado?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert('MARCAR COMPLETADO', '¿CONFIRMAS QUE ESTE ACONDICIONAMIENTO ESTÁ TERMINADO?', [
+      { text: 'CANCELAR', style: 'cancel' },
       {
-        text: 'Completar', onPress: async () => {
+        text: 'COMPLETAR', onPress: async () => {
           await updateAcondicionamiento(id, { estado: 'completado' });
           setItem(prev => ({ ...prev, estado: 'completado' }));
         }

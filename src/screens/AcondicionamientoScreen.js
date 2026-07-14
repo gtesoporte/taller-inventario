@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { suscribirAcondicionamientos } from '../config/firestore';
 
 const FILTROS = ['Todos', 'Pendientes', 'En progreso', 'Completados'];

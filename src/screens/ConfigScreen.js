@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Text from '../components/UpperText';
 import { useAuth } from '../context/AuthContext';
 
 export default function ConfigScreen({ navigation }) {

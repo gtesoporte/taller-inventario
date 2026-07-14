@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, FlatList,
+  View, TouchableOpacity, StyleSheet, FlatList,
   ActivityIndicator, Modal, Alert, Platform,
 } from 'react-native';
+import Text from '../components/UpperText';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -45,11 +46,11 @@ export default function EscanearQRScreen({ navigation, route }) {
           },
           () => {}
         ).catch(() => {
-          Alert.alert('Error', 'No se pudo acceder a la cámara. Verifica los permisos.');
+          Alert.alert('ERROR', 'NO SE PUDO ACCEDER A LA CÁMARA. VERIFICA LOS PERMISOS.');
           setEscaneando(false);
         });
       } catch (e) {
-        Alert.alert('Error', 'Escáner QR no disponible.');
+        Alert.alert('ERROR', 'ESCÁNER QR NO DISPONIBLE.');
         setEscaneando(false);
       }
     }, 300);

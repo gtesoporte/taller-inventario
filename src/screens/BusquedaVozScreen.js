@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import Text from '../components/UpperText';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 

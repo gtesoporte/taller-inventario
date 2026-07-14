@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import Text from '../components/UpperText';
 import { CAJUELAS_LISTA, suscribirCajuelaInventario, suscribirCajuelaConfig } from '../config/firestore';
 
 function useCajuelaResumen(cajuelaId) {

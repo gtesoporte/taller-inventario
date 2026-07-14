@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Image, TextInput,
+  View, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, Image,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import ImagenViewer from '../components/ImagenViewer';

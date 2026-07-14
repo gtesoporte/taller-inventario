@@ -36,7 +36,7 @@ const TAB_OPTS = {
   tabBarStyle: { backgroundColor: AZUL, borderTopColor: 'rgba(255,255,255,0.1)', height: 62, paddingBottom: 8 },
   tabBarActiveTintColor: '#60A5FA',
   tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
-  tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+  tabBarLabelStyle: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
 };
 
 function PartesStack() {

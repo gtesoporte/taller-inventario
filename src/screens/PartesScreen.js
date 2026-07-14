@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity,
+  View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';

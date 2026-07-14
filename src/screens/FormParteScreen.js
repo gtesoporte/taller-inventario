@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import ImagenViewer from '../components/ImagenViewer';

@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity,
+  View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Platform,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getUbicaciones, addUbicacion, deleteUbicacion } from '../config/firestore';
@@ -107,8 +109,8 @@ export default function UbicacionesScreen({ navigation }) {
         break-inside:avoid;page-break-inside:avoid
       }
       .qr-card img{width:5cm;height:5cm;display:block;margin:0 auto}
-      .label{font-size:10pt;font-weight:bold;color:#0B2447;margin-top:3mm;word-break:break-word}
-      .sub{font-size:7pt;color:#888;margin-top:2mm}
+      .label{font-size:10pt;font-weight:bold;color:#0B2447;margin-top:3mm;word-break:break-word;text-transform:uppercase}
+      .sub{font-size:7pt;color:#888;margin-top:2mm;text-transform:uppercase}
       @media print{body{padding:4mm}.qr-card{border-color:#999}}
     </style></head><body>
     <div class="grid">${cards}</div>

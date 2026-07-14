@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, Alert, Image,
+  View, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, Alert, Image,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { suscribirGaleriaCategorias, addGaleriaCategoria, updateGaleriaCategoria, deleteGaleriaCategoria } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
@@ -40,11 +42,11 @@ export default function GaleriaScreen({ navigation }) {
 
   const confirmarEliminar = (categoria) => {
     Alert.alert(
-      'Eliminar categoría',
-      `¿Eliminar "${categoria.nombre}"? Se eliminarán también sus subcategorías e imágenes.`,
+      'ELIMINAR CATEGORÍA',
+      `¿ELIMINAR "${categoria.nombre.toUpperCase()}"? SE ELIMINARÁN TAMBIÉN SUS SUBCATEGORÍAS E IMÁGENES.`,
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: () => deleteGaleriaCategoria(categoria.id).catch(() => {}) },
+        { text: 'CANCELAR', style: 'cancel' },
+        { text: 'ELIMINAR', style: 'destructive', onPress: () => deleteGaleriaCategoria(categoria.id).catch(() => {}) },
       ]
     );
   };

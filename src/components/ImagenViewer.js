@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, Image, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { Modal, View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import Text from './UpperText';
 
 export default function ImagenViewer({ uri, children, style, resizeMode = 'cover' }) {
   const [open, setOpen] = useState(false);

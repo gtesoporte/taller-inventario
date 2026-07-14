@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, ScrollView, Image, Alert,
+  View, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, ScrollView, Image, Alert,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import {
   suscribirCajuelaInventario, suscribirCajuelaMovimientos,
   addCajuelaEntrada, addCajuelaSalida, RAZONES_CAJUELA,
@@ -159,8 +161,8 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   const intentarAbrirUso = () => {
     if (!retiroActivo) {
       Alert.alert(
-        'Cajuela no retirada',
-        'Primero debes dar salida a la cajuela ("📤 Dar salida a toda la cajuela") antes de registrar el uso de piezas.'
+        'CAJUELA NO RETIRADA',
+        'PRIMERO DEBES DAR SALIDA A LA CAJUELA ("📤 DAR SALIDA A TODA LA CAJUELA") ANTES DE REGISTRAR EL USO DE PIEZAS.'
       );
       return;
     }

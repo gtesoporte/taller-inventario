@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity,
+  View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
+import Text from '../components/UpperText';
+import TextInput from '../components/UpperTextInput';
 import { suscribirEquipos, suscribirFabricantes } from '../config/firestore';
 
 export default function EquiposScreen({ navigation }) {

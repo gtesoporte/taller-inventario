@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Text from '../components/UpperText';
 import { getUsuarios, updateUsuario } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 
