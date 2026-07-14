@@ -49,7 +49,7 @@ export default function PartesScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerTitle}>🔧 Taller Inventario</Text>
+            <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
             <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
           </View>
           <View style={styles.headerBtns}>

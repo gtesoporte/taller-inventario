@@ -113,7 +113,7 @@ export default function LoginScreen() {
     <KeyboardAvoidingView style={styles.bg} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.icon}>🔧</Text>
-        <Text style={styles.title}>Taller Inventario</Text>
+        <Text style={styles.title}>Taller Soporte</Text>
         <Text style={styles.subtitle}>Sistema de gestión de refacciones</Text>
 
         <View style={styles.tabRow}>

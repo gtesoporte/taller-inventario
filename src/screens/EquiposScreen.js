@@ -57,7 +57,7 @@ export default function EquiposScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerTitle}>🔧 Taller Inventario</Text>
+            <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
             <Text style={styles.headerSub}>{equipos.length} equipos registrados</Text>
           </View>
           <View style={styles.headerBtns}>
