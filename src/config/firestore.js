@@ -137,7 +137,10 @@ export const getAcondicionamientos = async () => {
 
 export const getAcondicionamiento = async (id) => {
   const snap = await getDoc(doc(db, 'acondicionamientos', id));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  if (snap.exists()) return { id: snap.id, ...snap.data() };
+  // Compatibilidad con documentos que quedaron en la colección antigua (singular)
+  const snapLegacy = await getDoc(doc(db, 'acondicionamiento', id));
+  return snapLegacy.exists() ? { id: snapLegacy.id, ...snapLegacy.data() } : null;
 };
 
 export const addAcondicionamiento = async (data) => {
@@ -151,7 +154,12 @@ export const addAcondicionamiento = async (data) => {
 };
 
 export const updateAcondicionamiento = async (id, data) => {
-  return updateDoc(doc(db, 'acondicionamientos', id), { ...data, actualizadoEn: new Date().toISOString() });
+  const payload = { ...data, actualizadoEn: new Date().toISOString() };
+  const ref = doc(db, 'acondicionamientos', id);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return updateDoc(ref, payload);
+  // Compatibilidad con documentos que quedaron en la colección antigua (singular)
+  return updateDoc(doc(db, 'acondicionamiento', id), payload);
 };
 
 const sortAcond = (data) => {

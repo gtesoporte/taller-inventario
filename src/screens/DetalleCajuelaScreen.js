@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, ScrollView, Image, Alert,
+  ActivityIndicator, ScrollView, Image,
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
@@ -158,17 +158,6 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
   );
 
   // ── Handlers movimiento ───────────────────────────────────────
-  const intentarAbrirUso = () => {
-    if (!retiroActivo) {
-      Alert.alert(
-        'CAJUELA NO RETIRADA',
-        'PRIMERO DEBES DAR SALIDA A LA CAJUELA ("📤 DAR SALIDA A TODA LA CAJUELA") ANTES DE REGISTRAR EL USO DE PIEZAS.'
-      );
-      return;
-    }
-    abrirPanel('salida');
-  };
-
   const abrirPanel = (tipo) => {
     setEditItem(null); setRetiroPanel(null);
     setPanelTipo(tipo); setPanelBusqueda(''); setPanelNombre('');
@@ -733,7 +722,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             <TouchableOpacity style={[styles.fab, styles.fabE]} onPress={() => abrirPanel('entrada')}>
               <Text style={styles.fabText}>▲ Entrada</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.fab, styles.fabS, !retiroActivo && styles.fabDisabled]} onPress={intentarAbrirUso}>
+            <TouchableOpacity style={[styles.fab, styles.fabS]} onPress={() => abrirPanel('salida')}>
               <Text style={styles.fabText}>▼ Uso</Text>
             </TouchableOpacity>
           </View>
@@ -899,7 +888,6 @@ const styles = StyleSheet.create({
   fab: { flex: 1, borderRadius: 14, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 4 },
   fabE: { backgroundColor: '#2E7D32' },
   fabS: { backgroundColor: '#C62828' },
-  fabDisabled: { backgroundColor: '#BDBDBD' },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   // Empty
