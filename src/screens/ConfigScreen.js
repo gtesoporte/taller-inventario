@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Text from '../components/UpperText';
 import { useAuth } from '../context/AuthContext';
+import DrawerMenu from '../components/DrawerMenu';
 
 export default function ConfigScreen({ navigation }) {
   const { user, perfil, logout } = useAuth();
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
 
@@ -24,7 +26,12 @@ export default function ConfigScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>⚙️ Configuración</Text>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>⚙️ Configuración</Text>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -75,6 +82,8 @@ export default function ConfigScreen({ navigation }) {
           <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
         </TouchableOpacity>
       )}
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -82,6 +91,9 @@ export default function ConfigScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: '#0B2447', padding: 18, paddingTop: 50 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   section: { backgroundColor: '#fff', margin: 16, marginBottom: 0, borderRadius: 14, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#888', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },

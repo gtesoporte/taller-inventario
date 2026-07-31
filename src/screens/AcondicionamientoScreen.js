@@ -3,6 +3,7 @@ import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Scroll
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirAcondicionamientos } from '../config/firestore';
+import DrawerMenu from '../components/DrawerMenu';
 
 const FILTROS = ['Todos', 'Pendientes', 'En progreso', 'Completados'];
 const ESTADO_MAP = { 'Pendientes': 'pendiente', 'En progreso': 'en_progreso', 'Completados': 'completado' };
@@ -22,6 +23,7 @@ function formatFecha(ts) {
 }
 
 export default function AcondicionamientoScreen({ navigation }) {
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [items, setItems] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
@@ -54,9 +56,14 @@ export default function AcondicionamientoScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>🔧🔨 Acondicionamientos</Text>
-          <Text style={styles.headerSub}>{items.length} proyectos registrados</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>🔧🔨 Acondicionamientos</Text>
+            <Text style={styles.headerSub}>{items.length} proyectos registrados</Text>
+          </View>
         </View>
         <TouchableOpacity style={styles.nuevoBtn} onPress={() => navigation.navigate('FormAcond')}>
           <Text style={styles.nuevoBtnText}>+ Nuevo</Text>
@@ -116,6 +123,7 @@ export default function AcondicionamientoScreen({ navigation }) {
         contentContainerStyle={{ padding: 14, paddingBottom: 80 }}
       />
 
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -125,6 +133,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   nuevoBtn: { backgroundColor: '#F97316', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },

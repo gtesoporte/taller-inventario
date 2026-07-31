@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -30,13 +29,11 @@ import DetalleSubcategoriaGaleriaScreen from './DetalleSubcategoriaGaleriaScreen
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const AZUL = '#0B2447';
 const TAB_OPTS = {
   headerShown: false,
-  tabBarStyle: { backgroundColor: AZUL, borderTopColor: 'rgba(255,255,255,0.1)', height: 62, paddingBottom: 8 },
-  tabBarActiveTintColor: '#60A5FA',
-  tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
-  tabBarLabelStyle: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
+  // La navegación entre secciones ahora vive en el menú lateral (☰), no en una
+  // barra de pestañas — con 7 secciones se veía amontonada en celular.
+  tabBarStyle: { display: 'none' },
 };
 
 function PartesStack() {
@@ -103,41 +100,13 @@ function ConfigStack() {
 function MainTabs() {
   return (
     <Tab.Navigator screenOptions={TAB_OPTS}>
-      <Tab.Screen
-        name="Inventario"
-        component={PartesStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📦</Text> }}
-      />
-      <Tab.Screen
-        name="Proyectos"
-        component={AcondStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🔧</Text> }}
-      />
-      <Tab.Screen
-        name="Movimientos"
-        component={MovStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text> }}
-      />
-      <Tab.Screen
-        name="Cajuelas"
-        component={CajuelasStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🧰</Text> }}
-      />
-      <Tab.Screen
-        name="Galería"
-        component={GaleriaStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🖼️</Text> }}
-      />
-      <Tab.Screen
-        name="Config"
-        component={ConfigStack}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>⚙️</Text> }}
-      />
-      <Tab.Screen
-        name="Admin"
-        component={AdminScreen}
-        options={{ headerShown: false, tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👑</Text> }}
-      />
+      <Tab.Screen name="Inventario" component={PartesStack} />
+      <Tab.Screen name="Proyectos" component={AcondStack} />
+      <Tab.Screen name="Movimientos" component={MovStack} />
+      <Tab.Screen name="Cajuelas" component={CajuelasStack} />
+      <Tab.Screen name="Galería" component={GaleriaStack} />
+      <Tab.Screen name="Config" component={ConfigStack} />
+      <Tab.Screen name="Admin" component={AdminScreen} />
     </Tab.Navigator>
   );
 }

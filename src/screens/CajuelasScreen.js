@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Text from '../components/UpperText';
 import { CAJUELAS_LISTA, suscribirCajuelaInventario, suscribirCajuelaConfig } from '../config/firestore';
+import DrawerMenu from '../components/DrawerMenu';
 
 function useCajuelaResumen(cajuelaId) {
   const [refacciones, setRefacciones] = useState(0);
@@ -45,10 +46,16 @@ function CajuelaCard({ cajuela, navigation }) {
 }
 
 export default function CajuelasScreen({ navigation }) {
+  const [menuAbierto, setMenuAbierto] = useState(false);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.titulo}>🧰 Cajuelas</Text>
+        <View style={styles.tituloRow}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.titulo}>🧰 Cajuelas</Text>
+        </View>
         <Text style={styles.sub}>Kits de refacciones para servicio</Text>
       </View>
       <FlatList
@@ -57,6 +64,8 @@ export default function CajuelasScreen({ navigation }) {
         renderItem={({ item }) => <CajuelaCard cajuela={item} navigation={navigation} />}
         contentContainerStyle={{ padding: 14, paddingBottom: 40 }}
       />
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -65,6 +74,9 @@ const AZUL = '#0B2447';
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, elevation: 2 },

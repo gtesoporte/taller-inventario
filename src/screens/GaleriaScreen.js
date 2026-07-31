@@ -10,11 +10,13 @@ import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import { mostrarAlerta } from '../utils/confirmar';
+import DrawerMenu from '../components/DrawerMenu';
 
 export default function GaleriaScreen({ navigation }) {
   const { perfil } = useAuth();
   const puedeAdministrar = esAdmin(perfil);
 
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [panelAbierto, setPanelAbierto] = useState(false);
@@ -65,7 +67,12 @@ export default function GaleriaScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.titulo}>🖼️ Galería</Text>
+        <View style={styles.tituloRow}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.titulo}>🖼️ Galería</Text>
+        </View>
         <Text style={styles.sub}>Fotos de equipos y refacciones por categoría</Text>
       </View>
 
@@ -164,6 +171,8 @@ export default function GaleriaScreen({ navigation }) {
         }
         contentContainerStyle={{ padding: 14, paddingBottom: 40 }}
       />
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -173,6 +182,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 0, borderRadius: 12, padding: 14, alignItems: 'center' },

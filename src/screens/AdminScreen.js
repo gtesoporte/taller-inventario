@@ -3,6 +3,7 @@ import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 
 import Text from '../components/UpperText';
 import { getUsuarios, updateUsuario } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import DrawerMenu from '../components/DrawerMenu';
 
 const ROLES = ['Todos', 'Superadministrador', 'Administrador', 'Técnico'];
 const ROL_COLORES = {
@@ -24,6 +25,7 @@ const COLORES_AVATAR = ['#6D28D9', '#1565C0', '#0B5345', '#7B241C', '#1A5276', '
 
 export default function AdminScreen() {
   const { user } = useAuth();
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   const [rolFiltro, setRolFiltro] = useState('Todos');
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,12 @@ export default function AdminScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>👑 Administración</Text>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>👑 Administración</Text>
+        </View>
         <Text style={styles.headerSub}>{usuarios.length} usuarios registrados</Text>
       </View>
 
@@ -89,6 +96,8 @@ export default function AdminScreen() {
         ListEmptyComponent={<Text style={styles.empty}>Sin usuarios en esta categoría.</Text>}
         contentContainerStyle={{ padding: 14, paddingBottom: 80 }}
       />
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -98,6 +107,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   filtrosRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginTop: 12, marginBottom: 4 },

@@ -8,9 +8,11 @@ import TextInput from '../components/UpperTextInput';
 import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
+import DrawerMenu from '../components/DrawerMenu';
 
 export default function PartesScreen({ navigation }) {
   const { perfil } = useAuth();
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [partes, setPartes] = useState([]);
   const [fabricantes, setFabricantes] = useState(['Todos']);
   const [filtro, setFiltro] = useState('');
@@ -48,9 +50,14 @@ export default function PartesScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
-            <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+              <Text style={styles.menuBtnIcon}>☰</Text>
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
+              <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
+            </View>
           </View>
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
@@ -150,6 +157,8 @@ export default function PartesScreen({ navigation }) {
         }
         contentContainerStyle={{ paddingBottom: 80 }}
       />
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -160,6 +169,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
   invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   invTabActive: { backgroundColor: '#fff' },

@@ -7,6 +7,7 @@ import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirMovimientos, deleteMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import DrawerMenu from '../components/DrawerMenu';
 
 function formatFecha(ts) {
   if (!ts) return '';
@@ -25,6 +26,7 @@ const normTipo = (tipo) => (tipo || '').toLowerCase().trim();
 
 export default function MovimientosScreen() {
   const { perfil } = useAuth();
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState('todos');
@@ -76,7 +78,12 @@ export default function MovimientosScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📋 Movimientos</Text>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Text style={styles.menuBtnIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>📋 Movimientos</Text>
+        </View>
         <View style={styles.sumRow}>
           <TouchableOpacity
             style={[styles.sumChip, filtroTipo === 'entrada' && styles.sumChipActive]}
@@ -204,6 +211,8 @@ export default function MovimientosScreen() {
         }
         contentContainerStyle={{ padding: 14, paddingBottom: 80 }}
       />
+
+      <DrawerMenu visible={menuAbierto} onClose={() => setMenuAbierto(false)} />
     </View>
   );
 }
@@ -213,7 +222,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 16 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sumRow: { flexDirection: 'row', gap: 10 },
   sumChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
   sumChipActive: { backgroundColor: 'rgba(255,255,255,0.35)' },
