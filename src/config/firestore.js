@@ -471,6 +471,29 @@ export const deleteEquipo = async (id) => {
   return deleteDoc(doc(db, 'equipos', id));
 };
 
+// --- SALIDA DE EQUIPO COMPLETO (desecho / almacén) ---
+export const CLASIFICACIONES_SALIDA_EQUIPO = [
+  { id: 'desecho', label: '🗑️ Desecho' },
+  { id: 'almacen', label: '📦 Almacén' },
+];
+
+export const addEquipoSalidaCompleta = async (equipoId, clasificacion, perfil) => {
+  const usuario = perfil?.nombre || perfil?.email || 'Sistema';
+  await updateDoc(doc(db, 'equipos', equipoId), {
+    estadoSalida: clasificacion,
+    fechaSalida: new Date().toISOString(),
+    salidaPor: usuario,
+  });
+  await addDoc(collection(db, 'equipoMovimientos'), {
+    equipoId,
+    tipo: 'salida_equipo',
+    nombre: 'Equipo completo',
+    clasificacionSalida: clasificacion,
+    usuario,
+    creadoEn: new Date().toISOString(),
+  });
+};
+
 // --- USUARIOS ---
 export const getUsuarios = async () => {
   const snap = await getDocs(collection(db, 'usuarios'));

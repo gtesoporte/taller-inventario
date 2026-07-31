@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, Image,
+  ActivityIndicator, Image,
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
@@ -9,6 +9,7 @@ import { suscribirGaleriaCategorias, addGaleriaCategoria, updateGaleriaCategoria
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import { seleccionarFoto } from '../utils/fotoHelper';
+import { mostrarAlerta } from '../utils/confirmar';
 
 export default function GaleriaScreen({ navigation }) {
   const { perfil } = useAuth();
@@ -41,7 +42,7 @@ export default function GaleriaScreen({ navigation }) {
   };
 
   const confirmarEliminar = (categoria) => {
-    Alert.alert(
+    mostrarAlerta(
       'ELIMINAR CATEGORÍA',
       `¿ELIMINAR "${categoria.nombre.toUpperCase()}"? SE ELIMINARÁN TAMBIÉN SUS SUBCATEGORÍAS E IMÁGENES.`,
       [

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirGaleriaSubcategorias, addGaleriaSubcategoria, deleteGaleriaSubcategoria } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
+import { mostrarAlerta } from '../utils/confirmar';
 
 export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
   const { categoriaId, nombre } = route?.params || {};
@@ -40,7 +41,7 @@ export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
   };
 
   const confirmarEliminar = (sub) => {
-    Alert.alert(
+    mostrarAlerta(
       'ELIMINAR SUBCATEGORÍA',
       `¿ELIMINAR "${sub.nombre.toUpperCase()}"? SE ELIMINARÁN TAMBIÉN SUS IMÁGENES.`,
       [

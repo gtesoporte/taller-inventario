@@ -163,6 +163,11 @@ export default function EquiposScreen({ navigation }) {
                         <Text style={styles.fabBadgeText}>{CLASIF_MAP[equipo.clasificacion].label}</Text>
                       </View>
                     )}
+                    {equipo.estadoSalida && (
+                      <View style={[styles.fabBadge, { backgroundColor: equipo.estadoSalida === 'desecho' ? '#616161' : '#00838F' }]}>
+                        <Text style={styles.fabBadgeText}>{equipo.estadoSalida === 'desecho' ? '🗑️ Desecho' : '📦 Almacén'}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <Text style={styles.cardArrow}>›</Text>

@@ -6,3 +6,17 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# index.html nunca debe quedar en caché: si no, los celulares (sobre todo
+# como PWA instalada) siguen mostrando una versión vieja aunque ya se haya
+# desplegado una nueva. Los archivos con hash (JS/CSS) sí pueden cachearse
+# largo tiempo porque su nombre cambia en cada build.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

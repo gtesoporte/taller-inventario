@@ -5,7 +5,10 @@ import {
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
-import { getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento } from '../config/firestore';
+import {
+  getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento,
+  addEquipoSalidaCompleta, CLASIFICACIONES_SALIDA_EQUIPO,
+} from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import ImagenViewer from '../components/ImagenViewer';
 
@@ -43,6 +46,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
   const [guardandoMov, setGuardandoMov] = useState(false);
   const [movError, setMovError] = useState('');
 
+  // Salida de equipo completo (desecho / almacén)
+  const [salidaPanelAbierto, setSalidaPanelAbierto] = useState(false);
+  const [salidaClasificacion, setSalidaClasificacion] = useState('');
+  const [guardandoSalida, setGuardandoSalida] = useState(false);
+  const [salidaError, setSalidaError] = useState('');
+
   useEffect(() => {
     if (!id) return;
     getEquipo(id)
@@ -75,6 +84,30 @@ export default function DetalleEquipoScreen({ navigation, route }) {
       setMovError('Error al guardar. Intenta de nuevo.');
     }
     setGuardandoMov(false);
+  };
+
+  const abrirSalidaPanel = () => {
+    setSalidaClasificacion('');
+    setSalidaError('');
+    setSalidaPanelAbierto(true);
+  };
+
+  const confirmarSalidaEquipo = async () => {
+    if (!salidaClasificacion) { setSalidaError('Selecciona una clasificación.'); return; }
+    setGuardandoSalida(true);
+    try {
+      await addEquipoSalidaCompleta(id, salidaClasificacion, perfil);
+      setEquipo(prev => ({
+        ...prev,
+        estadoSalida: salidaClasificacion,
+        fechaSalida: new Date().toISOString(),
+        salidaPor: perfil?.nombre || perfil?.email || 'Sistema',
+      }));
+      setSalidaPanelAbierto(false);
+    } catch {
+      setSalidaError('Error al guardar. Intenta de nuevo.');
+    }
+    setGuardandoSalida(false);
   };
 
   const handleEliminar = async () => {
@@ -132,6 +165,52 @@ export default function DetalleEquipoScreen({ navigation, route }) {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+
+        {/* Banner de salida de equipo completo */}
+        {equipo.estadoSalida && (
+          <View style={[styles.salidaBanner, equipo.estadoSalida === 'desecho' ? styles.salidaBannerDesecho : styles.salidaBannerAlmacen]}>
+            <Text style={styles.salidaBannerIcon}>{equipo.estadoSalida === 'desecho' ? '🗑️' : '📦'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.salidaBannerTitle}>
+                EQUIPO DADO DE SALIDA — {equipo.estadoSalida === 'desecho' ? 'DESECHO' : 'ALMACÉN'}
+              </Text>
+              <Text style={styles.salidaBannerSub}>
+                {equipo.salidaPor} · {formatFecha(equipo.fechaSalida)}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Panel salida de equipo completo */}
+        {salidaPanelAbierto && (
+          <View style={[styles.panel, styles.panelSalidaEquipo]}>
+            <Text style={styles.panelTit}>📤 Dar salida al equipo completo</Text>
+            <Text style={styles.panelLbl}>CLASIFICACIÓN *</Text>
+            <View style={styles.salidaChipsWrap}>
+              {CLASIFICACIONES_SALIDA_EQUIPO.map(c => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[styles.salidaChip, salidaClasificacion === c.id && styles.salidaChipActive]}
+                  onPress={() => { setSalidaClasificacion(c.id); setSalidaError(''); }}
+                >
+                  <Text style={[styles.salidaChipText, salidaClasificacion === c.id && styles.salidaChipTextActive]}>{c.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {!!salidaError && <Text style={styles.panelError}>⚠️ {salidaError}</Text>}
+            <View style={styles.panelBtns}>
+              <TouchableOpacity style={styles.panelCancelar} onPress={() => setSalidaPanelAbierto(false)} disabled={guardandoSalida}>
+                <Text style={styles.panelCancelarText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.panelConfirmar, { backgroundColor: '#E65100' }]} onPress={confirmarSalidaEquipo} disabled={guardandoSalida}>
+                {guardandoSalida
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.panelConfirmarText}>Confirmar salida</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Foto */}
         {equipo.foto ? (
@@ -228,25 +307,43 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           {/* Lista de movimientos */}
           {movimientos.length === 0
             ? <Text style={styles.movVacio}>Sin movimientos registrados.</Text>
-            : movimientos.map(m => (
-              <View key={m.id} style={[styles.movCard, { borderLeftColor: m.tipo === 'entrada' ? '#4CAF50' : '#F44336' }]}>
-                <View style={styles.movTop}>
-                  <Text style={[styles.movTipo, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
-                    {m.tipo === 'entrada' ? '▲ ENTRADA' : '▼ SALIDA'}
-                  </Text>
-                  <Text style={[styles.movCant, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
-                    {m.tipo === 'entrada' ? '+' : '-'}{m.cantidad} pz
-                  </Text>
+            : movimientos.map(m => {
+              if (m.tipo === 'salida_equipo') {
+                return (
+                  <View key={m.id} style={[styles.movCard, { borderLeftColor: '#E65100' }]}>
+                    <Text style={[styles.movTipo, { color: '#E65100' }]}>
+                      📤 SALIDA DE EQUIPO — {m.clasificacionSalida === 'desecho' ? 'DESECHO' : 'ALMACÉN'}
+                    </Text>
+                    <Text style={styles.movFecha}>{m.usuario} · {formatFecha(m.creadoEn)}</Text>
+                  </View>
+                );
+              }
+              return (
+                <View key={m.id} style={[styles.movCard, { borderLeftColor: m.tipo === 'entrada' ? '#4CAF50' : '#F44336' }]}>
+                  <View style={styles.movTop}>
+                    <Text style={[styles.movTipo, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
+                      {m.tipo === 'entrada' ? '▲ ENTRADA' : '▼ SALIDA'}
+                    </Text>
+                    <Text style={[styles.movCant, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
+                      {m.tipo === 'entrada' ? '+' : '-'}{m.cantidad} pz
+                    </Text>
+                  </View>
+                  <Text style={styles.movNom}>{m.nombre}</Text>
+                  {m.nota ? <Text style={styles.movNota}>💬 {m.nota}</Text> : null}
+                  <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
                 </View>
-                <Text style={styles.movNom}>{m.nombre}</Text>
-                {m.nota ? <Text style={styles.movNota}>💬 {m.nota}</Text> : null}
-                <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
-              </View>
-            ))
+              );
+            })
           }
         </View>
 
         {/* Botones de acción */}
+        {!equipo.estadoSalida && !salidaPanelAbierto && (
+          <TouchableOpacity style={styles.btnSalidaEquipo} onPress={abrirSalidaPanel}>
+            <Text style={styles.btnSalidaEquipoText}>📤 Dar salida al equipo completo</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={styles.btnEditar}
           onPress={() => navigation.navigate('FormEquipo', { id, equipo })}
@@ -352,6 +449,21 @@ const styles = StyleSheet.create({
   panelCancelarText: { color: '#555', fontWeight: '700' },
   panelConfirmar: { flex: 2, borderRadius: 10, padding: 10, alignItems: 'center' },
   panelConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  // Salida de equipo completo
+  salidaBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 16 },
+  salidaBannerDesecho: { backgroundColor: '#F5F5F5', borderWidth: 1.5, borderColor: '#9E9E9E' },
+  salidaBannerAlmacen: { backgroundColor: '#E0F7FA', borderWidth: 1.5, borderColor: '#00838F' },
+  salidaBannerIcon: { fontSize: 26 },
+  salidaBannerTitle: { fontSize: 13, fontWeight: '800', color: '#1a1a2e' },
+  salidaBannerSub: { fontSize: 12, color: '#666', marginTop: 2 },
+  panelSalidaEquipo: { backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFCC80' },
+  salidaChipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  salidaChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1.5, borderColor: '#ddd', backgroundColor: '#fff' },
+  salidaChipActive: { backgroundColor: '#E65100', borderColor: '#E65100' },
+  salidaChipText: { fontSize: 13, fontWeight: '700', color: '#555' },
+  salidaChipTextActive: { color: '#fff' },
+  btnSalidaEquipo: { backgroundColor: '#fff', borderRadius: 14, padding: 15, alignItems: 'center', marginBottom: 10, borderWidth: 1.5, borderColor: '#E65100', borderStyle: 'dashed' },
+  btnSalidaEquipoText: { color: '#E65100', fontWeight: '700', fontSize: 15 },
   btnEditar: { backgroundColor: '#1565C0', borderRadius: 14, padding: 15, alignItems: 'center', marginBottom: 10 },
   btnEditarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   btnEliminar: { borderRadius: 14, padding: 15, alignItems: 'center', borderWidth: 1.5, borderColor: '#C62828' },

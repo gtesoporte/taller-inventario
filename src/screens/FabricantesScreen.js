@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator,
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { getFabricantes, addFabricante } from '../config/firestore';
+import { mostrarAlerta } from '../utils/confirmar';
 
 export default function FabricantesScreen({ navigation }) {
   const [fabricantes, setFabricantes] = useState([]);
@@ -21,7 +22,7 @@ export default function FabricantesScreen({ navigation }) {
     const nombre = nuevo.trim().toUpperCase();
     if (!nombre) return;
     if (fabricantes.includes(nombre)) {
-      Alert.alert('YA EXISTE', `"${nombre}" YA ESTÁ EN LA LISTA.`);
+      mostrarAlerta('YA EXISTE', `"${nombre}" YA ESTÁ EN LA LISTA.`);
       return;
     }
     setGuardando(true);

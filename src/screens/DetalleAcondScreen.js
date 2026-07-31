@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
@@ -10,6 +10,7 @@ import {
   getProgreso, addProgreso,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import { mostrarAlerta } from '../utils/confirmar';
 
 const ESTADO_ESTILOS = {
   pendiente:   { bg: '#FFF3E0', text: '#E65100', label: '⏳ Pendiente' },
@@ -45,7 +46,7 @@ export default function DetalleAcondScreen({ route, navigation }) {
   }, [id]);
 
   const marcarCompletado = async () => {
-    Alert.alert('MARCAR COMPLETADO', '¿CONFIRMAS QUE ESTE ACONDICIONAMIENTO ESTÁ TERMINADO?', [
+    mostrarAlerta('MARCAR COMPLETADO', '¿CONFIRMAS QUE ESTE ACONDICIONAMIENTO ESTÁ TERMINADO?', [
       { text: 'CANCELAR', style: 'cancel' },
       {
         text: 'COMPLETAR', onPress: async () => {
