@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 
 import LoginScreen from './LoginScreen';
@@ -27,7 +27,9 @@ import DetalleCategoriaGaleriaScreen from './DetalleCategoriaGaleriaScreen';
 import DetalleSubcategoriaGaleriaScreen from './DetalleSubcategoriaGaleriaScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+// native-stack (no el stack JS) es obligatorio en web: el otro no propaga
+// height:100% a las pantallas, así que ninguna lista podía hacer scroll.
+const Stack = createNativeStackNavigator();
 
 const TAB_OPTS = {
   headerShown: false,
