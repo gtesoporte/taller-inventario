@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Text from './UpperText';
 import { useAuth } from '../context/AuthContext';
@@ -47,7 +47,7 @@ export default function DrawerMenu({ visible, onClose }) {
 
         <View style={styles.divider} />
 
-        <View style={styles.lista}>
+        <ScrollView style={styles.lista} contentContainerStyle={styles.listaContent} showsVerticalScrollIndicator={false}>
           {SECCIONES.map(s => (
             <TouchableOpacity key={s.tab} style={styles.item} onPress={() => ir(s.tab)}>
               <Text style={styles.itemIcon}>{s.icon}</Text>
@@ -55,7 +55,7 @@ export default function DrawerMenu({ visible, onClose }) {
               <Text style={styles.itemArrow}>›</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         <View style={styles.divider} />
 
@@ -82,12 +82,13 @@ const styles = StyleSheet.create({
   nombre: { fontSize: 15, fontWeight: '800', color: '#1a1a2e' },
   rol: { fontSize: 12, color: '#888', marginTop: 2 },
   divider: { height: 1, backgroundColor: '#eee' },
-  lista: { paddingVertical: 8 },
+  lista: { flex: 1 },
+  listaContent: { paddingVertical: 8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 13 },
   itemIcon: { fontSize: 20, width: 26, textAlign: 'center' },
   itemLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
   itemArrow: { fontSize: 18, color: '#ccc' },
-  salirBtn: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16 },
+  salirBtn: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 },
   salirIcon: { fontSize: 20, width: 26, textAlign: 'center' },
   salirText: { fontSize: 14, fontWeight: '700', color: '#C62828' },
 });
