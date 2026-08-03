@@ -11,6 +11,7 @@ const SECCIONES = [
   { tab: 'Movimientos', icon: '📋', label: 'Movimientos' },
   { tab: 'Cajuelas', icon: '🧰', label: 'Cajuelas' },
   { tab: 'Galería', icon: '🖼️', label: 'Galería' },
+  { tab: 'Contactos', icon: '📇', label: 'Contactos' },
   { tab: 'Config', icon: '⚙️', label: 'Configuración' },
   { tab: 'Admin', icon: '👑', label: 'Administración' },
 ];

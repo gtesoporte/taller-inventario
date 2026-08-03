@@ -25,6 +25,9 @@ import DetalleCajuelaScreen from './DetalleCajuelaScreen';
 import GaleriaScreen from './GaleriaScreen';
 import DetalleCategoriaGaleriaScreen from './DetalleCategoriaGaleriaScreen';
 import DetalleSubcategoriaGaleriaScreen from './DetalleSubcategoriaGaleriaScreen';
+import ContactosScreen from './ContactosScreen';
+import DetalleContactoScreen from './DetalleContactoScreen';
+import FormContactoScreen from './FormContactoScreen';
 
 const Tab = createBottomTabNavigator();
 // native-stack (no el stack JS) es obligatorio en web: el otro no propaga
@@ -90,6 +93,16 @@ function GaleriaStack() {
   );
 }
 
+function ContactosStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ContactosLista" component={ContactosScreen} />
+      <Stack.Screen name="DetalleContacto" component={DetalleContactoScreen} />
+      <Stack.Screen name="FormContacto" component={FormContactoScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function ConfigStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -107,6 +120,7 @@ function MainTabs() {
       <Tab.Screen name="Movimientos" component={MovStack} />
       <Tab.Screen name="Cajuelas" component={CajuelasStack} />
       <Tab.Screen name="Galería" component={GaleriaStack} />
+      <Tab.Screen name="Contactos" component={ContactosStack} />
       <Tab.Screen name="Config" component={ConfigStack} />
       <Tab.Screen name="Admin" component={AdminScreen} />
     </Tab.Navigator>

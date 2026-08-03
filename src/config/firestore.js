@@ -12,6 +12,7 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -589,4 +590,52 @@ export const addGaleriaImagen = async (subcategoriaId, foto, nota, perfil) => {
 
 export const deleteGaleriaImagen = async (id) => {
   return deleteDoc(doc(db, 'galeriaImagenes', id));
+};
+
+// --- CONTACTOS ---
+export const suscribirContactos = (callback) => {
+  return onSnapshot(collection(db, 'contactos'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    callback(data);
+  });
+};
+
+export const getContacto = async (id) => {
+  const snap = await getDoc(doc(db, 'contactos', id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+export const addContacto = async (data, perfil) => {
+  return addDoc(collection(db, 'contactos'), {
+    ...data,
+    creadoPor: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString(),
+  });
+};
+
+export const updateContacto = async (id, data) => {
+  return updateDoc(doc(db, 'contactos', id), { ...data, actualizadoEn: new Date().toISOString() });
+};
+
+export const deleteContacto = async (id) => {
+  return deleteDoc(doc(db, 'contactos', id));
+};
+
+// Carga masiva desde un Excel importado (ver ContactosScreen). `filas` ya
+// vienen normalizadas a { activoFracttal, nombre, codigo, ciudad, email, contacto, telefono }.
+export const importarContactos = async (filas, perfil) => {
+  const usuario = perfil?.nombre || perfil?.email || 'Sistema';
+  const ahora = new Date().toISOString();
+  const LOTE = 450; // límite de Firestore es 500 operaciones por batch
+  for (let i = 0; i < filas.length; i += LOTE) {
+    const batch = writeBatch(db);
+    filas.slice(i, i + LOTE).forEach(fila => {
+      const ref = doc(collection(db, 'contactos'));
+      batch.set(ref, { ...fila, creadoPor: usuario, creadoEn: ahora, actualizadoEn: ahora });
+    });
+    await batch.commit();
+  }
+  return filas.length;
 };
