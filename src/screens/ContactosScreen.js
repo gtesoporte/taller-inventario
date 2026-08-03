@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import { mostrarAlerta } from '../utils/confirmar';
 import DrawerMenu from '../components/DrawerMenu';
+import * as XLSX from 'xlsx';
 
 function normalizarFila(row) {
   const get = (...keys) => {
@@ -64,7 +65,6 @@ export default function ContactosScreen({ navigation }) {
       setImportando(true);
       try {
         const buffer = await file.arrayBuffer();
-        const XLSX = await import('xlsx');
         const wb = XLSX.read(buffer, { type: 'array' });
         const sheetName = wb.SheetNames[1] || wb.SheetNames[0];
         const ws = wb.Sheets[sheetName];
@@ -76,8 +76,9 @@ export default function ContactosScreen({ navigation }) {
           const count = await importarContactos(filas, perfil);
           mostrarAlerta('IMPORTACIÓN COMPLETA', `SE IMPORTARON ${count} CONTACTOS CORRECTAMENTE.`);
         }
-      } catch {
-        mostrarAlerta('ERROR', 'NO SE PUDO LEER O IMPORTAR EL ARCHIVO. VERIFICA QUE SEA UN .XLSX VÁLIDO.');
+      } catch (err) {
+        console.error('Error al importar Excel:', err);
+        mostrarAlerta('ERROR', `NO SE PUDO LEER O IMPORTAR EL ARCHIVO: ${err?.message || err}`);
       }
       setImportando(false);
     };
