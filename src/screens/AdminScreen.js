@@ -3,6 +3,7 @@ import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 
 import Text from '../components/UpperText';
 import { getUsuarios, updateUsuario } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
+import { esAdmin } from '../utils/permisos';
 import DrawerMenu from '../components/DrawerMenu';
 
 const ROLES = ['Todos', 'Superadministrador', 'Administrador', 'Técnico'];
@@ -24,17 +25,32 @@ function Avatar({ nombre, color }) {
 const COLORES_AVATAR = ['#6D28D9', '#1565C0', '#0B5345', '#7B241C', '#1A5276', '#6E2FD4', '#117A65'];
 
 export default function AdminScreen() {
-  const { user } = useAuth();
+  const { user, perfil } = useAuth();
+  const puedeEditarRoles = esAdmin(perfil);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   const [rolFiltro, setRolFiltro] = useState('Todos');
   const [loading, setLoading] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
+  const [guardandoId, setGuardandoId] = useState(null);
 
-  useEffect(() => {
-    getUsuarios().then(data => { setUsuarios(data); setLoading(false); });
-  }, []);
+  const cargarUsuarios = () => getUsuarios().then(data => { setUsuarios(data); setLoading(false); });
+
+  useEffect(() => { cargarUsuarios(); }, []);
 
   const filtrados = rolFiltro === 'Todos' ? usuarios : usuarios.filter(u => u.rol === rolFiltro);
+
+  const ROLES_ASIGNABLES = ['Técnico', 'Administrador', 'Superadministrador'];
+
+  const cambiarRol = async (uid, nuevoRol) => {
+    setGuardandoId(uid);
+    try {
+      await updateUsuario(uid, { rol: nuevoRol });
+      setUsuarios(prev => prev.map(u => (u.id === uid ? { ...u, rol: nuevoRol } : u)));
+      setEditandoId(null);
+    } catch {}
+    setGuardandoId(null);
+  };
 
   function formatFecha(ts) {
     if (!ts) return '';
@@ -79,17 +95,45 @@ export default function AdminScreen() {
         renderItem={({ item, index }) => {
           const esYo = item.id === user?.uid;
           const rolCfg = ROL_COLORES[item.rol] || ROL_COLORES['Técnico'];
+          const editandoEste = editandoId === item.id;
           return (
             <View style={[styles.card, esYo && styles.cardYo]}>
-              <Avatar nombre={item.nombre} color={COLORES_AVATAR[index % COLORES_AVATAR.length]} />
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardNombre}>{item.nombre}{esYo ? ' (tú)' : ''}</Text>
-                <Text style={styles.cardEmail}>{item.email}</Text>
-                {item.creadoEn ? <Text style={styles.cardFecha}>Registrado: {formatFecha(item.creadoEn)}</Text> : null}
+              <View style={styles.cardTop}>
+                <Avatar nombre={item.nombre} color={COLORES_AVATAR[index % COLORES_AVATAR.length]} />
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardNombre}>{item.nombre}{esYo ? ' (tú)' : ''}</Text>
+                  <Text style={styles.cardEmail}>{item.email}</Text>
+                  {item.creadoEn ? <Text style={styles.cardFecha}>Registrado: {formatFecha(item.creadoEn)}</Text> : null}
+                </View>
+                <TouchableOpacity
+                  style={[styles.rolBadge, { backgroundColor: rolCfg.bg }]}
+                  onPress={puedeEditarRoles ? () => setEditandoId(editandoEste ? null : item.id) : undefined}
+                  disabled={!puedeEditarRoles}
+                >
+                  <Text style={[styles.rolText, { color: rolCfg.text }]}>{rolCfg.emoji} {item.rol}</Text>
+                </TouchableOpacity>
               </View>
-              <View style={[styles.rolBadge, { backgroundColor: rolCfg.bg }]}>
-                <Text style={[styles.rolText, { color: rolCfg.text }]}>{rolCfg.emoji} {item.rol}</Text>
-              </View>
+
+              {editandoEste && (
+                <View style={styles.editRolBox}>
+                  <Text style={styles.editRolLabel}>CAMBIAR ROL</Text>
+                  <View style={styles.editRolChips}>
+                    {ROLES_ASIGNABLES.map(rol => (
+                      <TouchableOpacity
+                        key={rol}
+                        style={[styles.editRolChip, item.rol === rol && styles.editRolChipActive]}
+                        onPress={() => cambiarRol(item.id, rol)}
+                        disabled={guardandoId === item.id}
+                      >
+                        {guardandoId === item.id && item.rol !== rol
+                          ? <ActivityIndicator size="small" color={PURPLE} />
+                          : <Text style={[styles.editRolChipText, item.rol === rol && styles.editRolChipTextActive]}>{rol}</Text>
+                        }
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
           );
         }}
@@ -117,7 +161,8 @@ const styles = StyleSheet.create({
   filtroBtnActive: { backgroundColor: PURPLE, borderColor: PURPLE },
   filtroText: { fontSize: 12, fontWeight: '600', color: '#555' },
   filtroTextActive: { color: '#fff' },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, gap: 12 },
+  card: { backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardYo: { borderWidth: 2, borderColor: PURPLE },
   avatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },
   avatarLetra: { fontSize: 20, fontWeight: '700', color: '#fff' },
@@ -127,5 +172,12 @@ const styles = StyleSheet.create({
   cardFecha: { fontSize: 11, color: '#aaa', marginTop: 2 },
   rolBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'center' },
   rolText: { fontSize: 11, fontWeight: '700' },
+  editRolBox: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
+  editRolLabel: { fontSize: 10, fontWeight: '800', color: '#aaa', letterSpacing: 0.5, marginBottom: 8 },
+  editRolChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  editRolChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F6FA', borderWidth: 1, borderColor: '#ddd', minWidth: 70, alignItems: 'center' },
+  editRolChipActive: { backgroundColor: PURPLE, borderColor: PURPLE },
+  editRolChipText: { fontSize: 12, fontWeight: '700', color: '#555' },
+  editRolChipTextActive: { color: '#fff' },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40 },
 });

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { getUsuario } from '../config/firestore';
+import { getUsuario, crearPerfilUsuario } from '../config/firestore';
 
 const AuthContext = createContext(null);
 
@@ -16,7 +16,17 @@ export function AuthProvider({ children }) {
         if (firebaseUser) {
           setUser(firebaseUser);
           const p = await getUsuario(firebaseUser.uid);
-          setPerfil(p);
+          if (p) {
+            setPerfil(p);
+          } else {
+            // Cuenta de Auth sin perfil en Firestore (ej. se borró el doc a mano):
+            // se crea uno nuevo por default para que no quede "invisible".
+            const nuevoPerfil = await crearPerfilUsuario(firebaseUser.uid, {
+              nombre: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuario',
+              email: firebaseUser.email,
+            });
+            setPerfil(nuevoPerfil);
+          }
         } else {
           setUser(null);
           setPerfil(null);

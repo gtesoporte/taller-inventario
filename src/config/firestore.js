@@ -510,6 +510,19 @@ export const updateUsuario = async (uid, data) => {
   return updateDoc(doc(db, 'usuarios', uid), data);
 };
 
+// Crea el perfil en Firestore para una cuenta de Firebase Auth que ya existe
+// pero se quedó sin documento en 'usuarios' (ej. se borró por error, o la
+// cuenta es de antes de que se empezara a guardar el perfil).
+export const crearPerfilUsuario = async (uid, data) => {
+  const perfil = {
+    rol: 'Técnico',
+    creadoEn: new Date().toISOString(),
+    ...data,
+  };
+  await setDoc(doc(db, 'usuarios', uid), perfil);
+  return { id: uid, ...perfil };
+};
+
 // --- GALERÍA: CATEGORÍAS ---
 export const suscribirGaleriaCategorias = (callback) => {
   return onSnapshot(collection(db, 'galeriaCategorias'), snap => {
