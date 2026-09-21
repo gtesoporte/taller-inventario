@@ -6,7 +6,7 @@ import {
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import ImagenViewer from '../components/ImagenViewer';
-import { getParte, deleteParte, registrarMovimiento } from '../config/firestore';
+import { getParte, deleteParte, registrarMovimiento, marcarRevisionParte } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 
@@ -63,6 +63,9 @@ export default function DetalleParteScreen({ route, navigation }) {
   const [confirmEliminar, setConfirmEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
 
+  // Revisión
+  const [guardandoRev, setGuardandoRev] = useState(false);
+
   useEffect(() => {
     if (!id) { setErrorMsg('No se recibió el ID de la refacción.'); setLoading(false); return; }
     getParte(id)
@@ -86,6 +89,15 @@ export default function DetalleParteScreen({ route, navigation }) {
       setMovOp(null);
     } catch {}
     setGuardandoMov(false);
+  };
+
+  const cambiarRevision = async (revisada) => {
+    setGuardandoRev(true);
+    try {
+      const cambios = await marcarRevisionParte(id, revisada, perfil);
+      setParte(prev => ({ ...prev, ...cambios }));
+    } catch {}
+    setGuardandoRev(false);
   };
 
   const handleEliminar = async () => {
@@ -123,6 +135,7 @@ export default function DetalleParteScreen({ route, navigation }) {
   const esEntradaActiva = movOp === 'entrada';
   const esSalidaActiva = movOp === 'salida';
   const puedeEditar = esAdmin(perfil);
+  const revisada = parte.estadoRevision === 'revisada';
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -239,6 +252,28 @@ export default function DetalleParteScreen({ route, navigation }) {
           </>
         ) : null}
 
+        <Text style={styles.seccion}>🔎 REVISIÓN</Text>
+        <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
+              {revisada ? '✅ Revisada' : '⏳ Pendiente de revisar'}
+            </Text>
+            {revisada && parte.revisadaPor ? (
+              <Text style={styles.revSub}>{extractNombre(parte.revisadaPor)} · {formatFecha(parte.revisadaEn)}</Text>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            style={[styles.revBtn, revisada ? styles.revBtnPend : styles.revBtnOk]}
+            onPress={() => cambiarRevision(!revisada)}
+            disabled={guardandoRev}
+          >
+            {guardandoRev
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.revBtnText}>{revisada ? 'Marcar pendiente' : 'Marcar revisada'}</Text>
+            }
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.seccion}>📍 UBICACIÓN</Text>
         <View style={styles.ubicBox}>
           <Text style={styles.ubicText}>{parte.ubicacion || '—'}</Text>
@@ -305,6 +340,16 @@ const styles = StyleSheet.create({
   movConfirmarEntrada: { backgroundColor: '#2E7D32' },
   movConfirmarSalida: { backgroundColor: '#C62828' },
   movConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  // Revisión
+  revBox: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, padding: 14, borderWidth: 1 },
+  revBoxOk: { backgroundColor: '#E8F5E9', borderColor: '#A5D6A7' },
+  revBoxPend: { backgroundColor: '#FFF3E0', borderColor: '#FFCC80' },
+  revEstado: { fontSize: 15, fontWeight: '800' },
+  revSub: { fontSize: 12, color: '#666', marginTop: 3 },
+  revBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, minWidth: 120, alignItems: 'center' },
+  revBtnOk: { backgroundColor: '#2E7D32' },
+  revBtnPend: { backgroundColor: '#E65100' },
+  revBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   // Contenido
   seccion: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5, marginBottom: 10, marginTop: 18 },
   foto: { width: '100%', height: 220, borderRadius: 14, marginBottom: 4, backgroundColor: '#e0e0e0' },

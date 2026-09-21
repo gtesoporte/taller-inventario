@@ -30,11 +30,26 @@ export const getParte = async (id) => {
 export const addParte = async (data) => {
   const { existenciaActual, ...resto } = data;
   return addDoc(collection(db, 'partes'), {
+    estadoRevision: 'pendiente',
     ...resto,
     existencia: existenciaActual ?? data.existencia ?? 0,
     creadoEn: new Date().toISOString(),
     actualizadoEn: new Date().toISOString(),
   });
+};
+
+// Revisión de refacciones: 'pendiente' (default, también para las que no tienen el campo) | 'revisada'.
+// No toca actualizadoEn/actualizadoPor: revisar una pieza no es editar su ficha.
+export const marcarRevisionParte = async (id, revisada, perfil) => {
+  const cambios = revisada
+    ? {
+        estadoRevision: 'revisada',
+        revisadaPor: perfil?.nombre || perfil?.email || 'Sistema',
+        revisadaEn: new Date().toISOString(),
+      }
+    : { estadoRevision: 'pendiente', revisadaPor: null, revisadaEn: null };
+  await updateDoc(doc(db, 'partes', id), cambios);
+  return cambios;
 };
 
 export const updateParte = async (id, data) => {
@@ -294,6 +309,7 @@ export const CAJUELAS_LISTA = [
   { id: 'autoscan',     nombre: 'AUTOSCAN' },
   { id: 'minividas',    nombre: 'MINIVIDAS' },
   { id: 'micros',       nombre: 'MICROS' },
+  { id: 'sc-120',       nombre: 'SC-120' },
 ];
 
 export const RAZONES_CAJUELA = [

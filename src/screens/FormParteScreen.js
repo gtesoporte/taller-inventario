@@ -8,6 +8,7 @@ import TextInput from '../components/UpperTextInput';
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import ImagenViewer from '../components/ImagenViewer';
+import Dropdown from '../components/Dropdown';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 
@@ -121,22 +122,16 @@ export default function FormParteScreen({ navigation, route }) {
         </Campo>
 
         <Campo label="FABRICANTE">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {fabricantes.map(f => (
-                <TouchableOpacity
-                  key={f}
-                  style={[styles.chip, fabricante === f && styles.chipActive]}
-                  onPress={() => setFabricante(prev => prev === f ? '' : f)}
-                >
-                  <Text style={[styles.chipText, fabricante === f && styles.chipTextActive]}>{f}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-          {fabricante && !fabricantes.includes(fabricante) && (
-            <Text style={styles.customHint}>Fabricante: {fabricante}</Text>
-          )}
+          <Dropdown
+            value={fabricante}
+            titulo="SELECCIONA UN FABRICANTE"
+            opciones={[
+              { value: '', label: 'Sin fabricante' },
+              ...(fabricante && !fabricantes.includes(fabricante) ? [fabricante] : []),
+              ...fabricantes,
+            ]}
+            onChange={setFabricante}
+          />
         </Campo>
 
         <Campo label="UBICACIÓN">

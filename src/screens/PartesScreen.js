@@ -9,6 +9,7 @@ import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import DrawerMenu from '../components/DrawerMenu';
+import Dropdown from '../components/Dropdown';
 
 export default function PartesScreen({ navigation }) {
   const { perfil } = useAuth();
@@ -17,6 +18,7 @@ export default function PartesScreen({ navigation }) {
   const [fabricantes, setFabricantes] = useState(['Todos']);
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
+  const [revision, setRevision] = useState('todas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +35,12 @@ export default function PartesScreen({ navigation }) {
       : fabricante === 'Sin fabricante'
         ? !p.fabricante || p.fabricante.trim() === ''
         : p.fabricante?.toUpperCase() === fabricante;
-    return matchTexto && matchFab;
+    const matchRev = revision === 'todas'
+      ? true
+      : revision === 'revisada'
+        ? p.estadoRevision === 'revisada'
+        : p.estadoRevision !== 'revisada';
+    return matchTexto && matchFab && matchRev;
   });
 
   const grupos = partesFiltradas.reduce((acc, p) => {
@@ -97,24 +104,26 @@ export default function PartesScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
-      {/* Chips de fabricante — wrapped para web */}
-      <View style={styles.chipsContainer}>
-        {fabricantes.map(fab => (
-          <TouchableOpacity
-            key={fab}
-            style={[styles.chip, fabricante === fab && styles.chipActive]}
-            onPress={() => setFabricante(fab)}
-          >
-            <Text style={[styles.chipText, fabricante === fab && styles.chipTextActive]}>{fab}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          key="sin-fabricante"
-          style={[styles.chip, styles.chipSinFab, fabricante === 'Sin fabricante' && styles.chipActive]}
-          onPress={() => setFabricante(fabricante === 'Sin fabricante' ? 'Todos' : 'Sin fabricante')}
-        >
-          <Text style={[styles.chipText, fabricante === 'Sin fabricante' && styles.chipTextActive]}>Sin fabricante</Text>
-        </TouchableOpacity>
+      {/* Filtros: marca y estado de revisión */}
+      <View style={styles.filtrosRow}>
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={fabricante}
+          titulo="FILTRAR POR MARCA"
+          opciones={[...fabricantes, 'Sin fabricante']}
+          onChange={setFabricante}
+        />
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={revision}
+          titulo="FILTRAR POR REVISIÓN"
+          opciones={[
+            { value: 'todas', label: 'Todas' },
+            { value: 'pendiente', label: '⏳ Pendientes de revisar' },
+            { value: 'revisada', label: '✅ Revisadas' },
+          ]}
+          onChange={setRevision}
+        />
       </View>
 
       {/* Lista agrupada */}
@@ -141,6 +150,10 @@ export default function PartesScreen({ navigation }) {
                     {parte.fabricante
                       ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{parte.fabricante.toUpperCase()}</Text></View>
                       : null
+                    }
+                    {parte.estadoRevision === 'revisada'
+                      ? <View style={[styles.revBadge, styles.revBadgeOk]}><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>✅ Revisada</Text></View>
+                      : <View style={[styles.revBadge, styles.revBadgePend]}><Text style={[styles.revBadgeText, { color: '#E65100' }]}>⏳ Pendiente</Text></View>
                     }
                   </View>
                 </View>
@@ -184,12 +197,12 @@ const styles = StyleSheet.create({
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
-  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginBottom: 12 },
-  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
-  chipSinFab: { borderStyle: 'dashed', borderColor: '#bbb' },
-  chipActive: { backgroundColor: AZUL, borderColor: AZUL },
-  chipText: { fontSize: 12, fontWeight: '600', color: '#555' },
-  chipTextActive: { color: '#fff' },
+  filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
+  filtroDropdown: { flex: 1 },
+  revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  revBadgeOk: { backgroundColor: '#E8F5E9' },
+  revBadgePend: { backgroundColor: '#FFF3E0' },
+  revBadgeText: { fontSize: 10, fontWeight: '700' },
   grupoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 6 },
   grupoNombre: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
   grupoBadge: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
