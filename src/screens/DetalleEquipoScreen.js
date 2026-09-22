@@ -7,7 +7,7 @@ import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import {
   getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento,
-  addEquipoSalidaCompleta, CLASIFICACIONES_SALIDA_EQUIPO,
+  addEquipoSalidaCompleta, CLASIFICACIONES_SALIDA_EQUIPO, marcarRevisionEquipo,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import ImagenViewer from '../components/ImagenViewer';
@@ -51,6 +51,9 @@ export default function DetalleEquipoScreen({ navigation, route }) {
   const [salidaClasificacion, setSalidaClasificacion] = useState('');
   const [guardandoSalida, setGuardandoSalida] = useState(false);
   const [salidaError, setSalidaError] = useState('');
+
+  // Revisión
+  const [guardandoRev, setGuardandoRev] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -110,6 +113,15 @@ export default function DetalleEquipoScreen({ navigation, route }) {
     setGuardandoSalida(false);
   };
 
+  const cambiarRevision = async (revisada) => {
+    setGuardandoRev(true);
+    try {
+      const cambios = await marcarRevisionEquipo(id, revisada, perfil);
+      setEquipo(prev => ({ ...prev, ...cambios }));
+    } catch {}
+    setGuardandoRev(false);
+  };
+
   const handleEliminar = async () => {
     setEliminando(true);
     try {
@@ -136,6 +148,8 @@ export default function DetalleEquipoScreen({ navigation, route }) {
       </View>
     );
   }
+
+  const revisada = equipo.estadoRevision === 'revisada';
 
   return (
     <View style={styles.container}>
@@ -211,6 +225,28 @@ export default function DetalleEquipoScreen({ navigation, route }) {
             </View>
           </View>
         )}
+
+        {/* Revisión */}
+        <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
+              {revisada ? '✅ Revisado' : '⏳ Pendiente de revisar'}
+            </Text>
+            {revisada && equipo.revisadaPor ? (
+              <Text style={styles.revSub}>{equipo.revisadaPor} · {formatFecha(equipo.revisadaEn)}</Text>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            style={[styles.revBtn, revisada ? styles.revBtnPend : styles.revBtnOk]}
+            onPress={() => cambiarRevision(!revisada)}
+            disabled={guardandoRev}
+          >
+            {guardandoRev
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.revBtnText}>{revisada ? 'Marcar pendiente' : 'Marcar revisado'}</Text>
+            }
+          </TouchableOpacity>
+        </View>
 
         {/* Foto */}
         {equipo.foto ? (
@@ -421,6 +457,16 @@ const styles = StyleSheet.create({
   fabBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   foto: { width: '100%', height: 220, borderRadius: 16, marginBottom: 16, backgroundColor: '#e0e0e0' },
   seccion: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16 },
+  // Revisión
+  revBox: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 16, borderWidth: 1 },
+  revBoxOk: { backgroundColor: '#E8F5E9', borderColor: '#A5D6A7' },
+  revBoxPend: { backgroundColor: '#FFF3E0', borderColor: '#FFCC80' },
+  revEstado: { fontSize: 15, fontWeight: '800' },
+  revSub: { fontSize: 12, color: '#666', marginTop: 3 },
+  revBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, minWidth: 120, alignItems: 'center' },
+  revBtnOk: { backgroundColor: '#2E7D32' },
+  revBtnPend: { backgroundColor: '#E65100' },
+  revBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   // Movimientos section
   movHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   movTitulo: { fontSize: 14, fontWeight: '800', color: '#1a1a2e' },

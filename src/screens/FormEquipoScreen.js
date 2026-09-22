@@ -8,6 +8,13 @@ import TextInput from '../components/UpperTextInput';
 import { addEquipo, updateEquipo, suscribirFabricantes, getUbicaciones } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import ImagenViewer from '../components/ImagenViewer';
+import Dropdown from '../components/Dropdown';
+
+const CLASIFICACIONES = [
+  { value: 'hueso', label: '💀 Hueso' },
+  { value: 'reacondicionamiento', label: '🔧 Reacondicionamiento' },
+  { value: 'prestamo', label: '🤝 Préstamo' },
+];
 
 export default function FormEquipoScreen({ navigation, route }) {
   const { id, equipo } = route?.params || {};
@@ -109,24 +116,13 @@ export default function FormEquipoScreen({ navigation, route }) {
         </Campo>
 
         <Campo label="CLASIFICACIÓN">
-          <View style={styles.chipsWrap}>
-            {[
-              { id: 'hueso', label: '💀 Hueso', color: '#E53935' },
-              { id: 'reacondicionamiento', label: '🔧 Reacondicionamiento', color: '#1565C0' },
-              { id: 'prestamo', label: '🤝 Préstamo', color: '#2E7D32' },
-            ].map(c => (
-              <TouchableOpacity
-                key={c.id}
-                style={[
-                  styles.chip,
-                  clasificacion === c.id && { backgroundColor: c.color, borderColor: c.color },
-                ]}
-                onPress={() => setClasificacion(prev => prev === c.id ? '' : c.id)}
-              >
-                <Text style={[styles.chipText, clasificacion === c.id && styles.chipTextActive]}>{c.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Dropdown
+            value={clasificacion}
+            titulo="SELECCIONA UNA CLASIFICACIÓN"
+            placeholder="Sin clasificación"
+            opciones={[{ value: '', label: 'Sin clasificación' }, ...CLASIFICACIONES]}
+            onChange={setClasificacion}
+          />
         </Campo>
 
         <Campo label="NÚMERO DE SERIE">

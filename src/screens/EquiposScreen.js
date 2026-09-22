@@ -6,6 +6,7 @@ import {
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirEquipos, suscribirFabricantes } from '../config/firestore';
+import Dropdown from '../components/Dropdown';
 
 export default function EquiposScreen({ navigation }) {
   const [equipos, setEquipos] = useState([]);
@@ -13,6 +14,7 @@ export default function EquiposScreen({ navigation }) {
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
   const [clasificacion, setClasificacion] = useState('');
+  const [revision, setRevision] = useState('todas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +41,12 @@ export default function EquiposScreen({ navigation }) {
         ? !e.fabricante || e.fabricante.trim() === ''
         : e.fabricante?.toUpperCase() === fabricante;
     const matchClasif = !clasificacion || e.clasificacion === clasificacion;
-    return matchTexto && matchFab && matchClasif;
+    const matchRev = revision === 'todas'
+      ? true
+      : revision === 'revisada'
+        ? e.estadoRevision === 'revisada'
+        : e.estadoRevision !== 'revisada';
+    return matchTexto && matchFab && matchClasif && matchRev;
   });
 
   const grupos = equiposFiltrados.reduce((acc, e) => {
@@ -96,17 +103,30 @@ export default function EquiposScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
-      {/* Chips de clasificación */}
-      <View style={styles.chipsContainer}>
-        {Object.entries(CLASIF_MAP).map(([id, { label, color }]) => (
-          <TouchableOpacity
-            key={id}
-            style={[styles.chip, clasificacion === id && { backgroundColor: color, borderColor: color }]}
-            onPress={() => setClasificacion(prev => prev === id ? '' : id)}
-          >
-            <Text style={[styles.chipText, clasificacion === id && styles.chipTextActive]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
+      {/* Filtros: clasificación y revisión */}
+      <View style={styles.filtrosRow}>
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={clasificacion}
+          titulo="FILTRAR POR CLASIFICACIÓN"
+          placeholder="Todas las clasificaciones"
+          opciones={[
+            { value: '', label: 'Todas las clasificaciones' },
+            ...Object.entries(CLASIF_MAP).map(([id, { label }]) => ({ value: id, label })),
+          ]}
+          onChange={setClasificacion}
+        />
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={revision}
+          titulo="FILTRAR POR REVISIÓN"
+          opciones={[
+            { value: 'todas', label: 'Todas' },
+            { value: 'pendiente', label: '⏳ Pendientes de revisar' },
+            { value: 'revisada', label: '✅ Revisadas' },
+          ]}
+          onChange={setRevision}
+        />
       </View>
 
       {/* Chips de fabricante */}
@@ -168,6 +188,10 @@ export default function EquiposScreen({ navigation }) {
                         <Text style={styles.fabBadgeText}>{equipo.estadoSalida === 'desecho' ? '🗑️ Desecho' : '📦 Almacén'}</Text>
                       </View>
                     )}
+                    {equipo.estadoRevision === 'revisada'
+                      ? <View style={[styles.revBadge, styles.revBadgeOk]}><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>✅ Revisado</Text></View>
+                      : <View style={[styles.revBadge, styles.revBadgePend]}><Text style={[styles.revBadgeText, { color: '#E65100' }]}>⏳ Pendiente</Text></View>
+                    }
                   </View>
                 </View>
                 <Text style={styles.cardArrow}>›</Text>
@@ -204,6 +228,12 @@ const styles = StyleSheet.create({
   nuevaBtn: { backgroundColor: '#1565C0', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
+  filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
+  filtroDropdown: { flex: 1 },
+  revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 6 },
+  revBadgeOk: { backgroundColor: '#E8F5E9' },
+  revBadgePend: { backgroundColor: '#FFF3E0' },
+  revBadgeText: { fontSize: 10, fontWeight: '700' },
   chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginBottom: 12 },
   chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
   chipSinFab: { borderStyle: 'dashed', borderColor: '#bbb' },

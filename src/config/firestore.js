@@ -474,10 +474,24 @@ export const getEquipo = async (id) => {
 
 export const addEquipo = async (data) => {
   return addDoc(collection(db, 'equipos'), {
+    estadoRevision: 'pendiente',
     ...data,
     creadoEn: new Date().toISOString(),
     actualizadoEn: new Date().toISOString(),
   });
+};
+
+// Mismo esquema que marcarRevisionParte: 'pendiente' (default) | 'revisada'.
+export const marcarRevisionEquipo = async (id, revisada, perfil) => {
+  const cambios = revisada
+    ? {
+        estadoRevision: 'revisada',
+        revisadaPor: perfil?.nombre || perfil?.email || 'Sistema',
+        revisadaEn: new Date().toISOString(),
+      }
+    : { estadoRevision: 'pendiente', revisadaPor: null, revisadaEn: null };
+  await updateDoc(doc(db, 'equipos', id), cambios);
+  return cambios;
 };
 
 export const updateEquipo = async (id, data) => {
