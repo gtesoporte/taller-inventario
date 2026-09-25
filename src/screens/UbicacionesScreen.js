@@ -10,6 +10,7 @@ import { db } from '../config/firebase';
 import { getUbicaciones, addUbicacion, deleteUbicacion } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
+import { mostrarAlerta } from '../utils/confirmar';
 
 export default function UbicacionesScreen({ navigation }) {
   const { perfil } = useAuth();
@@ -100,7 +101,11 @@ export default function UbicacionesScreen({ navigation }) {
     setGuardando(false);
   };
 
-  const abrirSubdividir = (item) => {
+  const pedirSubdividir = (item) => {
+    if (!puedeSubdividir) {
+      mostrarAlerta('SOLO ADMINISTRADORES', 'TU USUARIO NO ES ADMINISTRADOR, POR ESO NO PUEDES CREAR SUBDIVISIONES. PÍDELE A UN ADMINISTRADOR QUE CAMBIE TU ROL EN LA SECCIÓN DE ADMINISTRACIÓN.');
+      return;
+    }
     setSubdividiendoId(subdividiendoId === item.id ? null : item.id);
     setSubCantidad('4');
     setSubError('');
@@ -284,21 +289,27 @@ export default function UbicacionesScreen({ navigation }) {
                 </TouchableOpacity>
 
                 {/* Info — navega a refacciones */}
-                <TouchableOpacity
-                  style={styles.cardInfo}
-                  onPress={() => navigation.navigate('EscanearQR', { ubicacionInicial: item.nombre })}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.cardNombre}>{item.padre ? '↳ ' : ''}{item.nombre}</Text>
-                  <Text style={styles.cardSub}>
-                    {item.refacciones + item.subRefacciones} refacción{item.refacciones + item.subRefacciones !== 1 ? 'es' : ''} · {item.piezas + item.subPiezas} pz
-                  </Text>
-                  {tieneSubs ? (
-                    <Text style={styles.cardSubDetalle}>
-                      {item.refacciones} en {item.nombre} · {item.subRefacciones} en subdivisiones
+                <View style={styles.cardInfo}>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('EscanearQR', { ubicacionInicial: item.nombre })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.cardNombre}>{item.padre ? '↳ ' : ''}{item.nombre}</Text>
+                    <Text style={styles.cardSub}>
+                      {item.refacciones + item.subRefacciones} refacción{item.refacciones + item.subRefacciones !== 1 ? 'es' : ''} · {item.piezas + item.subPiezas} pz
                     </Text>
-                  ) : null}
-                </TouchableOpacity>
+                    {tieneSubs ? (
+                      <Text style={styles.cardSubDetalle}>
+                        {item.refacciones} en {item.nombre} · {item.subRefacciones} en subdivisiones
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                  {!item.padre && (
+                    <TouchableOpacity style={styles.linkSubdividir} onPress={() => pedirSubdividir(item)}>
+                      <Text style={styles.linkSubdividirText}>＋ Subdividir {item.nombre}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
                 {/* Acciones */}
                 {confirmDelete === item.id ? (
@@ -324,11 +335,6 @@ export default function UbicacionesScreen({ navigation }) {
                   </View>
                 ) : (
                   <View style={styles.cardBtns}>
-                    {puedeSubdividir && !item.padre && (
-                      <TouchableOpacity style={styles.btnSubdividir} onPress={() => abrirSubdividir(item)}>
-                        <Text style={{ fontSize: 15 }}>🗂️</Text>
-                      </TouchableOpacity>
-                    )}
                     <TouchableOpacity style={styles.btnPrint} onPress={() => imprimirUno(item.nombre)}>
                       <Text style={{ fontSize: 15 }}>🖨️</Text>
                     </TouchableOpacity>
@@ -422,7 +428,8 @@ const styles = StyleSheet.create({
   subWrap: { marginLeft: 22 },
   cardHija: { borderLeftWidth: 3, borderLeftColor: '#90CAF9', backgroundColor: '#FAFCFF' },
   cardSubDetalle: { fontSize: 11, color: '#1976D2', marginTop: 2, fontWeight: '600' },
-  btnSubdividir: { backgroundColor: '#E3F2FD', borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#90CAF9' },
+  linkSubdividir: { alignSelf: 'flex-start', marginTop: 8, backgroundColor: '#E3F2FD', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#90CAF9' },
+  linkSubdividirText: { fontSize: 12, fontWeight: '700', color: '#1565C0' },
   subPanel: { backgroundColor: '#E3F2FD', borderRadius: 12, padding: 14, marginBottom: 10, marginTop: -4, borderWidth: 1, borderColor: '#90CAF9' },
   subPanelTitulo: { fontSize: 13, fontWeight: '800', color: '#0B2447' },
   subPanelHint: { fontSize: 12, color: '#555', marginTop: 4, marginBottom: 10 },

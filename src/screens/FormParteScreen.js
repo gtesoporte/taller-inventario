@@ -66,8 +66,20 @@ export default function FormParteScreen({ navigation, route }) {
     }
   };
 
-  const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean);
+  const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'es'));
   const chipUbicActivo = ubicacionesNombres.includes(ubicacion);
+  // Las subdivisiones (A1.1…) se marcan con ↳ para distinguirlas de su ubicación principal.
+  const esSubdivision = (n) => {
+    const i = n.lastIndexOf('.');
+    return i > 0 && ubicacionesNombres.includes(n.slice(0, i));
+  };
+  const opcionesUbicacion = [
+    { value: '', label: 'Sin ubicación' },
+    // Ubicación escrita a mano (no está en la lista): se muestra para que no "desaparezca" al editar.
+    ...(ubicacion && !chipUbicActivo ? [{ value: ubicacion, label: ubicacion }] : []),
+    ...ubicacionesNombres.map(n => ({ value: n, label: esSubdivision(n) ? `↳ ${n}` : n })),
+  ];
 
   if (!esAdmin(perfil)) {
     return (
@@ -135,29 +147,20 @@ export default function FormParteScreen({ navigation, route }) {
         </Campo>
 
         <Campo label="UBICACIÓN">
-          {ubicacionesNombres.length > 0 && (
-            <View style={styles.chipsWrap}>
-              {ubicacionesNombres.map(u => (
-                <TouchableOpacity
-                  key={u}
-                  style={[styles.chip, ubicacion === u && styles.chipActive]}
-                  onPress={() => setUbicacion(prev => prev === u ? '' : u)}
-                >
-                  <Text style={[styles.chipText, ubicacion === u && styles.chipTextActive]}>📍 {u}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <Dropdown
+            value={ubicacion}
+            titulo="SELECCIONA UNA UBICACIÓN"
+            placeholder="Sin ubicación"
+            opciones={opcionesUbicacion}
+            onChange={setUbicacion}
+          />
           <TextInput
             style={[styles.input, { marginTop: 8 }]}
             value={ubicacion}
             onChangeText={setUbicacion}
-            placeholder={ubicacionesNombres.length > 0 ? 'O escribe una nueva ubicación...' : 'Ej: Estante A1'}
+            placeholder="O escribe una ubicación que no esté en la lista..."
             placeholderTextColor="#bbb"
           />
-          {chipUbicActivo && (
-            <Text style={styles.customHint}>📍 Ubicación seleccionada: {ubicacion}</Text>
-          )}
         </Campo>
 
         <Campo label={esEdicion ? 'EXISTENCIA' : 'EXISTENCIA INICIAL'}>
@@ -250,12 +253,6 @@ const styles = StyleSheet.create({
   body: { flex: 1, padding: 16 },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
   inputMultiline: { minHeight: 90, paddingTop: 12 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
-  chipActive: { backgroundColor: AZUL, borderColor: AZUL },
-  chipText: { fontSize: 12, fontWeight: '700', color: '#555' },
-  chipTextActive: { color: '#fff' },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  customHint: { fontSize: 12, color: '#888', marginTop: 6, fontStyle: 'italic' },
   errorBox: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FFCDD2' },
   errorText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   exitoBox: { backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#A5D6A7' },
