@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import Text from './UpperText';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
+import { VERSION } from '../config/version';
 
 const SECCIONES = [
   { tab: 'Inventario', icon: '📦', label: 'Inventario' },
@@ -64,6 +65,7 @@ export default function DrawerMenu({ visible, onClose }) {
             <Text style={styles.salirIcon}>🚪</Text>
             <Text style={styles.salirText}>Cerrar sesión</Text>
           </TouchableOpacity>
+          <Text style={styles.version}>Versión {VERSION}</Text>
         </View>
 
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
@@ -96,4 +98,5 @@ const styles = StyleSheet.create({
   salirBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 16 },
   salirIcon: { fontSize: 18, width: 24, textAlign: 'center' },
   salirText: { fontSize: 13, fontWeight: '700', color: '#C62828' },
+  version: { fontSize: 10, color: '#aaa', textAlign: 'center', paddingBottom: 12 },
 });

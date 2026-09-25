@@ -1,5 +1,5 @@
 [build]
-  command = "npx expo export --platform web"
+  command = "EXPO_PUBLIC_BUILD=$COMMIT_REF npx expo export --platform web"
   publish = "dist"
 
 [[redirects]]

@@ -23,6 +23,7 @@ export default function UbicacionesScreen({ navigation }) {
   const [filtro, setFiltro] = useState('');
   const [nueva, setNueva] = useState('');
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [eliminando, setEliminando] = useState(false);
@@ -36,7 +37,7 @@ export default function UbicacionesScreen({ navigation }) {
         getDocs(collection(db, 'partes')),
       ]);
       const partes = partesSnap.docs.map(d => d.data());
-      const stock = (p) => p.existencia ?? p.existenciaActual ?? p.cantidad ?? 0;
+      const stock = (p) => Number(p.existencia ?? p.existenciaActual ?? p.cantidad ?? 0) || 0;
       const nombres = new Set(ubics.map(u => u.nombre));
       // Una subdivisión se llama "<padre>.<n>" (ej. A1.2); es hija solo si el padre existe.
       const padreDe = (nombre) => {
@@ -47,7 +48,7 @@ export default function UbicacionesScreen({ navigation }) {
       };
       const ubicsConConteo = ubics.map(u => {
         const enUbic = partes.filter(p => p.ubicacion === u.nombre);
-        const enSubs = partes.filter(p => (p.ubicacion || '').startsWith(`${u.nombre}.`));
+        const enSubs = partes.filter(p => String(p.ubicacion ?? '').startsWith(`${u.nombre}.`));
         return {
           ...u,
           refacciones: enUbic.length,
@@ -57,9 +58,13 @@ export default function UbicacionesScreen({ navigation }) {
           padre: padreDe(u.nombre),
         };
       });
-      ubicsConConteo.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+      ubicsConConteo.sort((a, b) => String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''), 'es'));
       setUbicaciones(ubicsConConteo);
-    } catch {}
+      setErrorCarga('');
+    } catch (err) {
+      console.error('Error al cargar ubicaciones:', err);
+      setErrorCarga(err?.message || 'No se pudieron cargar las ubicaciones.');
+    }
     setLoading(false);
   }, []);
 
@@ -224,6 +229,12 @@ export default function UbicacionesScreen({ navigation }) {
       </View>
 
       <View style={styles.body}>
+        {!!errorCarga && (
+          <TouchableOpacity style={styles.errorCarga} onPress={cargar}>
+            <Text style={styles.errorCargaText}>⚠️ No se pudieron cargar las ubicaciones: {errorCarga}. Toca para reintentar.</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Nueva ubicación */}
         <View style={styles.nuevaBox}>
           <Text style={styles.nuevaLabel}>NUEVA UBICACIÓN</Text>
@@ -425,6 +436,8 @@ const styles = StyleSheet.create({
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#ccc', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   checkboxActive: { backgroundColor: '#1976D2', borderColor: '#1976D2' },
   checkmark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  errorCarga: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FFCDD2' },
+  errorCargaText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   subWrap: { marginLeft: 22 },
   cardHija: { borderLeftWidth: 3, borderLeftColor: '#90CAF9', backgroundColor: '#FAFCFF' },
   cardSubDetalle: { fontSize: 11, color: '#1976D2', marginTop: 2, fontWeight: '600' },

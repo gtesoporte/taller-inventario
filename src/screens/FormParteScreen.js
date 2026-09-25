@@ -66,7 +66,7 @@ export default function FormParteScreen({ navigation, route }) {
     }
   };
 
-  const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean)
+  const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean).map(String)
     .sort((a, b) => a.localeCompare(b, 'es'));
   const chipUbicActivo = ubicacionesNombres.includes(ubicacion);
   // Las subdivisiones (A1.1…) se marcan con ↳ para distinguirlas de su ubicación principal.
