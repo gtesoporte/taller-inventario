@@ -8,8 +8,16 @@ import TextInput from '../components/UpperTextInput';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getUbicaciones, addUbicacion, deleteUbicacion } from '../config/firestore';
+import { useAuth } from '../context/AuthContext';
+import { esAdmin } from '../utils/permisos';
 
 export default function UbicacionesScreen({ navigation }) {
+  const { perfil } = useAuth();
+  const puedeSubdividir = esAdmin(perfil);
+  const [subdividiendoId, setSubdividiendoId] = useState(null);
+  const [subCantidad, setSubCantidad] = useState('4');
+  const [creandoSubs, setCreandoSubs] = useState(false);
+  const [subError, setSubError] = useState('');
   const [ubicaciones, setUbicaciones] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [nueva, setNueva] = useState('');
@@ -27,13 +35,26 @@ export default function UbicacionesScreen({ navigation }) {
         getDocs(collection(db, 'partes')),
       ]);
       const partes = partesSnap.docs.map(d => d.data());
+      const stock = (p) => p.existencia ?? p.existenciaActual ?? p.cantidad ?? 0;
+      const nombres = new Set(ubics.map(u => u.nombre));
+      // Una subdivisión se llama "<padre>.<n>" (ej. A1.2); es hija solo si el padre existe.
+      const padreDe = (nombre) => {
+        const i = (nombre || '').lastIndexOf('.');
+        if (i <= 0) return null;
+        const padre = nombre.slice(0, i);
+        return nombres.has(padre) ? padre : null;
+      };
       const ubicsConConteo = ubics.map(u => {
         const enUbic = partes.filter(p => p.ubicacion === u.nombre);
-        const piezas = enUbic.reduce(
-          (sum, p) => sum + (p.existencia ?? p.existenciaActual ?? p.cantidad ?? 0),
-          0
-        );
-        return { ...u, refacciones: enUbic.length, piezas };
+        const enSubs = partes.filter(p => (p.ubicacion || '').startsWith(`${u.nombre}.`));
+        return {
+          ...u,
+          refacciones: enUbic.length,
+          piezas: enUbic.reduce((sum, p) => sum + stock(p), 0),
+          subRefacciones: enSubs.length,
+          subPiezas: enSubs.reduce((sum, p) => sum + stock(p), 0),
+          padre: padreDe(u.nombre),
+        };
       });
       ubicsConConteo.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
       setUbicaciones(ubicsConConteo);
@@ -77,6 +98,32 @@ export default function UbicacionesScreen({ navigation }) {
       await cargar();
     } catch {}
     setGuardando(false);
+  };
+
+  const abrirSubdividir = (item) => {
+    setSubdividiendoId(subdividiendoId === item.id ? null : item.id);
+    setSubCantidad('4');
+    setSubError('');
+  };
+
+  const crearSubdivisiones = async (item) => {
+    const n = parseInt(subCantidad, 10);
+    if (!n || n < 1 || n > 20) { setSubError('Escribe un número entre 1 y 20.'); return; }
+    const existentes = new Set(ubicaciones.map(u => u.nombre));
+    setCreandoSubs(true);
+    setSubError('');
+    try {
+      for (let i = 1; i <= n; i++) {
+        const nombre = `${item.nombre}.${i}`;
+        if (!existentes.has(nombre)) await addUbicacion(nombre);
+      }
+      setSubdividiendoId(null);
+      await cargar();
+    } catch {
+      setSubError('No se pudieron crear todas. Intenta de nuevo.');
+      await cargar();
+    }
+    setCreandoSubs(false);
   };
 
   const handleEliminar = async (item) => {
@@ -224,8 +271,10 @@ export default function UbicacionesScreen({ navigation }) {
           keyExtractor={item => item.id}
           renderItem={({ item }) => {
             const seleccionado = seleccionados.has(item.id);
+            const tieneSubs = item.subRefacciones > 0 || ubicaciones.some(u => u.padre === item.nombre);
             return (
-              <View style={[styles.card, seleccionado && styles.cardSelected]}>
+              <View style={item.padre ? styles.subWrap : null}>
+              <View style={[styles.card, item.padre && styles.cardHija, seleccionado && styles.cardSelected]}>
                 {/* Checkbox */}
                 <TouchableOpacity
                   style={[styles.checkbox, seleccionado && styles.checkboxActive]}
@@ -240,10 +289,15 @@ export default function UbicacionesScreen({ navigation }) {
                   onPress={() => navigation.navigate('EscanearQR', { ubicacionInicial: item.nombre })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cardNombre}>{item.nombre}</Text>
+                  <Text style={styles.cardNombre}>{item.padre ? '↳ ' : ''}{item.nombre}</Text>
                   <Text style={styles.cardSub}>
-                    {item.refacciones} refacción{item.refacciones !== 1 ? 'es' : ''} · {item.piezas} pz
+                    {item.refacciones + item.subRefacciones} refacción{item.refacciones + item.subRefacciones !== 1 ? 'es' : ''} · {item.piezas + item.subPiezas} pz
                   </Text>
+                  {tieneSubs ? (
+                    <Text style={styles.cardSubDetalle}>
+                      {item.refacciones} en {item.nombre} · {item.subRefacciones} en subdivisiones
+                    </Text>
+                  ) : null}
                 </TouchableOpacity>
 
                 {/* Acciones */}
@@ -270,6 +324,11 @@ export default function UbicacionesScreen({ navigation }) {
                   </View>
                 ) : (
                   <View style={styles.cardBtns}>
+                    {puedeSubdividir && !item.padre && (
+                      <TouchableOpacity style={styles.btnSubdividir} onPress={() => abrirSubdividir(item)}>
+                        <Text style={{ fontSize: 15 }}>🗂️</Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity style={styles.btnPrint} onPress={() => imprimirUno(item.nombre)}>
                       <Text style={{ fontSize: 15 }}>🖨️</Text>
                     </TouchableOpacity>
@@ -278,6 +337,35 @@ export default function UbicacionesScreen({ navigation }) {
                     </TouchableOpacity>
                   </View>
                 )}
+              </View>
+
+              {subdividiendoId === item.id && (
+                <View style={styles.subPanel}>
+                  <Text style={styles.subPanelTitulo}>Subdividir {item.nombre}</Text>
+                  <Text style={styles.subPanelHint}>
+                    Se crearán {item.nombre}.1, {item.nombre}.2… (las que ya existan se omiten).
+                  </Text>
+                  <View style={styles.subPanelRow}>
+                    <TextInput
+                      style={styles.subPanelInput}
+                      value={subCantidad}
+                      onChangeText={v => { setSubCantidad(v); setSubError(''); }}
+                      keyboardType="numeric"
+                      selectTextOnFocus
+                    />
+                    <TouchableOpacity style={styles.subPanelCancelar} onPress={() => setSubdividiendoId(null)} disabled={creandoSubs}>
+                      <Text style={styles.subPanelCancelarText}>Cancelar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.subPanelCrear} onPress={() => crearSubdivisiones(item)} disabled={creandoSubs}>
+                      {creandoSubs
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={styles.subPanelCrearText}>Crear</Text>
+                      }
+                    </TouchableOpacity>
+                  </View>
+                  {!!subError && <Text style={styles.subPanelError}>⚠️ {subError}</Text>}
+                </View>
+              )}
               </View>
             );
           }}
@@ -331,6 +419,20 @@ const styles = StyleSheet.create({
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#ccc', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   checkboxActive: { backgroundColor: '#1976D2', borderColor: '#1976D2' },
   checkmark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  subWrap: { marginLeft: 22 },
+  cardHija: { borderLeftWidth: 3, borderLeftColor: '#90CAF9', backgroundColor: '#FAFCFF' },
+  cardSubDetalle: { fontSize: 11, color: '#1976D2', marginTop: 2, fontWeight: '600' },
+  btnSubdividir: { backgroundColor: '#E3F2FD', borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#90CAF9' },
+  subPanel: { backgroundColor: '#E3F2FD', borderRadius: 12, padding: 14, marginBottom: 10, marginTop: -4, borderWidth: 1, borderColor: '#90CAF9' },
+  subPanelTitulo: { fontSize: 13, fontWeight: '800', color: '#0B2447' },
+  subPanelHint: { fontSize: 12, color: '#555', marginTop: 4, marginBottom: 10 },
+  subPanelRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  subPanelInput: { width: 60, backgroundColor: '#fff', borderRadius: 10, padding: 10, fontSize: 16, fontWeight: '800', textAlign: 'center', borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
+  subPanelCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 11, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
+  subPanelCancelarText: { color: '#555', fontWeight: '700', fontSize: 13 },
+  subPanelCrear: { flex: 1, backgroundColor: '#1976D2', borderRadius: 10, padding: 11, alignItems: 'center' },
+  subPanelCrearText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  subPanelError: { color: '#C62828', fontSize: 12, fontWeight: '600', marginTop: 8 },
   cardInfo: { flex: 1 },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSub: { fontSize: 12, color: '#888', marginTop: 2 },

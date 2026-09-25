@@ -80,7 +80,11 @@ export default function EscanearQRScreen({ navigation, route }) {
       const snap = await getDocs(collection(db, 'partes'));
       const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const ubic = nombre.toLowerCase().trim();
-      setPartes(todas.filter(p => (p.ubicacion || '').toLowerCase().trim() === ubic));
+      // Incluye las subdivisiones (A1 también muestra lo de A1.1, A1.2…)
+      setPartes(todas.filter(p => {
+        const u = (p.ubicacion || '').toLowerCase().trim();
+        return u === ubic || u.startsWith(`${ubic}.`);
+      }));
     } catch {
       setPartes([]);
     }
@@ -115,6 +119,9 @@ export default function EscanearQRScreen({ navigation, route }) {
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardNombre}>{item.nombre}</Text>
                     {item.codigo ? <Text style={styles.cardCodigo}>{item.codigo}</Text> : null}
+                    {item.ubicacion && item.ubicacion.toLowerCase().trim() !== ubicacion.toLowerCase().trim()
+                      ? <Text style={styles.cardCodigo}>📍 {item.ubicacion}</Text>
+                      : null}
                     {item.fabricante ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{item.fabricante.toUpperCase()}</Text></View> : null}
                   </View>
                   <View style={[styles.cantBadge, (item.existencia ?? item.existenciaActual ?? 0) <= 0 && styles.cantRed]}>
