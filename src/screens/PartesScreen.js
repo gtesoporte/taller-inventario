@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
-import { suscribirPartes, suscribirFabricantes } from '../config/firestore';
+import { suscribirPartes, suscribirFabricantes, getUbicaciones } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import DrawerMenu from '../components/DrawerMenu';
@@ -19,13 +19,27 @@ export default function PartesScreen({ navigation }) {
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
   const [revision, setRevision] = useState('todas');
+  const [ubicacion, setUbicacion] = useState('Todas');
+  const [ubicacionesRegistradas, setUbicacionesRegistradas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubFab = suscribirFabricantes(lista => setFabricantes(['Todos', ...lista]));
     const unsubPartes = suscribirPartes((data) => { setPartes(data); setLoading(false); });
+    getUbicaciones().then(setUbicacionesRegistradas).catch(() => {});
     return () => { unsubFab(); unsubPartes(); };
   }, []);
+
+  // Todas las ubicaciones posibles: las registradas en Ubicaciones + las que
+  // alguna refacción trae escritas a mano (así no "desaparecen" del filtro
+  // aunque nunca se hayan dado de alta formalmente).
+  const ubicacionesDisponibles = [...new Set([
+    ...ubicacionesRegistradas.map(u => u.nombre).filter(Boolean),
+    ...partes.map(p => p.ubicacion).filter(Boolean),
+  ])].sort((a, b) => String(a).localeCompare(String(b), 'es'));
+  const ubicacionesSinRegistrar = ubicacionesDisponibles.filter(
+    u => !ubicacionesRegistradas.some(r => r.nombre === u)
+  );
 
   const partesFiltradas = partes.filter(p => {
     const q = filtro.toLowerCase();
@@ -40,7 +54,12 @@ export default function PartesScreen({ navigation }) {
       : revision === 'revisada'
         ? p.estadoRevision === 'revisada'
         : p.estadoRevision !== 'revisada';
-    return matchTexto && matchFab && matchRev;
+    const matchUbic = ubicacion === 'Todas'
+      ? true
+      : ubicacion === 'Sin ubicación'
+        ? !p.ubicacion
+        : p.ubicacion === ubicacion;
+    return matchTexto && matchFab && matchRev && matchUbic;
   });
 
   const grupos = partesFiltradas.reduce((acc, p) => {
@@ -126,6 +145,23 @@ export default function PartesScreen({ navigation }) {
         />
       </View>
 
+      <Dropdown
+        style={styles.filtroUbicacion}
+        value={ubicacion}
+        titulo="FILTRAR POR UBICACIÓN"
+        opciones={['Todas', 'Sin ubicación', ...ubicacionesDisponibles]}
+        onChange={setUbicacion}
+      />
+
+      {ubicacionesSinRegistrar.length > 0 && (
+        <TouchableOpacity style={styles.avisoSinRegistrar} onPress={() => navigation.navigate('Ubicaciones')}>
+          <Text style={styles.avisoSinRegistrarText}>
+            ⚠️ {ubicacionesSinRegistrar.length} ubicación{ubicacionesSinRegistrar.length !== 1 ? 'es' : ''} solo escrita{ubicacionesSinRegistrar.length !== 1 ? 's' : ''} en refacciones,
+            sin registrar en 📱 Ubicaciones ({ubicacionesSinRegistrar.slice(0, 3).join(', ')}{ubicacionesSinRegistrar.length > 3 ? '…' : ''}). Toca para registrarlas.
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* Lista agrupada */}
       <FlatList
         data={Object.entries(grupos)}
@@ -197,8 +233,11 @@ const styles = StyleSheet.create({
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
-  filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
+  filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 10 },
   filtroDropdown: { flex: 1 },
+  filtroUbicacion: { marginHorizontal: 14, marginBottom: 12 },
+  avisoSinRegistrar: { backgroundColor: '#FFF3E0', borderRadius: 10, marginHorizontal: 14, marginBottom: 12, padding: 10, borderWidth: 1, borderColor: '#FFCC80' },
+  avisoSinRegistrarText: { fontSize: 11, color: '#E65100', fontWeight: '600', lineHeight: 16 },
   revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   revBadgeOk: { backgroundColor: '#E8F5E9' },
   revBadgePend: { backgroundColor: '#FFF3E0' },
