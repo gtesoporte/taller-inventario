@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
+import { Menu, Contact, Download, Building2, MapPin, User } from 'lucide-react-native';
 import Text from '../components/UpperText';
-import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { suscribirContactos, importarContactos } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
@@ -92,10 +93,13 @@ export default function ContactosScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>📇 Contactos</Text>
+            <View style={styles.headerTitleInnerRow}>
+              <Contact size={18} color="#fff" />
+              <Text style={styles.headerTitle}>Contactos</Text>
+            </View>
             <Text style={styles.headerSub}>{contactos.length} registrados</Text>
           </View>
         </View>
@@ -106,19 +110,21 @@ export default function ContactosScreen({ navigation }) {
           <TouchableOpacity style={styles.nuevaBtn} onPress={() => navigation.navigate('FormContacto')}>
             <Text style={styles.nuevaBtnText}>+ Nuevo contacto</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.importarBtn} onPress={importarExcel} disabled={importando}>
+          <TouchableOpacity style={[styles.importarBtn, styles.importarBtnRow]} onPress={importarExcel} disabled={importando}>
             {importando
               ? <ActivityIndicator color="#1565C0" size="small" />
-              : <Text style={styles.importarBtnText}>📥 Importar Excel</Text>
+              : <>
+                  <Download size={14} color="#1565C0" />
+                  <Text style={styles.importarBtnText}>Importar Excel</Text>
+                </>
             }
           </TouchableOpacity>
         </View>
       )}
 
-      <TextInput
+      <SearchInput
         style={styles.search}
-        placeholder="🔍  Buscar por nombre, ciudad, contacto o código..."
-        placeholderTextColor="#aaa"
+        placeholder="Buscar por nombre, ciudad, contacto o código..."
         value={filtro}
         onChangeText={setFiltro}
       />
@@ -133,12 +139,27 @@ export default function ContactosScreen({ navigation }) {
           >
             <View style={styles.cardBody}>
               <Text style={styles.cardNombre}>{item.nombre}</Text>
-              {item.activoFracttal ? <Text style={styles.cardSub}>🏢 {item.activoFracttal}</Text> : null}
+              {item.activoFracttal ? (
+                <View style={styles.iconTextRow}>
+                  <Building2 size={12} color="#1565C0" />
+                  <Text style={styles.cardSub}>{item.activoFracttal}</Text>
+                </View>
+              ) : null}
               <View style={styles.cardRow}>
-                {item.ciudad ? <Text style={styles.cardMeta}>📍 {item.ciudad}</Text> : null}
+                {item.ciudad ? (
+                  <View style={styles.iconTextRow}>
+                    <MapPin size={11} color="#888" />
+                    <Text style={styles.cardMeta}>{item.ciudad}</Text>
+                  </View>
+                ) : null}
                 {item.codigo ? <Text style={styles.cardMeta}>#{item.codigo}</Text> : null}
               </View>
-              {item.contacto ? <Text style={styles.cardMeta}>👤 {item.contacto}</Text> : null}
+              {item.contacto ? (
+                <View style={styles.iconTextRow}>
+                  <User size={11} color="#888" />
+                  <Text style={styles.cardMeta}>{item.contacto}</Text>
+                </View>
+              ) : null}
             </View>
             <Text style={styles.cardArrow}>›</Text>
           </TouchableOpacity>
@@ -161,13 +182,14 @@ const styles = StyleSheet.create({
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  headerTitleInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   adminBtnsRow: { flexDirection: 'row', gap: 10, marginHorizontal: 14, marginTop: 14 },
   nuevaBtn: { flex: 1, backgroundColor: '#1976D2', borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   importarBtn: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#1565C0' },
+  importarBtnRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   importarBtnText: { color: '#1565C0', fontWeight: '700', fontSize: 13 },
   search: { marginHorizontal: 14, marginTop: 12, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
   card: { flexDirection: 'row', backgroundColor: '#fff', marginBottom: 10, borderRadius: 14, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
@@ -175,6 +197,7 @@ const styles = StyleSheet.create({
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSub: { fontSize: 12, color: '#1565C0', fontWeight: '600' },
   cardRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  iconTextRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cardMeta: { fontSize: 12, color: '#888' },
   cardArrow: { fontSize: 24, color: '#ccc', marginLeft: 8 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 14 },

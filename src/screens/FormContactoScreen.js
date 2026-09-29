@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
+import { ArrowLeft, AlertTriangle, CheckCircle2 } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { addContacto, updateContacto } from '../config/firestore';
@@ -59,8 +60,9 @@ export default function FormContactoScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.volver}>← Volver</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.volver}>Volver</Text>
           </TouchableOpacity>
           <Text style={styles.titulo}>Acceso restringido</Text>
         </View>
@@ -76,8 +78,9 @@ export default function FormContactoScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Cancelar</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Cancelar</Text>
         </TouchableOpacity>
         <Text style={styles.titulo}>{esEdicion ? 'Editar contacto' : 'Nuevo contacto'}</Text>
       </View>
@@ -157,14 +160,16 @@ export default function FormContactoScreen({ navigation, route }) {
         </Campo>
 
         {!!error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+          <View style={[styles.errorBox, styles.errorBoxRow]}>
+            <AlertTriangle size={15} color="#C62828" />
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
         {guardado && (
-          <View style={styles.exitoBox}>
-            <Text style={styles.exitoText}>✅ {esEdicion ? 'Contacto actualizado.' : 'Contacto registrado.'}</Text>
+          <View style={[styles.exitoBox, styles.errorBoxRow]}>
+            <CheckCircle2 size={15} color="#2E7D32" />
+            <Text style={styles.exitoText}>{esEdicion ? 'Contacto actualizado.' : 'Contacto registrado.'}</Text>
           </View>
         )}
 
@@ -192,10 +197,12 @@ const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   body: { flex: 1, padding: 16 },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
+  errorBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   errorBox: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FFCDD2' },
   errorText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   exitoBox: { backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#A5D6A7' },

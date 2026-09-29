@@ -3,6 +3,7 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator,
 } from 'react-native';
+import { ArrowLeft, Factory } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { getFabricantes, addFabricante } from '../config/firestore';
@@ -37,10 +38,14 @@ export default function FabricantesScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Volver</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.75)" />
+          <Text style={styles.volver}>Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>🏭 Fabricantes</Text>
+        <View style={styles.tituloRow}>
+          <Factory size={20} color="#fff" />
+          <Text style={styles.titulo}>Fabricantes</Text>
+        </View>
         <Text style={styles.sub}>{fabricantes.length} registrados</Text>
       </View>
 
@@ -83,7 +88,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.75)', fontSize: 14, marginBottom: 8 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  volver: { color: 'rgba(255,255,255,0.75)', fontSize: 14 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
   body: { flex: 1, padding: 14 },

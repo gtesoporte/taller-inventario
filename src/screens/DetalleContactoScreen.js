@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking,
 } from 'react-native';
+import { ArrowLeft, Pencil, Trash2, Building2, Phone, Mail, Info } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { getContacto, deleteContacto } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -48,7 +49,10 @@ export default function DetalleContactoScreen({ route, navigation }) {
     return (
       <View style={styles.center}>
         <Text style={{ color: '#999', marginBottom: 16 }}>Contacto no encontrado.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}><Text style={{ color: '#1565C0' }}>← Volver</Text></TouchableOpacity>
+        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="#1565C0" />
+          <Text style={{ color: '#1565C0' }}>Volver</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -57,13 +61,15 @@ export default function DetalleContactoScreen({ route, navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.volver}>← Contactos</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={14} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.volver}>Contactos</Text>
           </TouchableOpacity>
           {puedeEditar && (
             <View style={styles.headerBtns}>
               <TouchableOpacity style={styles.editarBtn} onPress={() => navigation.navigate('FormContacto', { id, contacto })}>
-                <Text style={styles.editarText}>✏️ Editar</Text>
+                <Pencil size={13} color="#fff" />
+                <Text style={styles.editarText}>Editar</Text>
               </TouchableOpacity>
               {confirmEliminar ? (
                 <View style={styles.eliminarConfirm}>
@@ -76,33 +82,41 @@ export default function DetalleContactoScreen({ route, navigation }) {
                 </View>
               ) : (
                 <TouchableOpacity style={styles.eliminarBtn} onPress={() => setConfirmEliminar(true)}>
-                  <Text style={{ fontSize: 18 }}>🗑️</Text>
+                  <Trash2 size={16} color="#fff" />
                 </TouchableOpacity>
               )}
             </View>
           )}
         </View>
         <Text style={styles.nombre}>{contacto.nombre}</Text>
-        {contacto.activoFracttal ? <Text style={styles.subinfo}>🏢 {contacto.activoFracttal}</Text> : null}
+        {contacto.activoFracttal ? (
+          <View style={styles.subinfoRow}>
+            <Building2 size={12} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.subinfo}>{contacto.activoFracttal}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.accionesRow}>
         {contacto.telefono ? (
           <TouchableOpacity style={styles.accionBtn} onPress={() => Linking.openURL(`tel:${contacto.telefono.replace(/\s+/g, '')}`)}>
-            <Text style={styles.accionIcon}>📞</Text>
+            <Phone size={15} color="#1565C0" />
             <Text style={styles.accionText}>Llamar</Text>
           </TouchableOpacity>
         ) : null}
         {contacto.email ? (
           <TouchableOpacity style={styles.accionBtn} onPress={() => Linking.openURL(`mailto:${contacto.email}`)}>
-            <Text style={styles.accionIcon}>✉️</Text>
+            <Mail size={15} color="#1565C0" />
             <Text style={styles.accionText}>Correo</Text>
           </TouchableOpacity>
         ) : null}
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
-        <Text style={styles.seccion}>ℹ️ INFORMACIÓN</Text>
+        <View style={styles.seccionRow}>
+          <Info size={13} color="#555" />
+          <Text style={styles.seccion}>INFORMACIÓN</Text>
+        </View>
         <View style={styles.infoBox}>
           <InfoRow label="Código" value={contacto.codigo} />
           <InfoRow label="Ciudad" value={contacto.ciudad} />
@@ -122,9 +136,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   volver: { color: 'rgba(255,255,255,0.8)', fontSize: 15 },
   headerBtns: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  editarBtn: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  editarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   editarText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   eliminarBtn: { padding: 6 },
   eliminarConfirm: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
@@ -132,12 +147,13 @@ const styles = StyleSheet.create({
   eliminarSiText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   eliminarNoText: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', fontSize: 13 },
   nombre: { fontSize: 20, fontWeight: '900', color: '#fff' },
-  subinfo: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 6 },
+  subinfoRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
+  subinfo: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   accionesRow: { flexDirection: 'row', gap: 10, padding: 14, paddingBottom: 0 },
   accionBtn: { flex: 1, flexDirection: 'row', gap: 8, justifyContent: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
-  accionIcon: { fontSize: 16 },
   accionText: { fontSize: 13, fontWeight: '700', color: '#1565C0' },
-  seccion: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5, marginBottom: 10, marginTop: 4 },
+  seccionRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginTop: 4 },
+  seccion: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
   infoBox: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden' },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f3f3' },
   infoLabel: { fontSize: 14, color: '#666', flex: 1 },
