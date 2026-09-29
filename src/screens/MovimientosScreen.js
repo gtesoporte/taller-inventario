@@ -3,8 +3,9 @@ import {
   View, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { Menu, ClipboardList, ArrowUp, ArrowDown, Trash2, MapPin, User, MessageCircle } from 'lucide-react-native';
 import Text from '../components/UpperText';
-import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { suscribirMovimientos, deleteMovimiento } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import DrawerMenu from '../components/DrawerMenu';
@@ -80,9 +81,12 @@ export default function MovimientosScreen() {
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>📋 Movimientos</Text>
+          <View style={styles.headerTitleInnerRow}>
+            <ClipboardList size={18} color="#fff" />
+            <Text style={styles.headerTitle}>Movimientos</Text>
+          </View>
         </View>
         <View style={styles.sumRow}>
           <TouchableOpacity
@@ -90,22 +94,27 @@ export default function MovimientosScreen() {
             onPress={() => setFiltroTipo(filtroTipo === 'entrada' ? 'todos' : 'entrada')}
           >
             <Text style={styles.sumNum}>{totalEntradas}</Text>
-            <Text style={styles.sumLabel}>▲ Entradas</Text>
+            <View style={styles.sumLabelRow}>
+              <ArrowUp size={12} color="rgba(255,255,255,0.8)" />
+              <Text style={styles.sumLabel}>Entradas</Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sumChip, filtroTipo === 'salida' && styles.sumChipActive]}
             onPress={() => setFiltroTipo(filtroTipo === 'salida' ? 'todos' : 'salida')}
           >
             <Text style={[styles.sumNum, { color: '#FF6B6B' }]}>{totalSalidas}</Text>
-            <Text style={styles.sumLabel}>▼ Salidas</Text>
+            <View style={styles.sumLabelRow}>
+              <ArrowDown size={12} color="rgba(255,255,255,0.8)" />
+              <Text style={styles.sumLabel}>Salidas</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
 
-      <TextInput
+      <SearchInput
         style={styles.search}
-        placeholder="🔍  Buscar por refacción, usuario, nota..."
-        placeholderTextColor="#aaa"
+        placeholder="Buscar por refacción, usuario, nota..."
         value={busqueda}
         onChangeText={setBusqueda}
       />
@@ -125,9 +134,13 @@ export default function MovimientosScreen() {
             <View style={[styles.card, { borderLeftColor: esEntrada ? '#4CAF50' : '#F44336' }]}>
               {/* Fila superior: badge tipo + cantidad + (botón eliminar superadmin) */}
               <View style={styles.cardTop}>
-                <View style={[styles.tipoBadge, esEntrada ? styles.tipoBadgeEntrada : styles.tipoBadgeSalida]}>
+                <View style={[styles.tipoBadge, styles.tipoBadgeRow, esEntrada ? styles.tipoBadgeEntrada : styles.tipoBadgeSalida]}>
+                  {esEntrada
+                    ? <ArrowUp size={12} color="#2E7D32" />
+                    : <ArrowDown size={12} color="#C62828" />
+                  }
                   <Text style={[styles.tipoBadgeText, { color: esEntrada ? '#2E7D32' : '#C62828' }]}>
-                    {esEntrada ? '▲ ENTRADA' : '▼ SALIDA'}
+                    {esEntrada ? 'ENTRADA' : 'SALIDA'}
                   </Text>
                 </View>
                 <View style={styles.cardTopRight}>
@@ -139,7 +152,7 @@ export default function MovimientosScreen() {
                       style={styles.deleteBtn}
                       onPress={() => setConfirmDelete(item.id)}
                     >
-                      <Text style={styles.deleteBtnText}>🗑️</Text>
+                      <Trash2 size={16} color="#888" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -157,8 +170,12 @@ export default function MovimientosScreen() {
 
               {/* Ubicación y usuario */}
               <View style={styles.metaRow}>
-                {item.ubicacion ? <Text style={styles.metaItem}>📍 {item.ubicacion}</Text> : null}
-                {item.usuario ? <Text style={styles.metaItem}>👤 {item.usuario}</Text> : null}
+                {item.ubicacion ? (
+                  <View style={styles.metaItemRow}><MapPin size={11} color="#666" /><Text style={styles.metaItem}>{item.ubicacion}</Text></View>
+                ) : null}
+                {item.usuario ? (
+                  <View style={styles.metaItemRow}><User size={11} color="#666" /><Text style={styles.metaItem}>{item.usuario}</Text></View>
+                ) : null}
               </View>
 
               {/* Flujo de existencia */}
@@ -170,7 +187,10 @@ export default function MovimientosScreen() {
 
               {/* Nota */}
               {nota ? (
-                <Text style={styles.nota}>💬 {nota}</Text>
+                <View style={styles.notaRow}>
+                  <MessageCircle size={13} color="#555" style={{ marginTop: 2 }} />
+                  <Text style={[styles.nota, { flex: 1 }]}>{nota}</Text>
+                </View>
               ) : null}
 
               {/* Fecha */}
@@ -224,30 +244,33 @@ const styles = StyleSheet.create({
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  headerTitleInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sumRow: { flexDirection: 'row', gap: 10 },
   sumChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
   sumChipActive: { backgroundColor: 'rgba(255,255,255,0.35)' },
   sumNum: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  sumLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sumLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
   search: { margin: 14, marginBottom: 6, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
   card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, padding: 14 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   cardTopRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   tipoBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  tipoBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tipoBadgeEntrada: { backgroundColor: '#E8F5E9' },
   tipoBadgeSalida: { backgroundColor: '#FFEBEE' },
   tipoBadgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   cardCantidad: { fontSize: 20, fontWeight: '900' },
   deleteBtn: { padding: 4 },
-  deleteBtnText: { fontSize: 16 },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardCodigo: { fontSize: 12, color: '#888', marginTop: 2 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
+  metaItemRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaItem: { fontSize: 12, color: '#666' },
   existenciaFlow: { fontSize: 12, color: '#1976D2', fontWeight: '600', marginTop: 4 },
-  nota: { fontSize: 13, color: '#555', fontStyle: 'italic', marginTop: 6, backgroundColor: '#F5F6FA', borderRadius: 8, padding: 8 },
+  notaRow: { flexDirection: 'row', gap: 6, marginTop: 6, backgroundColor: '#F5F6FA', borderRadius: 8, padding: 8 },
+  nota: { fontSize: 13, color: '#555', fontStyle: 'italic' },
   fecha: { fontSize: 11, color: '#bbb', marginTop: 8 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 14 },
   deleteConfirm: { marginTop: 10, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 10 },

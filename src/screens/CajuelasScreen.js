@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Menu, Toolbox } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { CAJUELAS_LISTA, suscribirCajuelaInventario, suscribirCajuelaConfig } from '../config/firestore';
 import DrawerMenu from '../components/DrawerMenu';
@@ -31,7 +32,7 @@ function CajuelaCard({ cajuela, navigation }) {
       <View style={styles.cardIcon}>
         {foto
           ? <Image source={{ uri: foto }} style={styles.cajuelaThumb} resizeMode="cover" />
-          : <Text style={{ fontSize: 30 }}>🧰</Text>
+          : <Toolbox size={28} color={AZUL} />
         }
       </View>
       <View style={styles.cardBody}>
@@ -52,9 +53,12 @@ export default function CajuelasScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.tituloRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.titulo}>🧰 Cajuelas</Text>
+          <View style={styles.tituloInnerRow}>
+            <Toolbox size={20} color="#fff" />
+            <Text style={styles.titulo}>Cajuelas</Text>
+          </View>
         </View>
         <Text style={styles.sub}>Kits de refacciones para servicio</Text>
       </View>
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  tituloInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, elevation: 2 },

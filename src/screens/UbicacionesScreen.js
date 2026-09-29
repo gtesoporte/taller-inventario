@@ -3,8 +3,10 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Platform,
 } from 'react-native';
+import { ArrowLeft, MapPin, AlertTriangle, Check, Printer, Trash2 } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getUbicaciones, addUbicacion, deleteUbicacion } from '../config/firestore';
@@ -221,17 +223,22 @@ export default function UbicacionesScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Volver</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.75)" />
+          <Text style={styles.volver}>Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>📍 Ubicaciones</Text>
+        <View style={styles.tituloRow}>
+          <MapPin size={20} color="#fff" />
+          <Text style={styles.titulo}>Ubicaciones</Text>
+        </View>
         <Text style={styles.sub}>{ubicaciones.length} registradas</Text>
       </View>
 
       <View style={styles.body}>
         {!!errorCarga && (
-          <TouchableOpacity style={styles.errorCarga} onPress={cargar}>
-            <Text style={styles.errorCargaText}>⚠️ No se pudieron cargar las ubicaciones: {errorCarga}. Toca para reintentar.</Text>
+          <TouchableOpacity style={[styles.errorCarga, { flexDirection: 'row', gap: 8 }]} onPress={cargar}>
+            <AlertTriangle size={15} color="#C62828" style={{ marginTop: 1 }} />
+            <Text style={[styles.errorCargaText, { flex: 1 }]}>No se pudieron cargar las ubicaciones: {errorCarga}. Toca para reintentar.</Text>
           </TouchableOpacity>
         )}
 
@@ -259,27 +266,29 @@ export default function UbicacionesScreen({ navigation }) {
 
         {/* Buscador + Todos */}
         <View style={styles.searchRow}>
-          <TextInput
+          <SearchInput
             style={styles.search}
-            placeholder="🔍  Buscar ubicación..."
-            placeholderTextColor="#aaa"
+            placeholder="Buscar ubicación..."
             value={filtro}
             onChangeText={text => { setFiltro(text); setSeleccionados(new Set()); }}
           />
           <TouchableOpacity
-            style={[styles.todosBtn, todosSeleccionados && styles.todosBtnActive]}
+            style={[styles.todosBtn, styles.todosBtnRow, todosSeleccionados && styles.todosBtnActive]}
             onPress={toggleTodos}
           >
-            <Text style={styles.todosBtnText}>
-              {todosSeleccionados ? '✓ Todos' : 'Todos'}
-            </Text>
+            {todosSeleccionados && <Check size={14} color="#fff" />}
+            <Text style={styles.todosBtnText}>Todos</Text>
           </TouchableOpacity>
         </View>
 
         {seleccionados.size > 0 && (
-          <Text style={styles.seleccionadosHint}>
-            {seleccionados.size} seleccionada{seleccionados.size !== 1 ? 's' : ''} — toca 🖨️ o el botón de abajo para imprimir
-          </Text>
+          <View style={styles.seleccionadosHintRow}>
+            <Text style={styles.seleccionadosHint}>
+              {seleccionados.size} seleccionada{seleccionados.size !== 1 ? 's' : ''} — toca
+            </Text>
+            <Printer size={13} color="#1976D2" />
+            <Text style={styles.seleccionadosHint}>o el botón de abajo para imprimir</Text>
+          </View>
         )}
 
         <FlatList
@@ -296,7 +305,7 @@ export default function UbicacionesScreen({ navigation }) {
                   style={[styles.checkbox, seleccionado && styles.checkboxActive]}
                   onPress={() => toggleSeleccion(item.id)}
                 >
-                  {seleccionado && <Text style={styles.checkmark}>✓</Text>}
+                  {seleccionado && <Check size={13} color="#fff" />}
                 </TouchableOpacity>
 
                 {/* Info — navega a refacciones */}
@@ -347,10 +356,10 @@ export default function UbicacionesScreen({ navigation }) {
                 ) : (
                   <View style={styles.cardBtns}>
                     <TouchableOpacity style={styles.btnPrint} onPress={() => imprimirUno(item.nombre)}>
-                      <Text style={{ fontSize: 15 }}>🖨️</Text>
+                      <Printer size={15} color="#fff" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.btnDelete} onPress={() => setConfirmDelete(item.id)}>
-                      <Text style={{ fontSize: 15 }}>🗑️</Text>
+                      <Trash2 size={15} color="#F44336" />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -380,7 +389,12 @@ export default function UbicacionesScreen({ navigation }) {
                       }
                     </TouchableOpacity>
                   </View>
-                  {!!subError && <Text style={styles.subPanelError}>⚠️ {subError}</Text>}
+                  {!!subError && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                      <AlertTriangle size={13} color="#C62828" />
+                      <Text style={styles.subPanelError}>{subError}</Text>
+                    </View>
+                  )}
                 </View>
               )}
               </View>
@@ -400,9 +414,14 @@ export default function UbicacionesScreen({ navigation }) {
         <TouchableOpacity style={styles.fab} onPress={imprimirSeleccionados} disabled={imprimiendo}>
           {imprimiendo
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.fabText}>
-                🖨️ Imprimir {seleccionados.size} QR{seleccionados.size !== 1 ? 's' : ''}
-              </Text>
+            : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Printer size={16} color="#fff" />
+                <Text style={styles.fabText}>
+                  Imprimir {seleccionados.size} QR{seleccionados.size !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            )
           }
         </TouchableOpacity>
       )}
@@ -415,7 +434,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.75)', fontSize: 14, marginBottom: 8 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  volver: { color: 'rgba(255,255,255,0.75)', fontSize: 14 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
   body: { flex: 1, padding: 14 },
@@ -428,14 +449,15 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   search: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
   todosBtn: { backgroundColor: AZUL, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' },
+  todosBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   todosBtnActive: { backgroundColor: '#1976D2' },
   todosBtnText: { color: '#fff', fontWeight: '700' },
-  seleccionadosHint: { fontSize: 12, color: '#1976D2', fontWeight: '600', marginBottom: 8, marginLeft: 2 },
+  seleccionadosHintRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8, marginLeft: 2 },
+  seleccionadosHint: { fontSize: 12, color: '#1976D2', fontWeight: '600' },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.04, elevation: 1, gap: 10 },
   cardSelected: { borderWidth: 1.5, borderColor: '#1976D2', backgroundColor: '#F0F7FF' },
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#ccc', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   checkboxActive: { backgroundColor: '#1976D2', borderColor: '#1976D2' },
-  checkmark: { color: '#fff', fontSize: 13, fontWeight: '800' },
   errorCarga: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FFCDD2' },
   errorCargaText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   subWrap: { marginLeft: 22 },
@@ -452,7 +474,7 @@ const styles = StyleSheet.create({
   subPanelCancelarText: { color: '#555', fontWeight: '700', fontSize: 13 },
   subPanelCrear: { flex: 1, backgroundColor: '#1976D2', borderRadius: 10, padding: 11, alignItems: 'center' },
   subPanelCrearText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  subPanelError: { color: '#C62828', fontSize: 12, fontWeight: '600', marginTop: 8 },
+  subPanelError: { color: '#C62828', fontSize: 12, fontWeight: '600' },
   cardInfo: { flex: 1 },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSub: { fontSize: 12, color: '#888', marginTop: 2 },

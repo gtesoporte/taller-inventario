@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Package, Wrench, ClipboardList, Wrench as ToolboxIcon, Image as ImageIcon, Contact, Settings, Crown, LogOut, ChevronRight } from 'lucide-react-native';
+import { Package, Wrench, ClipboardList, Toolbox, Image as ImageIcon, Contact, Settings, Crown, LogOut, ChevronRight } from 'lucide-react-native';
 import Text from './UpperText';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
@@ -13,7 +13,7 @@ const SECCIONES = [
   { tab: 'Inventario', icon: Package, label: 'Inventario' },
   { tab: 'Proyectos', icon: Wrench, label: 'Proyectos' },
   { tab: 'Movimientos', icon: ClipboardList, label: 'Movimientos' },
-  { tab: 'Cajuelas', icon: ToolboxIcon, label: 'Cajuelas' },
+  { tab: 'Cajuelas', icon: Toolbox, label: 'Cajuelas' },
   { tab: 'Galería', icon: ImageIcon, label: 'Galería' },
   { tab: 'Contactos', icon: Contact, label: 'Contactos' },
   { tab: 'Config', icon: Settings, label: 'Configuración' },
