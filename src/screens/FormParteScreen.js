@@ -3,6 +3,7 @@ import {
   View, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image,
 } from 'react-native';
+import { ArrowLeft, MapPin, Trash2, Camera, Image as ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { addParte, updateParte, getFabricantes, getUbicaciones } from '../config/firestore';
@@ -85,8 +86,9 @@ export default function FormParteScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.volver}>← Volver</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.volver}>Volver</Text>
           </TouchableOpacity>
           <Text style={styles.titulo}>Acceso restringido</Text>
         </View>
@@ -102,12 +104,18 @@ export default function FormParteScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Cancelar</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Cancelar</Text>
         </TouchableOpacity>
         <Text style={styles.titulo}>{esEdicion ? 'Editar refacción' : 'Nueva refacción'}</Text>
         {ubicacionPreseleccionada && !esEdicion
-          ? <Text style={styles.sub}>📍 {ubicacionPreseleccionada}</Text>
+          ? (
+            <View style={styles.subRow}>
+              <MapPin size={12} color="rgba(255,255,255,0.7)" />
+              <Text style={styles.sub}>{ubicacionPreseleccionada}</Text>
+            </View>
+          )
           : null}
       </View>
 
@@ -180,18 +188,19 @@ export default function FormParteScreen({ navigation, route }) {
               <ImagenViewer uri={foto}>
                 <Image source={{ uri: foto }} style={styles.fotoPreview} resizeMode="cover" />
               </ImagenViewer>
-              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
-                <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+              <TouchableOpacity style={[styles.fotoQuitarBtn, styles.fotoQuitarRow]} onPress={() => setFoto('')}>
+                <Trash2 size={13} color="#C62828" />
+                <Text style={styles.fotoQuitarText}>Quitar foto</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.fotoBtnsRow}>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'camara')}>
-                <Text style={styles.fotoAddIcon}>📷</Text>
+                <Camera size={30} color="#888" />
                 <Text style={styles.fotoAddText}>Cámara</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'galeria')}>
-                <Text style={styles.fotoAddIcon}>🖼️</Text>
+                <ImageIcon size={30} color="#888" />
                 <Text style={styles.fotoAddText}>Galería</Text>
               </TouchableOpacity>
             </View>
@@ -212,14 +221,16 @@ export default function FormParteScreen({ navigation, route }) {
         </Campo>
 
         {!!error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+          <View style={[styles.errorBox, styles.errorBoxRow]}>
+            <AlertTriangle size={15} color="#C62828" />
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
         {guardado && (
-          <View style={styles.exitoBox}>
-            <Text style={styles.exitoText}>✅ {esEdicion ? 'Refacción actualizada.' : 'Refacción registrada.'}</Text>
+          <View style={[styles.exitoBox, styles.errorBoxRow]}>
+            <CheckCircle2 size={15} color="#2E7D32" />
+            <Text style={styles.exitoText}>{esEdicion ? 'Refacción actualizada.' : 'Refacción registrada.'}</Text>
           </View>
         )}
 
@@ -247,12 +258,15 @@ const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   body: { flex: 1, padding: 16 },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e0e0e0', color: '#1a1a2e' },
   inputMultiline: { minHeight: 90, paddingTop: 12 },
+  errorBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   errorBox: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FFCDD2' },
   errorText: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   exitoBox: { backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#A5D6A7' },
@@ -260,9 +274,9 @@ const styles = StyleSheet.create({
   fotoPreview: { width: '100%', height: 200, borderRadius: 12, backgroundColor: '#e0e0e0' },
   fotoBtnsRow: { flexDirection: 'row', gap: 10 },
   fotoAddBtn: { flex: 1, borderWidth: 2, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 12, paddingVertical: 20, alignItems: 'center', gap: 6, backgroundColor: '#fafafa' },
-  fotoAddIcon: { fontSize: 38 },
   fotoAddText: { fontSize: 14, color: '#888', fontWeight: '600' },
   fotoQuitarBtn: { marginTop: 8, backgroundColor: '#FFEBEE', borderRadius: 10, padding: 10, alignItems: 'center' },
+  fotoQuitarRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
   btn: { backgroundColor: '#1976D2', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 10 },
   btnExito: { backgroundColor: '#2E7D32' },
