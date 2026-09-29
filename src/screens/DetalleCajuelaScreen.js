@@ -3,6 +3,11 @@ import {
   View, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import {
+  Nut, Pencil, Camera, Image as ImageIcon, ArrowLeft, Toolbox, Hourglass,
+  ArrowUp, ArrowDown, CheckCircle2, X, Trash2, AlertTriangle, Upload,
+  Download, User, Package, ClipboardList, MessageCircle, BarChart3, Siren,
+} from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import {
@@ -48,7 +53,7 @@ function InvCard({ item, onEdit }) {
       <ImagenViewer uri={item.foto || null}>
         {item.foto
           ? <Image source={{ uri: item.foto }} style={styles.invThumb} resizeMode="cover" />
-          : <View style={[styles.invThumb, styles.invThumbPh]}><Text style={{ fontSize: 22 }}>🔩</Text></View>
+          : <View style={[styles.invThumb, styles.invThumbPh]}><Nut size={20} color="#bbb" /></View>
         }
       </ImagenViewer>
       <Text style={styles.invNombre} numberOfLines={2}>{item.nombre}</Text>
@@ -57,7 +62,7 @@ function InvCard({ item, onEdit }) {
         <Text style={styles.cantLabel}>pz</Text>
       </View>
       <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(item)}>
-        <Text style={styles.editBtnText}>✏️</Text>
+        <Pencil size={15} color="#555" />
       </TouchableOpacity>
     </View>
   );
@@ -67,11 +72,11 @@ function FotoButtons({ onFoto }) {
   return (
     <View style={styles.fotoBtnsRow}>
       <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(onFoto, 'camara')}>
-        <Text style={styles.fotoAddIcon}>📷</Text>
+        <Camera size={22} color="#888" />
         <Text style={styles.fotoAddText}>Cámara</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(onFoto, 'galeria')}>
-        <Text style={styles.fotoAddIcon}>🖼️</Text>
+        <ImageIcon size={22} color="#888" />
         <Text style={styles.fotoAddText}>Galería / PC</Text>
       </TouchableOpacity>
     </View>
@@ -259,17 +264,18 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
 
       {/* ── HEADER ── */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Cajuelas</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Cajuelas</Text>
         </TouchableOpacity>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.cajuelaFotoBtn} onPress={cambiarFotoCajuela} disabled={guardandoFoto}>
             {cajuelaFoto
               ? <ImagenViewer uri={cajuelaFoto}><Image source={{ uri: cajuelaFoto }} style={styles.cajuelaFotoImg} resizeMode="cover" /></ImagenViewer>
-              : <View style={styles.cajuelaFotoPh}><Text style={{ fontSize: 32 }}>🧰</Text></View>
+              : <View style={styles.cajuelaFotoPh}><Toolbox size={28} color="#fff" /></View>
             }
             <View style={styles.cajuelaFotoCam}>
-              <Text style={{ fontSize: 12 }}>{guardandoFoto ? '⏳' : '📷'}</Text>
+              {guardandoFoto ? <Hourglass size={11} color="#555" /> : <Camera size={11} color="#555" />}
             </View>
           </TouchableOpacity>
           <Text style={styles.titulo}>{nombre}</Text>
@@ -288,9 +294,12 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           contentContainerStyle={styles.panelContent}
           nestedScrollEnabled
         >
-          <Text style={styles.panelTitulo}>
-            {panelTipo === 'entrada' ? '▲ Registrar entrada' : '▼ Registrar uso'}
-          </Text>
+          <View style={styles.panelTituloRow}>
+            {panelTipo === 'entrada' ? <ArrowUp size={16} color="#2E7D32" /> : <ArrowDown size={16} color="#C62828" />}
+            <Text style={styles.panelTitulo}>
+              {panelTipo === 'entrada' ? 'Registrar entrada' : 'Registrar uso'}
+            </Text>
+          </View>
 
           <Text style={styles.panelLabel}>REFACCIÓN *</Text>
           {panelTipo === 'entrada' ? (
@@ -321,9 +330,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           ) : (
             panelNombre ? (
               <View style={styles.selBox}>
-                <Text style={styles.selNombre}>✅ {panelNombre}</Text>
-                <TouchableOpacity onPress={() => { setPanelNombre(''); setPanelBusqueda(''); }}>
-                  <Text style={styles.selX}>✕ cambiar</Text>
+                <View style={styles.selNombreRow}>
+                  <CheckCircle2 size={14} color="#2E7D32" />
+                  <Text style={styles.selNombre}>{panelNombre}</Text>
+                </View>
+                <TouchableOpacity style={styles.selXRow} onPress={() => { setPanelNombre(''); setPanelBusqueda(''); }}>
+                  <X size={12} color="#888" />
+                  <Text style={styles.selX}>cambiar</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -376,8 +389,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                   <ImagenViewer uri={panelFoto}>
                     <Image source={{ uri: panelFoto }} style={styles.fotoPreview} resizeMode="cover" />
                   </ImagenViewer>
-                  <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setPanelFoto('')}>
-                    <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+                  <TouchableOpacity style={[styles.fotoQuitarBtn, styles.fotoQuitarRow]} onPress={() => setPanelFoto('')}>
+                    <Trash2 size={13} color="#C62828" />
+                    <Text style={styles.fotoQuitarText}>Quitar foto</Text>
                   </TouchableOpacity>
                 </>
               ) : <FotoButtons onFoto={setPanelFoto} />}
@@ -407,7 +421,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             </>
           )}
 
-          {!!panelError && <Text style={styles.panelError}>⚠️ {panelError}</Text>}
+          {!!panelError && (
+            <View style={styles.panelErrorRow}><AlertTriangle size={13} color="#C62828" /><Text style={styles.panelError}>{panelError}</Text></View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -424,7 +440,10 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
       {editItem && (
         <ScrollView style={[styles.panelFull, styles.panelEdit]} keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.panelContent} nestedScrollEnabled>
-          <Text style={styles.panelTitulo}>✏️ Editar refacción</Text>
+          <View style={styles.panelTituloRow}>
+            <Pencil size={16} color="#1565C0" />
+            <Text style={styles.panelTitulo}>Editar refacción</Text>
+          </View>
           <Text style={styles.panelLabel}>NOMBRE</Text>
           <TextInput style={styles.panelInput} value={editNombre}
             onChangeText={v => { setEditNombre(v); setEditError(''); }}
@@ -453,12 +472,15 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
               <ImagenViewer uri={editFoto}>
                 <Image source={{ uri: editFoto }} style={styles.fotoPreview} resizeMode="cover" />
               </ImagenViewer>
-              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setEditFoto('')}>
-                <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+              <TouchableOpacity style={[styles.fotoQuitarBtn, styles.fotoQuitarRow]} onPress={() => setEditFoto('')}>
+                <Trash2 size={13} color="#C62828" />
+                <Text style={styles.fotoQuitarText}>Quitar foto</Text>
               </TouchableOpacity>
             </>
           ) : <FotoButtons onFoto={setEditFoto} />}
-          {!!editError && <Text style={styles.panelError}>⚠️ {editError}</Text>}
+          {!!editError && (
+            <View style={styles.panelErrorRow}><AlertTriangle size={13} color="#C62828" /><Text style={styles.panelError}>{editError}</Text></View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setEditItem(null)} disabled={editGuardando}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -468,8 +490,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
           {!confirmDelete
-            ? <TouchableOpacity style={styles.btnEliminarItem} onPress={() => setConfirmDelete(true)}>
-                <Text style={styles.btnEliminarItemText}>🗑️ Eliminar del inventario</Text>
+            ? <TouchableOpacity style={[styles.btnEliminarItem, styles.btnEliminarItemRow]} onPress={() => setConfirmDelete(true)}>
+                <Trash2 size={14} color="#C62828" />
+                <Text style={styles.btnEliminarItemText}>Eliminar del inventario</Text>
               </TouchableOpacity>
             : <View style={styles.confirmBox}>
                 <Text style={styles.confirmText}>¿Eliminar "{editItem.nombre}"?</Text>
@@ -489,15 +512,23 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
       {/* ── PANEL: RETIRO ── */}
       {retiroPanel === 'salida' && (
         <View style={[styles.panelFull, styles.panelRetiro]}>
-          <Text style={styles.panelTitulo}>📤 Dar salida a toda la cajuela</Text>
+          <View style={styles.panelTituloRow}>
+            <Upload size={16} color="#E65100" />
+            <Text style={styles.panelTitulo}>Dar salida a toda la cajuela</Text>
+          </View>
           <Text style={styles.retiroInfoText}>
             La cajuela quedará marcada como <Text style={{ fontWeight: '800' }}>EN SERVICIO</Text> hasta que se registre su devolución.
           </Text>
           <View style={styles.retiroUserBox}>
             <Text style={styles.retiroUserLabel}>RESPONSABLE</Text>
-            <Text style={styles.retiroUserNombre}>👤 {perfil?.nombre || perfil?.email || 'Usuario actual'}</Text>
+            <View style={styles.retiroUserNombreRow}>
+              <User size={15} color="#1a1a2e" />
+              <Text style={styles.retiroUserNombre}>{perfil?.nombre || perfil?.email || 'Usuario actual'}</Text>
+            </View>
           </View>
-          {!!retiroError && <Text style={styles.panelError}>⚠️ {retiroError}</Text>}
+          {!!retiroError && (
+            <View style={styles.panelErrorRow}><AlertTriangle size={13} color="#C62828" /><Text style={styles.panelError}>{retiroError}</Text></View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setRetiroPanel(null)} disabled={procesandoRetiro}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -511,16 +542,24 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
 
       {retiroPanel === 'devolucion' && (
         <View style={[styles.panelFull, styles.panelDevolucion]}>
-          <Text style={styles.panelTitulo}>📥 Registrar devolución</Text>
+          <View style={styles.panelTituloRow}>
+            <Download size={16} color="#1565C0" />
+            <Text style={styles.panelTitulo}>Registrar devolución</Text>
+          </View>
           {retiroActivo && (
             <View style={styles.retiroUserBox}>
               <Text style={styles.retiroUserLabel}>RETIRADO POR</Text>
-              <Text style={styles.retiroUserNombre}>👤 {retiroActivo.usuarioNombre}</Text>
+              <View style={styles.retiroUserNombreRow}>
+                <User size={15} color="#1a1a2e" />
+                <Text style={styles.retiroUserNombre}>{retiroActivo.usuarioNombre}</Text>
+              </View>
               <Text style={styles.retiroUserFecha}>Salida: {formatFechaCorta(retiroActivo.fechaRetiro)}</Text>
             </View>
           )}
           <Text style={styles.devolucionPregunta}>¿Se utilizó alguna pieza de esta cajuela?</Text>
-          {!!retiroError && <Text style={styles.panelError}>⚠️ {retiroError}</Text>}
+          {!!retiroError && (
+            <View style={styles.panelErrorRow}><AlertTriangle size={13} color="#C62828" /><Text style={styles.panelError}>{retiroError}</Text></View>
+          )}
           <TouchableOpacity
             style={[styles.devolucionBtn, { backgroundColor: '#2E7D32' }]}
             onPress={confirmarDevolucionConPiezas}
@@ -528,7 +567,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           >
             {procesandoRetiro ? <ActivityIndicator color="#fff" size="small" /> : (
               <>
-                <Text style={styles.devolucionBtnIcon}>✅</Text>
+                <CheckCircle2 size={26} color="#fff" />
                 <View>
                   <Text style={styles.devolucionBtnTitulo}>Sí, registrar piezas usadas</Text>
                   <Text style={styles.devolucionBtnSub}>Ir a movimientos de refacciones</Text>
@@ -543,7 +582,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           >
             {procesandoRetiro ? <ActivityIndicator color="#fff" size="small" /> : (
               <>
-                <Text style={styles.devolucionBtnIcon}>📦</Text>
+                <Package size={26} color="#fff" />
                 <View>
                   <Text style={styles.devolucionBtnTitulo}>No, todo completo</Text>
                   <Text style={styles.devolucionBtnSub}>Devolver sin cambios en inventario</Text>
@@ -565,9 +604,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           {/* Tabs */}
           <View style={styles.tabsBar}>
             {['inventario', 'movimientos'].map(t => (
-              <TouchableOpacity key={t} style={[styles.tabBtn2, tab === t && styles.tabBtn2Active]} onPress={() => setTab(t)}>
+              <TouchableOpacity key={t} style={[styles.tabBtn2, styles.tabBtn2Row, tab === t && styles.tabBtn2Active]} onPress={() => setTab(t)}>
+                {t === 'inventario'
+                  ? <Package size={14} color={tab === t ? AZUL : '#aaa'} />
+                  : <ClipboardList size={14} color={tab === t ? AZUL : '#aaa'} />
+                }
                 <Text style={[styles.tabText2, tab === t && styles.tabText2Active]}>
-                  {t === 'inventario' ? '📦 Inventario' : '📋 Movimientos'}
+                  {t === 'inventario' ? 'Inventario' : 'Movimientos'}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -577,7 +620,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
           {retiroActivo === undefined ? null : retiroActivo ? (
             <View style={styles.retiroBanner}>
               <View style={styles.retiroBannerLeft}>
-                <Text style={styles.retiroBannerIcon}>🚨</Text>
+                <Siren size={20} color="#fff" />
                 <View>
                   <Text style={styles.retiroBannerTitle}>EN SERVICIO</Text>
                   <Text style={styles.retiroBannerSub}>
@@ -585,13 +628,15 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                   </Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.retiroDevBtn} onPress={() => setRetiroPanel('devolucion')}>
-                <Text style={styles.retiroDevBtnText}>📥 Devolver</Text>
+              <TouchableOpacity style={[styles.retiroDevBtn, styles.retiroDevBtnRow]} onPress={() => setRetiroPanel('devolucion')}>
+                <Download size={13} color="#fff" />
+                <Text style={styles.retiroDevBtnText}>Devolver</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.darSalidaBtn} onPress={() => setRetiroPanel('salida')}>
-              <Text style={styles.darSalidaText}>📤 Dar salida a toda la cajuela</Text>
+            <TouchableOpacity style={[styles.darSalidaBtn, styles.darSalidaRow]} onPress={() => setRetiroPanel('salida')}>
+              <Upload size={14} color="#E65100" />
+              <Text style={styles.darSalidaText}>Dar salida a toda la cajuela</Text>
             </TouchableOpacity>
           )}
 
@@ -601,9 +646,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
               <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
                 {inventario.length === 0 ? (
                   <View style={styles.emptyBox}>
-                    <Text style={styles.emptyIcon}>📦</Text>
+                    <Package size={40} color="#ccc" />
                     <Text style={styles.emptyText}>Sin refacciones en inventario.</Text>
-                    <Text style={styles.emptyHint}>Usa "▲ Entrada" para agregar refacciones.</Text>
+                    <Text style={styles.emptyHint}>Usa "Entrada" para agregar refacciones.</Text>
                   </View>
                 ) : CATEGORIAS_MINIVIDAS.map(cat => {
                   const items = inventario.filter(i => (i.categoria || categorizarMinividas(i.nombre)) === cat);
@@ -626,9 +671,9 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                 renderItem={({ item }) => <InvCard item={item} onEdit={abrirEdicion} />}
                 ListEmptyComponent={
                   <View style={styles.emptyBox}>
-                    <Text style={styles.emptyIcon}>📦</Text>
+                    <Package size={40} color="#ccc" />
                     <Text style={styles.emptyText}>Sin refacciones en inventario.</Text>
-                    <Text style={styles.emptyHint}>Usa "▲ Entrada" para agregar refacciones.</Text>
+                    <Text style={styles.emptyHint}>Usa "Entrada" para agregar refacciones.</Text>
                   </View>
                 }
                 contentContainerStyle={{ padding: 14, paddingBottom: 120 }}
@@ -639,7 +684,10 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
             <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 120 }}>
               {totalSalidas > 0 && (
                 <View style={styles.statsBox}>
-                  <Text style={styles.statsTitle}>📊 Estadísticas de uso</Text>
+                  <View style={styles.statsTitleRow}>
+                    <BarChart3 size={15} color="#1a1a2e" />
+                    <Text style={styles.statsTitle}>Estadísticas de uso</Text>
+                  </View>
                   <Text style={styles.statsTotal}>{totalSalidas} piezas utilizadas en total</Text>
                   {statsPorRazon.map(r => (
                     <View key={r.id} style={styles.statRow}>
@@ -653,7 +701,7 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
               )}
               {movimientos.length === 0
                 ? <View style={styles.emptyBox}>
-                    <Text style={styles.emptyIcon}>📋</Text>
+                    <ClipboardList size={40} color="#ccc" />
                     <Text style={styles.emptyText}>Sin movimientos registrados.</Text>
                   </View>
                 : movimientos.map(m => {
@@ -662,9 +710,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                     return (
                       <View key={m.id} style={[styles.movCard, { borderLeftColor: esRetiro ? '#E65100' : '#1565C0' }]}>
                         <View style={styles.movTop}>
-                          <View style={[styles.tipoBadge, { backgroundColor: esRetiro ? '#FFF3E0' : '#E3F2FD' }]}>
+                          <View style={[styles.tipoBadge, styles.tipoBadgeRow, { backgroundColor: esRetiro ? '#FFF3E0' : '#E3F2FD' }]}>
+                            {esRetiro
+                              ? <Upload size={11} color="#E65100" />
+                              : <Download size={11} color="#1565C0" />
+                            }
                             <Text style={[styles.tipoText, { color: esRetiro ? '#E65100' : '#1565C0' }]}>
-                              {esRetiro ? '📤 RETIRO DE CAJUELA' : '📥 DEVOLUCIÓN DE CAJUELA'}
+                              {esRetiro ? 'RETIRO DE CAJUELA' : 'DEVOLUCIÓN DE CAJUELA'}
                             </Text>
                           </View>
                         </View>
@@ -674,7 +726,11 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                           </Text>
                         )}
                         <View style={styles.movMeta}>
-                          {m.usuario ? <View style={styles.usuarioBadge}><Text style={styles.usuarioText}>👤 {m.usuario}</Text></View> : null}
+                          {m.usuario ? (
+                            <View style={[styles.usuarioBadge, styles.usuarioBadgeRow]}>
+                              <User size={11} color="#444" /><Text style={styles.usuarioText}>{m.usuario}</Text>
+                            </View>
+                          ) : null}
                           <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
                         </View>
                       </View>
@@ -685,9 +741,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                   return (
                     <View key={m.id} style={[styles.movCard, { borderLeftColor: esEntrada ? '#4CAF50' : '#F44336' }]}>
                       <View style={styles.movTop}>
-                        <View style={[styles.tipoBadge, esEntrada ? styles.tipoBadgeE : styles.tipoBadgeS]}>
+                        <View style={[styles.tipoBadge, styles.tipoBadgeRow, esEntrada ? styles.tipoBadgeE : styles.tipoBadgeS]}>
+                          {esEntrada
+                            ? <ArrowUp size={11} color="#2E7D32" />
+                            : <ArrowDown size={11} color="#C62828" />
+                          }
                           <Text style={[styles.tipoText, { color: esEntrada ? '#2E7D32' : '#C62828' }]}>
-                            {esEntrada ? '▲ ENTRADA' : '▼ USO'}
+                            {esEntrada ? 'ENTRADA' : 'USO'}
                           </Text>
                         </View>
                         <Text style={[styles.movCant, { color: esEntrada ? '#2E7D32' : '#C62828' }]}>
@@ -705,9 +765,18 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
                           <Text style={[styles.razonTagText, { color: COLORES_RAZON[m.razon] }]}>{razonObj.label}</Text>
                         </View>
                       )}
-                      {m.motivo ? <Text style={styles.movMotivo}>💬 {m.motivo}</Text> : null}
+                      {m.motivo ? (
+                        <View style={styles.movMotivoRow}>
+                          <MessageCircle size={12} color="#555" />
+                          <Text style={styles.movMotivo}>{m.motivo}</Text>
+                        </View>
+                      ) : null}
                       <View style={styles.movMeta}>
-                        {m.usuario ? <View style={styles.usuarioBadge}><Text style={styles.usuarioText}>👤 {m.usuario}</Text></View> : null}
+                        {m.usuario ? (
+                          <View style={[styles.usuarioBadge, styles.usuarioBadgeRow]}>
+                            <User size={11} color="#444" /><Text style={styles.usuarioText}>{m.usuario}</Text>
+                          </View>
+                        ) : null}
                         <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
                       </View>
                     </View>
@@ -719,11 +788,13 @@ export default function DetalleCajuelaScreen({ navigation, route }) {
 
           {/* FABs */}
           <View style={styles.fabs}>
-            <TouchableOpacity style={[styles.fab, styles.fabE]} onPress={() => abrirPanel('entrada')}>
-              <Text style={styles.fabText}>▲ Entrada</Text>
+            <TouchableOpacity style={[styles.fab, styles.fabE, styles.fabRow]} onPress={() => abrirPanel('entrada')}>
+              <ArrowUp size={16} color="#fff" />
+              <Text style={styles.fabText}>Entrada</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.fab, styles.fabS]} onPress={() => abrirPanel('salida')}>
-              <Text style={styles.fabText}>▼ Uso</Text>
+            <TouchableOpacity style={[styles.fab, styles.fabS, styles.fabRow]} onPress={() => abrirPanel('salida')}>
+              <ArrowDown size={16} color="#fff" />
+              <Text style={styles.fabText}>Uso</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -736,7 +807,8 @@ const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 10 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   headerTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   cajuelaFotoBtn: { position: 'relative' },
   cajuelaFotoImg: { width: 56, height: 56, borderRadius: 14 },
@@ -752,6 +824,7 @@ const styles = StyleSheet.create({
   // Tabs bar (debajo del header cuando no hay panel)
   tabsBar: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e8eaed' },
   tabBtn2: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  tabBtn2Row: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   tabBtn2Active: { borderBottomColor: AZUL },
   tabText2: { fontSize: 13, fontWeight: '700', color: '#aaa' },
   tabText2Active: { color: AZUL },
@@ -764,37 +837,40 @@ const styles = StyleSheet.create({
   panelEdit: { backgroundColor: '#E3F2FD' },
   panelRetiro: { backgroundColor: '#FFF3E0', padding: 20 },
   panelDevolucion: { backgroundColor: '#E8F5E9', padding: 20 },
-  panelTitulo: { fontSize: 16, fontWeight: '800', color: '#1a1a2e', marginBottom: 14 },
+  panelTituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  panelTitulo: { fontSize: 16, fontWeight: '800', color: '#1a1a2e' },
   panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 10 },
+  panelErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14 },
 
   // Retiro panel
   retiroInfoText: { fontSize: 14, color: '#555', lineHeight: 20, marginBottom: 16 },
   retiroUserBox: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#ddd' },
   retiroUserLabel: { fontSize: 10, fontWeight: '800', color: '#aaa', letterSpacing: 0.5, marginBottom: 4 },
+  retiroUserNombreRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   retiroUserNombre: { fontSize: 16, fontWeight: '800', color: '#1a1a2e' },
   retiroUserFecha: { fontSize: 12, color: '#888', marginTop: 4 },
 
   // Devolución panel
   devolucionPregunta: { fontSize: 16, fontWeight: '700', color: '#1a1a2e', marginBottom: 18, lineHeight: 22 },
   devolucionBtn: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 14, padding: 16, marginBottom: 10 },
-  devolucionBtnIcon: { fontSize: 28 },
   devolucionBtnTitulo: { color: '#fff', fontWeight: '800', fontSize: 15 },
   devolucionBtnSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 },
 
   // Banner retiro activo
   retiroBanner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#E53935', paddingHorizontal: 14, paddingVertical: 10 },
   retiroBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  retiroBannerIcon: { fontSize: 20 },
   retiroBannerTitle: { fontSize: 13, fontWeight: '800', color: '#fff' },
   retiroBannerSub: { fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   retiroDevBtn: { backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  retiroDevBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   retiroDevBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
 
   // Botón dar salida
   darSalidaBtn: { marginHorizontal: 14, marginTop: 10, marginBottom: 4, backgroundColor: '#fff', borderRadius: 12, padding: 13, alignItems: 'center', borderWidth: 1.5, borderColor: '#E65100', borderStyle: 'dashed' },
+  darSalidaRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   darSalidaText: { color: '#E65100', fontWeight: '700', fontSize: 14 },
 
   // Dropdown
@@ -808,16 +884,18 @@ const styles = StyleSheet.create({
 
   // Selección salida
   selBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 1.5, borderColor: '#4CAF50' },
-  selNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', flex: 1 },
-  selX: { fontSize: 12, color: '#888', marginLeft: 10, fontWeight: '600' },
+  selNombreRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  selNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  selXRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 10 },
+  selX: { fontSize: 12, color: '#888', fontWeight: '600' },
 
   // Foto
   fotoPreview: { width: '100%', height: 130, borderRadius: 10, backgroundColor: '#e0e0e0' },
   fotoQuitarBtn: { marginTop: 6, backgroundColor: '#FFEBEE', borderRadius: 8, padding: 8, alignItems: 'center', marginBottom: 4 },
+  fotoQuitarRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 12 },
   fotoBtnsRow: { flexDirection: 'row', gap: 8 },
   fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
-  fotoAddIcon: { fontSize: 24 },
   fotoAddText: { fontSize: 11, color: '#888', fontWeight: '600' },
 
   // Razones
@@ -833,6 +911,7 @@ const styles = StyleSheet.create({
   btnConfirmar: { flex: 2, borderRadius: 10, padding: 12, alignItems: 'center' },
   btnConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   btnEliminarItem: { marginTop: 12, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FFCDD2', backgroundColor: '#FFEBEE' },
+  btnEliminarItemRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   btnEliminarItemText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
   confirmBox: { marginTop: 10, backgroundColor: '#FFF3E0', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FFCC80' },
   confirmText: { fontSize: 13, fontWeight: '700', color: '#E65100', marginBottom: 10 },
@@ -853,11 +932,11 @@ const styles = StyleSheet.create({
   cantNum: { fontSize: 16, fontWeight: '800', color: '#2e7d32' },
   cantLabel: { fontSize: 9, color: '#888' },
   editBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#EEF2F7', justifyContent: 'center', alignItems: 'center' },
-  editBtnText: { fontSize: 16 },
 
   // Stats
   statsBox: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 14 },
-  statsTitle: { fontSize: 14, fontWeight: '800', color: '#1a1a2e', marginBottom: 4 },
+  statsTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  statsTitle: { fontSize: 14, fontWeight: '800', color: '#1a1a2e' },
   statsTotal: { fontSize: 12, color: '#888', marginBottom: 12 },
   statRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   statDot: { width: 10, height: 10, borderRadius: 5 },
@@ -869,6 +948,7 @@ const styles = StyleSheet.create({
   movCard: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, borderLeftWidth: 4 },
   movTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   tipoBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  tipoBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tipoBadgeE: { backgroundColor: '#E8F5E9' },
   tipoBadgeS: { backgroundColor: '#FFEBEE' },
   tipoText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
@@ -877,22 +957,24 @@ const styles = StyleSheet.create({
   movFoto: { width: '100%', height: 120, borderRadius: 10, marginBottom: 8, backgroundColor: '#e0e0e0' },
   razonTag: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 6 },
   razonTagText: { fontSize: 12, fontWeight: '700' },
-  movMotivo: { fontSize: 13, color: '#555', fontStyle: 'italic', marginBottom: 8 },
+  movMotivoRow: { flexDirection: 'row', gap: 5, marginBottom: 8 },
+  movMotivo: { fontSize: 13, color: '#555', fontStyle: 'italic', flex: 1 },
   movMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   usuarioBadge: { backgroundColor: '#EEF2F7', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  usuarioBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   usuarioText: { fontSize: 12, fontWeight: '700', color: '#444' },
   movFecha: { fontSize: 11, color: '#bbb' },
 
   // FABs
   fabs: { position: 'absolute', bottom: 20, left: 16, right: 16, flexDirection: 'row', gap: 12 },
   fab: { flex: 1, borderRadius: 14, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, elevation: 4 },
+  fabRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   fabE: { backgroundColor: '#2E7D32' },
   fabS: { backgroundColor: '#C62828' },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   // Empty
   emptyBox: { alignItems: 'center', marginTop: 40, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyText: { color: '#888', fontSize: 15, fontWeight: '700' },
   emptyHint: { color: '#aaa', fontSize: 13, textAlign: 'center', maxWidth: 280 },
 });
