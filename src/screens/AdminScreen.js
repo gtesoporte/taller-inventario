@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Menu, Crown, KeyRound, Wrench } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { getUsuarios, updateUsuario } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -8,9 +9,9 @@ import DrawerMenu from '../components/DrawerMenu';
 
 const ROLES = ['Todos', 'Superadministrador', 'Administrador', 'Técnico'];
 const ROL_COLORES = {
-  Superadministrador: { bg: '#F3E8FF', text: '#6D28D9', emoji: '👑' },
-  Administrador:      { bg: '#FEF3C7', text: '#92400E', emoji: '🔑' },
-  Técnico:            { bg: '#D1FAE5', text: '#065F46', emoji: '🔧' },
+  Superadministrador: { bg: '#F3E8FF', text: '#6D28D9', icon: Crown },
+  Administrador:      { bg: '#FEF3C7', text: '#92400E', icon: KeyRound },
+  Técnico:            { bg: '#D1FAE5', text: '#065F46', icon: Wrench },
 };
 
 function Avatar({ nombre, color }) {
@@ -65,9 +66,12 @@ export default function AdminScreen() {
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>👑 Administración</Text>
+          <View style={styles.headerTitleInnerRow}>
+            <Crown size={18} color="#fff" />
+            <Text style={styles.headerTitle}>Administración</Text>
+          </View>
         </View>
         <Text style={styles.headerSub}>{usuarios.length} usuarios registrados</Text>
       </View>
@@ -78,12 +82,11 @@ export default function AdminScreen() {
           return (
             <TouchableOpacity
               key={rol}
-              style={[styles.filtroBtn, rolFiltro === rol && styles.filtroBtnActive, cfg && { borderColor: cfg.text }]}
+              style={[styles.filtroBtn, styles.filtroBtnRow, rolFiltro === rol && styles.filtroBtnActive, cfg && { borderColor: cfg.text }]}
               onPress={() => setRolFiltro(rol)}
             >
-              <Text style={[styles.filtroText, rolFiltro === rol && styles.filtroTextActive]}>
-                {cfg ? `${cfg.emoji} ${rol}` : rol}
-              </Text>
+              {cfg && React.createElement(cfg.icon, { size: 12, color: rolFiltro === rol ? '#fff' : cfg.text })}
+              <Text style={[styles.filtroText, rolFiltro === rol && styles.filtroTextActive]}>{rol}</Text>
             </TouchableOpacity>
           );
         })}
@@ -106,11 +109,12 @@ export default function AdminScreen() {
                   {item.creadoEn ? <Text style={styles.cardFecha}>Registrado: {formatFecha(item.creadoEn)}</Text> : null}
                 </View>
                 <TouchableOpacity
-                  style={[styles.rolBadge, { backgroundColor: rolCfg.bg }]}
+                  style={[styles.rolBadge, styles.rolBadgeRow, { backgroundColor: rolCfg.bg }]}
                   onPress={puedeEditarRoles ? () => setEditandoId(editandoEste ? null : item.id) : undefined}
                   disabled={!puedeEditarRoles}
                 >
-                  <Text style={[styles.rolText, { color: rolCfg.text }]}>{rolCfg.emoji} {item.rol}</Text>
+                  {React.createElement(rolCfg.icon, { size: 12, color: rolCfg.text })}
+                  <Text style={[styles.rolText, { color: rolCfg.text }]}>{item.rol}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -153,11 +157,12 @@ const styles = StyleSheet.create({
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50 },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  headerTitleInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   filtrosRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginTop: 12, marginBottom: 4 },
   filtroBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
+  filtroBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   filtroBtnActive: { backgroundColor: PURPLE, borderColor: PURPLE },
   filtroText: { fontSize: 12, fontWeight: '600', color: '#555' },
   filtroTextActive: { color: '#fff' },
@@ -171,6 +176,7 @@ const styles = StyleSheet.create({
   cardEmail: { fontSize: 12, color: '#666', marginTop: 2 },
   cardFecha: { fontSize: 11, color: '#aaa', marginTop: 2 },
   rolBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'center' },
+  rolBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   rolText: { fontSize: 11, fontWeight: '700' },
   editRolBox: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
   editRolLabel: { fontSize: 10, fontWeight: '800', color: '#aaa', letterSpacing: 0.5, marginBottom: 8 },

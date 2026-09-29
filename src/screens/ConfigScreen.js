@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Menu, Settings, Factory, ChevronRight, LogOut } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { useAuth } from '../context/AuthContext';
 import DrawerMenu from '../components/DrawerMenu';
@@ -28,9 +29,12 @@ export default function ConfigScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>⚙️ Configuración</Text>
+          <View style={styles.headerTitleInnerRow}>
+            <Settings size={18} color="#fff" />
+            <Text style={styles.headerTitle}>Configuración</Text>
+          </View>
         </View>
       </View>
 
@@ -54,9 +58,9 @@ export default function ConfigScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Administración</Text>
           <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Fabricantes')}>
-            <Text style={styles.menuIcon}>🏭</Text>
+            <Factory size={19} color="#555" style={{ marginRight: 12 }} />
             <Text style={styles.menuLabel}>Fabricantes</Text>
-            <Text style={styles.menuArrow}>›</Text>
+            <ChevronRight size={20} color="#bbb" />
           </TouchableOpacity>
         </View>
       )}
@@ -78,8 +82,9 @@ export default function ConfigScreen({ navigation }) {
           </View>
         </View>
       ) : (
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setConfirmando(true)}>
-          <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
+        <TouchableOpacity style={[styles.logoutBtn, styles.logoutRow]} onPress={() => setConfirmando(true)}>
+          <LogOut size={16} color="#C62828" />
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
       )}
 
@@ -90,10 +95,10 @@ export default function ConfigScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
-  header: { backgroundColor: '#0B2447', padding: 18, paddingTop: 50 },
+  header: { backgroundColor: '#085686', padding: 18, paddingTop: 50 },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerTitleInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff' },
   section: { backgroundColor: '#fff', margin: 16, marginBottom: 0, borderRadius: 14, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#888', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -101,10 +106,9 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 14, color: '#555', fontWeight: '600' },
   infoVal: { fontSize: 14, color: '#1a1a2e' },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 0 },
-  menuIcon: { fontSize: 20, marginRight: 12 },
   menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1a1a2e' },
-  menuArrow: { fontSize: 22, color: '#bbb' },
   logoutBtn: { margin: 16, marginTop: 12, backgroundColor: '#FFEBEE', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#FFCDD2' },
+  logoutRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   logoutText: { color: '#C62828', fontWeight: '700', fontSize: 15 },
   confirmBox: { margin: 16, marginTop: 12, backgroundColor: '#fff', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: '#FFCDD2', shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
   confirmTitle: { fontSize: 16, fontWeight: '800', color: '#C62828', marginBottom: 4 },
