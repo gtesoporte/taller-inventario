@@ -3,6 +3,7 @@ import {
   View, TouchableOpacity, StyleSheet, FlatList,
   ActivityIndicator, Modal, Platform,
 } from 'react-native';
+import { ArrowLeft, MapPin, X, Lightbulb, QrCode, Camera } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -98,10 +99,14 @@ export default function EscanearQRScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={limpiar}>
-            <Text style={styles.volver}>← Volver</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={limpiar}>
+            <ArrowLeft size={14} color="#60A5FA" />
+            <Text style={styles.volver}>Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.titulo}>📍 {ubicacion}</Text>
+          <View style={styles.tituloRow}>
+            <MapPin size={18} color="#fff" />
+            <Text style={styles.titulo}>{ubicacion}</Text>
+          </View>
           <Text style={styles.sub}>{partes.length} refacciones en esta ubicación</Text>
         </View>
 
@@ -120,7 +125,12 @@ export default function EscanearQRScreen({ navigation, route }) {
                     <Text style={styles.cardNombre}>{item.nombre}</Text>
                     {item.codigo ? <Text style={styles.cardCodigo}>{item.codigo}</Text> : null}
                     {item.ubicacion && item.ubicacion.toLowerCase().trim() !== ubicacion.toLowerCase().trim()
-                      ? <Text style={styles.cardCodigo}>📍 {item.ubicacion}</Text>
+                      ? (
+                        <View style={styles.iconTextRow}>
+                          <MapPin size={11} color="#666" />
+                          <Text style={styles.cardCodigo}>{item.ubicacion}</Text>
+                        </View>
+                      )
                       : null}
                     {item.fabricante ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{item.fabricante.toUpperCase()}</Text></View> : null}
                   </View>
@@ -153,8 +163,9 @@ export default function EscanearQRScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>✕ Cancelar</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <X size={14} color="#60A5FA" />
+          <Text style={styles.volver}>Cancelar</Text>
         </TouchableOpacity>
         <Text style={styles.titulo}>Escanear QR</Text>
       </View>
@@ -165,23 +176,25 @@ export default function EscanearQRScreen({ navigation, route }) {
             <View style={styles.scannerBox}>
               <View nativeID="qr-reader" style={{ width: '100%', minHeight: 300 }} />
             </View>
-            <TouchableOpacity style={styles.cancelBtn} onPress={cancelarEscaneo}>
-              <Text style={styles.cancelText}>✕ Cancelar escaneo</Text>
+            <TouchableOpacity style={[styles.cancelBtn, styles.cancelBtnRow]} onPress={cancelarEscaneo}>
+              <X size={15} color="#fff" />
+              <Text style={styles.cancelText}>Cancelar escaneo</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
             <View style={styles.infoBox}>
-              <Text style={styles.infoIcon}>💡</Text>
+              <Lightbulb size={20} color="rgba(255,255,255,0.85)" />
               <Text style={styles.infoText}>
                 Escanea el código QR pegado en la ubicación física para ver las refacciones y registrar movimientos.
               </Text>
             </View>
             <View style={styles.micCircle}>
-              <Text style={{ fontSize: 60 }}>📱</Text>
+              <QrCode size={56} color="rgba(255,255,255,0.9)" />
             </View>
-            <TouchableOpacity style={styles.scanBtn} onPress={iniciarEscaneo}>
-              <Text style={styles.scanBtnText}>📷 Apunta la cámara al código QR</Text>
+            <TouchableOpacity style={[styles.scanBtn, styles.scanBtnRow]} onPress={iniciarEscaneo}>
+              <Camera size={16} color="#fff" />
+              <Text style={styles.scanBtnText}>Apunta la cámara al código QR</Text>
             </TouchableOpacity>
             <Text style={styles.scanHint}>
               Escanea el código QR pegado en la ubicación física para ver las refacciones y registrar movimientos.
@@ -198,24 +211,28 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: AZUL },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { padding: 18, paddingTop: 50 },
-  volver: { color: '#60A5FA', fontSize: 15, marginBottom: 8 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  volver: { color: '#60A5FA', fontSize: 15 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   scanBody: { flex: 1, padding: 20, alignItems: 'center', justifyContent: 'center' },
   scannerBox: { width: '100%', maxWidth: 380, borderRadius: 16, overflow: 'hidden', marginBottom: 20, backgroundColor: '#000' },
   infoBox: { flexDirection: 'row', gap: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 14, marginBottom: 30, alignItems: 'flex-start' },
-  infoIcon: { fontSize: 22 },
   infoText: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 20 },
   micCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 30 },
   scanBtn: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14, marginBottom: 16 },
+  scanBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   scanBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   scanHint: { color: 'rgba(255,255,255,0.6)', fontSize: 13, textAlign: 'center', lineHeight: 20 },
   cancelBtn: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 14, alignItems: 'center', width: '100%', maxWidth: 380 },
+  cancelBtnRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   cancelText: { color: '#fff', fontWeight: '600' },
   // Results view
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, elevation: 2 },
   cardInfo: { flex: 1 },
   cardNombre: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  iconTextRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   cardCodigo: { fontSize: 12, color: '#666', marginTop: 2 },
   fabBadge: { backgroundColor: AZUL, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 4 },
   fabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
