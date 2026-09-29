@@ -3,6 +3,7 @@ import {
   View, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { ArrowLeft, Folder, Image as ImageIcon, Trash2, AlertTriangle } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirGaleriaSubcategorias, addGaleriaSubcategoria, deleteGaleriaSubcategoria } from '../config/firestore';
@@ -56,10 +57,14 @@ export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Galería</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Galería</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>📁 {nombre}</Text>
+        <View style={styles.tituloRow}>
+          <Folder size={18} color="#fff" />
+          <Text style={styles.titulo}>{nombre}</Text>
+        </View>
       </View>
 
       {puedeAdministrar && !panelAbierto && (
@@ -79,7 +84,12 @@ export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
             placeholderTextColor="#bbb"
             autoFocus
           />
-          {!!error && <Text style={styles.panelError}>⚠️ {error}</Text>}
+          {!!error && (
+            <View style={styles.panelErrorRow}>
+              <AlertTriangle size={13} color="#C62828" />
+              <Text style={styles.panelError}>{error}</Text>
+            </View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -99,13 +109,13 @@ export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
             style={styles.card}
             onPress={() => navigation.navigate('DetalleSubcategoriaGaleria', { subcategoriaId: item.id, nombre: item.nombre })}
           >
-            <View style={styles.cardIcon}><Text style={{ fontSize: 26 }}>🖼️</Text></View>
+            <View style={styles.cardIcon}><ImageIcon size={24} color="#bbb" /></View>
             <View style={styles.cardBody}>
               <Text style={styles.cardNombre}>{item.nombre}</Text>
             </View>
             {puedeAdministrar && (
               <TouchableOpacity style={styles.eliminarBtn} onPress={() => confirmarEliminar(item)}>
-                <Text style={{ fontSize: 18 }}>🗑️</Text>
+                <Trash2 size={17} color="#888" />
               </TouchableOpacity>
             )}
             <Text style={styles.cardArrow}>›</Text>
@@ -113,7 +123,7 @@ export default function DetalleCategoriaGaleriaScreen({ navigation, route }) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyIcon}>📁</Text>
+            <Folder size={40} color="#ccc" />
             <Text style={styles.emptyText}>Sin subcategorías registradas.</Text>
             {puedeAdministrar && <Text style={styles.emptyHint}>Usa "+ Nueva subcategoría" para crear la primera.</Text>}
           </View>
@@ -129,14 +139,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 10 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 20, fontWeight: '800', color: '#fff' },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 0, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   panel: { backgroundColor: '#fff', margin: 14, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#ddd' },
   panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fafafa', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  panelErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btnCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
   btnCancelarText: { color: '#555', fontWeight: '700' },
@@ -149,7 +162,6 @@ const styles = StyleSheet.create({
   cardArrow: { fontSize: 24, color: '#ccc', marginLeft: 8 },
   eliminarBtn: { padding: 6, marginLeft: 6 },
   emptyBox: { alignItems: 'center', marginTop: 60, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyText: { color: '#888', fontSize: 15, fontWeight: '700' },
   emptyHint: { color: '#aaa', fontSize: 13, textAlign: 'center', maxWidth: 280 },
 });

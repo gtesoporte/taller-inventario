@@ -3,6 +3,7 @@ import {
   View, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image, ScrollView,
 } from 'react-native';
+import { ArrowLeft, Image as ImageIcon, Trash2, Camera, AlertTriangle, User } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirGaleriaImagenes, addGaleriaImagen, deleteGaleriaImagen } from '../config/firestore';
@@ -68,10 +69,14 @@ export default function DetalleSubcategoriaGaleriaScreen({ navigation, route }) 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Volver</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.titulo}>🖼️ {nombre}</Text>
+        <View style={styles.tituloRow}>
+          <ImageIcon size={18} color="#fff" />
+          <Text style={styles.titulo}>{nombre}</Text>
+        </View>
       </View>
 
       {puedeAdministrar && !panelAbierto && (
@@ -86,18 +91,19 @@ export default function DetalleSubcategoriaGaleriaScreen({ navigation, route }) 
           {foto ? (
             <>
               <Image source={{ uri: foto }} style={styles.fotoPreview} resizeMode="cover" />
-              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
-                <Text style={styles.fotoQuitarText}>🗑️ Quitar foto</Text>
+              <TouchableOpacity style={[styles.fotoQuitarBtn, styles.fotoQuitarRow]} onPress={() => setFoto('')}>
+                <Trash2 size={13} color="#C62828" />
+                <Text style={styles.fotoQuitarText}>Quitar foto</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.fotoBtnsRow}>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'camara')}>
-                <Text style={styles.fotoAddIcon}>📷</Text>
+                <Camera size={32} color="#888" />
                 <Text style={styles.fotoAddText}>Cámara</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'galeria')}>
-                <Text style={styles.fotoAddIcon}>🖼️</Text>
+                <ImageIcon size={32} color="#888" />
                 <Text style={styles.fotoAddText}>Galería / PC</Text>
               </TouchableOpacity>
             </View>
@@ -115,7 +121,12 @@ export default function DetalleSubcategoriaGaleriaScreen({ navigation, route }) 
             textAlignVertical="top"
           />
 
-          {!!error && <Text style={styles.panelError}>⚠️ {error}</Text>}
+          {!!error && (
+            <View style={styles.panelErrorRow}>
+              <AlertTriangle size={13} color="#C62828" />
+              <Text style={styles.panelError}>{error}</Text>
+            </View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -140,19 +151,22 @@ export default function DetalleSubcategoriaGaleriaScreen({ navigation, route }) 
               </ImagenViewer>
               {item.nota ? <Text style={styles.gridNota} numberOfLines={3}>{item.nota}</Text> : null}
               <View style={styles.gridMeta}>
-                <Text style={styles.gridUsuario} numberOfLines={1}>👤 {item.usuario}</Text>
+                <View style={styles.gridUsuarioRow}>
+                  <User size={10} color="#888" />
+                  <Text style={styles.gridUsuario} numberOfLines={1}>{item.usuario}</Text>
+                </View>
                 <Text style={styles.gridFecha}>{formatFecha(item.creadoEn)}</Text>
               </View>
               {puedeAdministrar && (
                 <TouchableOpacity style={styles.gridEliminarBtn} onPress={() => confirmarEliminar(item)}>
-                  <Text style={{ fontSize: 14 }}>🗑️</Text>
+                  <Trash2 size={13} color="#888" />
                 </TouchableOpacity>
               )}
             </View>
           )}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyIcon}>🖼️</Text>
+              <ImageIcon size={40} color="#ccc" />
               <Text style={styles.emptyText}>Sin imágenes registradas.</Text>
               {puedeAdministrar && <Text style={styles.emptyHint}>Usa "+ Agregar imagen" para subir la primera.</Text>}
             </View>
@@ -169,7 +183,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 10 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
+  tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 20, fontWeight: '800', color: '#fff' },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 0, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
@@ -177,7 +193,8 @@ const styles = StyleSheet.create({
   panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
   panelInputMultiline: { minHeight: 80 },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 10 },
+  panelErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btnCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
   btnCancelarText: { color: '#555', fontWeight: '700' },
@@ -185,20 +202,20 @@ const styles = StyleSheet.create({
   btnConfirmarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   fotoPreview: { width: '100%', height: 200, borderRadius: 12, backgroundColor: '#e0e0e0' },
   fotoQuitarBtn: { marginTop: 8, backgroundColor: '#FFEBEE', borderRadius: 10, padding: 10, alignItems: 'center' },
+  fotoQuitarRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 13 },
   fotoBtnsRow: { flexDirection: 'row', gap: 10 },
   fotoAddBtn: { flex: 1, borderWidth: 2, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 12, paddingVertical: 20, alignItems: 'center', gap: 6, backgroundColor: '#fafafa' },
-  fotoAddIcon: { fontSize: 38 },
   fotoAddText: { fontSize: 14, color: '#888', fontWeight: '600' },
   gridCard: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 8, position: 'relative' },
   gridImg: { width: '100%', height: 120, borderRadius: 8, backgroundColor: '#e0e0e0' },
   gridNota: { fontSize: 12, color: '#444', marginTop: 6 },
   gridMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
-  gridUsuario: { fontSize: 10, color: '#888', fontWeight: '600', flex: 1 },
+  gridUsuarioRow: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1 },
+  gridUsuario: { fontSize: 10, color: '#888', fontWeight: '600' },
   gridFecha: { fontSize: 10, color: '#bbb' },
   gridEliminarBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 8, padding: 5 },
   emptyBox: { alignItems: 'center', marginTop: 60, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyText: { color: '#888', fontSize: 15, fontWeight: '700' },
   emptyHint: { color: '#aaa', fontSize: 13, textAlign: 'center', maxWidth: 280 },
 });

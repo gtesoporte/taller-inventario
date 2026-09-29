@@ -3,6 +3,7 @@ import {
   View, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image,
 } from 'react-native';
+import { Menu, Image as ImageIcon, Trash2, Camera, AlertTriangle, Folder } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { suscribirGaleriaCategorias, addGaleriaCategoria, updateGaleriaCategoria, deleteGaleriaCategoria } from '../config/firestore';
@@ -69,9 +70,12 @@ export default function GaleriaScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.tituloRow}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.titulo}>🖼️ Galería</Text>
+          <View style={styles.tituloInnerRow}>
+            <ImageIcon size={20} color="#fff" />
+            <Text style={styles.titulo}>Galería</Text>
+          </View>
         </View>
         <Text style={styles.sub}>Fotos de equipos y refacciones por categoría</Text>
       </View>
@@ -98,24 +102,30 @@ export default function GaleriaScreen({ navigation }) {
           {foto ? (
             <View style={styles.iconoPreviewRow}>
               <Image source={{ uri: foto }} style={styles.iconoPreview} resizeMode="cover" />
-              <TouchableOpacity style={styles.fotoQuitarBtn} onPress={() => setFoto('')}>
-                <Text style={styles.fotoQuitarText}>🗑️ Quitar</Text>
+              <TouchableOpacity style={[styles.fotoQuitarBtn, styles.fotoQuitarRow]} onPress={() => setFoto('')}>
+                <Trash2 size={13} color="#C62828" />
+                <Text style={styles.fotoQuitarText}>Quitar</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.fotoBtnsRow}>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'camara')}>
-                <Text style={styles.fotoAddIcon}>📷</Text>
+                <Camera size={22} color="#888" />
                 <Text style={styles.fotoAddText}>Cámara</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.fotoAddBtn} onPress={() => seleccionarFoto(setFoto, 'galeria')}>
-                <Text style={styles.fotoAddIcon}>🖼️</Text>
+                <ImageIcon size={22} color="#888" />
                 <Text style={styles.fotoAddText}>Galería / PC</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {!!error && <Text style={styles.panelError}>⚠️ {error}</Text>}
+          {!!error && (
+            <View style={styles.panelErrorRow}>
+              <AlertTriangle size={13} color="#C62828" />
+              <Text style={styles.panelError}>{error}</Text>
+            </View>
+          )}
           <View style={styles.panelBtns}>
             <TouchableOpacity style={styles.btnCancelar} onPress={() => setPanelAbierto(false)} disabled={guardando}>
               <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -145,10 +155,10 @@ export default function GaleriaScreen({ navigation }) {
               ) : item.foto ? (
                 <Image source={{ uri: item.foto }} style={styles.cardIconImg} resizeMode="cover" />
               ) : (
-                <Text style={{ fontSize: 26 }}>📁</Text>
+                <Folder size={24} color="#bbb" />
               )}
               {puedeAdministrar && (
-                <View style={styles.cardIconCam}><Text style={{ fontSize: 10 }}>📷</Text></View>
+                <View style={styles.cardIconCam}><Camera size={9} color="#555" /></View>
               )}
             </TouchableOpacity>
             <View style={styles.cardBody}>
@@ -156,7 +166,7 @@ export default function GaleriaScreen({ navigation }) {
             </View>
             {puedeAdministrar && (
               <TouchableOpacity style={styles.eliminarBtn} onPress={() => confirmarEliminar(item)}>
-                <Text style={{ fontSize: 18 }}>🗑️</Text>
+                <Trash2 size={17} color="#888" />
               </TouchableOpacity>
             )}
             <Text style={styles.cardArrow}>›</Text>
@@ -164,7 +174,7 @@ export default function GaleriaScreen({ navigation }) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyIcon}>🖼️</Text>
+            <ImageIcon size={40} color="#ccc" />
             <Text style={styles.emptyText}>Sin categorías registradas.</Text>
             {puedeAdministrar && <Text style={styles.emptyHint}>Usa "+ Nueva categoría" para crear la primera.</Text>}
           </View>
@@ -184,7 +194,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   tituloRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  tituloInnerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff' },
   sub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 0, borderRadius: 12, padding: 14, alignItems: 'center' },
@@ -192,7 +202,8 @@ const styles = StyleSheet.create({
   panel: { backgroundColor: '#fff', margin: 14, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#ddd' },
   panelLabel: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 6 },
   panelInput: { backgroundColor: '#fafafa', borderRadius: 10, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  panelErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   panelBtns: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btnCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
   btnCancelarText: { color: '#555', fontWeight: '700' },
@@ -205,17 +216,16 @@ const styles = StyleSheet.create({
   iconoPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   iconoPreview: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#e0e0e0' },
   fotoQuitarBtn: { backgroundColor: '#FFEBEE', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  fotoQuitarRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fotoQuitarText: { color: '#C62828', fontWeight: '700', fontSize: 12 },
   fotoBtnsRow: { flexDirection: 'row', gap: 8 },
   fotoAddBtn: { flex: 1, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#ccc', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, backgroundColor: '#fafafa' },
-  fotoAddIcon: { fontSize: 24 },
   fotoAddText: { fontSize: 11, color: '#888', fontWeight: '600' },
   cardBody: { flex: 1 },
   cardNombre: { fontSize: 16, fontWeight: '800', color: '#1a1a2e' },
   cardArrow: { fontSize: 24, color: '#ccc', marginLeft: 8 },
   eliminarBtn: { padding: 6, marginLeft: 6 },
   emptyBox: { alignItems: 'center', marginTop: 60, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyText: { color: '#888', fontSize: 15, fontWeight: '700' },
   emptyHint: { color: '#aaa', fontSize: 13, textAlign: 'center', maxWidth: 280 },
 });
