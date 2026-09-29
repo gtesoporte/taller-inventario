@@ -3,8 +3,9 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
+import { Wrench, Camera, MapPin, Mic, Package, Monitor, Skull, Handshake, Trash2, CheckCircle2, Hourglass } from 'lucide-react-native';
 import Text from '../components/UpperText';
-import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { suscribirEquipos, suscribirFabricantes } from '../config/firestore';
 import Dropdown from '../components/Dropdown';
 
@@ -24,9 +25,9 @@ export default function EquiposScreen({ navigation }) {
   }, []);
 
   const CLASIF_MAP = {
-    hueso: { label: '💀 Hueso', color: '#E53935' },
-    reacondicionamiento: { label: '🔧 Reacondicionamiento', color: '#1565C0' },
-    prestamo: { label: '🤝 Préstamo', color: '#2E7D32' },
+    hueso: { label: 'Hueso', icon: Skull, color: '#E53935' },
+    reacondicionamiento: { label: 'Reacondicionamiento', icon: Wrench, color: '#1565C0' },
+    prestamo: { label: 'Préstamo', icon: Handshake, color: '#2E7D32' },
   };
 
   const equiposFiltrados = equipos.filter(e => {
@@ -64,28 +65,33 @@ export default function EquiposScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
+            <View style={styles.headerTitleRow}>
+              <Wrench size={18} color="#fff" />
+              <Text style={styles.headerTitle}>Taller Soporte</Text>
+            </View>
             <Text style={styles.headerSub}>{equipos.length} equipos registrados</Text>
           </View>
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Text>📷</Text>
+              <Camera size={17} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <Text>📱</Text>
+              <MapPin size={17} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Text>🎙️</Text>
+              <Mic size={17} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
         {/* Tab toggle */}
         <View style={styles.invTabs}>
-          <TouchableOpacity style={styles.invTab} onPress={() => navigation.replace('PartesLista')}>
-            <Text style={styles.invTabText}>📦 Refacciones</Text>
+          <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('PartesLista')}>
+            <Package size={14} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.invTabText}>Refacciones</Text>
           </TouchableOpacity>
-          <View style={[styles.invTab, styles.invTabActive]}>
-            <Text style={[styles.invTabText, styles.invTabTextActive]}>🖥️ Equipos</Text>
+          <View style={[styles.invTab, styles.invTabActive, styles.invTabRow]}>
+            <Monitor size={14} color={AZUL} />
+            <Text style={[styles.invTabText, styles.invTabTextActive]}>Equipos</Text>
           </View>
         </View>
       </View>
@@ -95,10 +101,9 @@ export default function EquiposScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* Buscador */}
-      <TextInput
+      <SearchInput
         style={styles.search}
-        placeholder="🔍  Buscar por modelo, fabricante o N° de serie..."
-        placeholderTextColor="#aaa"
+        placeholder="Buscar por modelo, fabricante o N° de serie..."
         value={filtro}
         onChangeText={setFiltro}
       />
@@ -124,8 +129,8 @@ export default function EquiposScreen({ navigation }) {
           label="Revisión"
           opciones={[
             { value: 'todas', label: 'Todas' },
-            { value: 'pendiente', label: '⏳ Pendientes de revisar' },
-            { value: 'revisada', label: '✅ Revisadas' },
+            { value: 'pendiente', label: 'Pendientes de revisar' },
+            { value: 'revisada', label: 'Revisadas' },
           ]}
           onChange={setRevision}
         />
@@ -169,7 +174,7 @@ export default function EquiposScreen({ navigation }) {
               >
                 {equipo.foto
                   ? <Image source={{ uri: equipo.foto }} style={styles.thumb} resizeMode="cover" />
-                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 28 }}>🖥️</Text></View>
+                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Monitor size={26} color="#bbb" /></View>
                 }
                 <View style={styles.cardBody}>
                   <Text style={styles.cardNombre}>{equipo.modelo}</Text>
@@ -181,18 +186,20 @@ export default function EquiposScreen({ navigation }) {
                       ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{equipo.fabricante.toUpperCase()}</Text></View>
                       : null}
                     {equipo.clasificacion && CLASIF_MAP[equipo.clasificacion] && (
-                      <View style={[styles.fabBadge, { backgroundColor: CLASIF_MAP[equipo.clasificacion].color }]}>
+                      <View style={[styles.fabBadge, styles.fabBadgeRow, { backgroundColor: CLASIF_MAP[equipo.clasificacion].color }]}>
+                        {React.createElement(CLASIF_MAP[equipo.clasificacion].icon, { size: 11, color: '#fff' })}
                         <Text style={styles.fabBadgeText}>{CLASIF_MAP[equipo.clasificacion].label}</Text>
                       </View>
                     )}
                     {equipo.estadoSalida && (
-                      <View style={[styles.fabBadge, { backgroundColor: equipo.estadoSalida === 'desecho' ? '#616161' : '#00838F' }]}>
-                        <Text style={styles.fabBadgeText}>{equipo.estadoSalida === 'desecho' ? '🗑️ Desecho' : '📦 Almacén'}</Text>
+                      <View style={[styles.fabBadge, styles.fabBadgeRow, { backgroundColor: equipo.estadoSalida === 'desecho' ? '#616161' : '#00838F' }]}>
+                        {equipo.estadoSalida === 'desecho' ? <Trash2 size={11} color="#fff" /> : <Package size={11} color="#fff" />}
+                        <Text style={styles.fabBadgeText}>{equipo.estadoSalida === 'desecho' ? 'Desecho' : 'Almacén'}</Text>
                       </View>
                     )}
                     {equipo.estadoRevision === 'revisada'
-                      ? <View style={[styles.revBadge, styles.revBadgeOk]}><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>✅ Revisado</Text></View>
-                      : <View style={[styles.revBadge, styles.revBadgePend]}><Text style={[styles.revBadgeText, { color: '#E65100' }]}>⏳ Pendiente</Text></View>
+                      ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Revisado</Text></View>
+                      : <View style={[styles.revBadge, styles.revBadgePend, styles.fabBadgeRow]}><Hourglass size={11} color="#E65100" /><Text style={[styles.revBadgeText, { color: '#E65100' }]}>Pendiente</Text></View>
                     }
                   </View>
                 </View>
@@ -220,10 +227,12 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerBtns: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   invTabActive: { backgroundColor: '#fff' },
   invTabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   invTabTextActive: { color: AZUL },
@@ -253,6 +262,7 @@ const styles = StyleSheet.create({
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardSerie: { fontSize: 12, color: '#666', marginTop: 2 },
   fabBadge: { backgroundColor: AZUL, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 6 },
+  fabBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   fabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   cardArrow: { fontSize: 24, color: '#ccc', marginLeft: 8 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 14 },

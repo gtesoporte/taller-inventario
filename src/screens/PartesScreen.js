@@ -3,8 +3,9 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import { Menu, Wrench, Camera, MapPin, Mic, Package, Monitor, AlertTriangle, CheckCircle2, Hourglass } from 'lucide-react-native';
 import Text from '../components/UpperText';
-import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { suscribirPartes, suscribirFabricantes, getUbicaciones } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
@@ -78,32 +79,37 @@ export default function PartesScreen({ navigation }) {
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
             <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-              <Text style={styles.menuBtnIcon}>☰</Text>
+              <Menu size={22} color="#fff" />
             </TouchableOpacity>
             <View>
-              <Text style={styles.headerTitle}>🔧 Taller Soporte</Text>
+              <View style={styles.headerTitleRow}>
+                <Wrench size={18} color="#fff" />
+                <Text style={styles.headerTitle}>Taller Soporte</Text>
+              </View>
               <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
             </View>
           </View>
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Text>📷</Text>
+              <Camera size={17} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <Text>📱</Text>
+              <MapPin size={17} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Text>🎙️</Text>
+              <Mic size={17} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
         {/* Tab toggle */}
         <View style={styles.invTabs}>
-          <View style={[styles.invTab, styles.invTabActive]}>
-            <Text style={[styles.invTabText, styles.invTabTextActive]}>📦 Refacciones</Text>
+          <View style={[styles.invTab, styles.invTabActive, styles.invTabRow]}>
+            <Package size={14} color={AZUL} />
+            <Text style={[styles.invTabText, styles.invTabTextActive]}>Refacciones</Text>
           </View>
-          <TouchableOpacity style={styles.invTab} onPress={() => navigation.replace('EquiposLista')}>
-            <Text style={styles.invTabText}>🖥️ Equipos</Text>
+          <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('EquiposLista')}>
+            <Monitor size={14} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.invTabText}>Equipos</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -115,10 +121,9 @@ export default function PartesScreen({ navigation }) {
       )}
 
       {/* Buscador */}
-      <TextInput
+      <SearchInput
         style={styles.search}
-        placeholder="🔍  Buscar por nombre, código o ubicación..."
-        placeholderTextColor="#aaa"
+        placeholder="Buscar por nombre, código o ubicación..."
         value={filtro}
         onChangeText={setFiltro}
       />
@@ -140,8 +145,8 @@ export default function PartesScreen({ navigation }) {
           label="Revisión"
           opciones={[
             { value: 'todas', label: 'Todas' },
-            { value: 'pendiente', label: '⏳ Pendientes de revisar' },
-            { value: 'revisada', label: '✅ Revisadas' },
+            { value: 'pendiente', label: 'Pendientes de revisar' },
+            { value: 'revisada', label: 'Revisadas' },
           ]}
           onChange={setRevision}
         />
@@ -157,10 +162,11 @@ export default function PartesScreen({ navigation }) {
       />
 
       {ubicacionesSinRegistrar.length > 0 && (
-        <TouchableOpacity style={styles.avisoSinRegistrar} onPress={() => navigation.navigate('Ubicaciones')}>
-          <Text style={styles.avisoSinRegistrarText}>
-            ⚠️ {ubicacionesSinRegistrar.length} ubicación{ubicacionesSinRegistrar.length !== 1 ? 'es' : ''} solo escrita{ubicacionesSinRegistrar.length !== 1 ? 's' : ''} en refacciones,
-            sin registrar en 📱 Ubicaciones ({ubicacionesSinRegistrar.slice(0, 3).join(', ')}{ubicacionesSinRegistrar.length > 3 ? '…' : ''}). Toca para registrarlas.
+        <TouchableOpacity style={[styles.avisoSinRegistrar, { flexDirection: 'row', gap: 8 }]} onPress={() => navigation.navigate('Ubicaciones')}>
+          <AlertTriangle size={15} color="#E65100" style={{ marginTop: 1 }} />
+          <Text style={[styles.avisoSinRegistrarText, { flex: 1 }]}>
+            {ubicacionesSinRegistrar.length} ubicación{ubicacionesSinRegistrar.length !== 1 ? 'es' : ''} solo escrita{ubicacionesSinRegistrar.length !== 1 ? 's' : ''} en refacciones,
+            sin registrar en Ubicaciones ({ubicacionesSinRegistrar.slice(0, 3).join(', ')}{ubicacionesSinRegistrar.length > 3 ? '…' : ''}). Toca para registrarlas.
           </Text>
         </TouchableOpacity>
       )}
@@ -179,20 +185,25 @@ export default function PartesScreen({ navigation }) {
               <TouchableOpacity key={parte.id} style={styles.card} onPress={() => navigation.navigate('DetalleParte', { id: parte.id })}>
                 {parte.foto
                   ? <Image source={{ uri: parte.foto }} style={styles.thumb} />
-                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 22 }}>📦</Text></View>
+                  : <View style={[styles.thumb, styles.thumbPlaceholder]}><Package size={22} color="#bbb" /></View>
                 }
                 <View style={styles.cardBody}>
                   <Text style={styles.cardNombre}>{parte.nombre}</Text>
                   {parte.codigo ? <Text style={styles.cardCodigo}>{parte.codigo}</Text> : null}
                   <View style={styles.cardRow}>
-                    {parte.ubicacion ? <Text style={styles.cardUbic}>📍 {parte.ubicacion}</Text> : null}
+                    {parte.ubicacion ? (
+                      <View style={styles.cardUbicRow}>
+                        <MapPin size={11} color="#888" />
+                        <Text style={styles.cardUbic}>{parte.ubicacion}</Text>
+                      </View>
+                    ) : null}
                     {parte.fabricante
                       ? <View style={styles.fabBadge}><Text style={styles.fabBadgeText}>{parte.fabricante.toUpperCase()}</Text></View>
                       : null
                     }
                     {parte.estadoRevision === 'revisada'
-                      ? <View style={[styles.revBadge, styles.revBadgeOk]}><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>✅ Revisada</Text></View>
-                      : <View style={[styles.revBadge, styles.revBadgePend]}><Text style={[styles.revBadgeText, { color: '#E65100' }]}>⏳ Pendiente</Text></View>
+                      ? <View style={[styles.revBadge, styles.revBadgeOk, styles.revBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Revisada</Text></View>
+                      : <View style={[styles.revBadge, styles.revBadgePend, styles.revBadgeRow]}><Hourglass size={11} color="#E65100" /><Text style={[styles.revBadgeText, { color: '#E65100' }]}>Pendiente</Text></View>
                     }
                   </View>
                 </View>
@@ -223,12 +234,13 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
   invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   invTabActive: { backgroundColor: '#fff' },
   invTabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   invTabTextActive: { color: AZUL },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   headerBtns: { flexDirection: 'row', gap: 8 },
@@ -256,9 +268,11 @@ const styles = StyleSheet.create({
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   cardCodigo: { fontSize: 12, color: '#666', marginTop: 2 },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' },
+  cardUbicRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   cardUbic: { fontSize: 11, color: '#888' },
   fabBadge: { backgroundColor: AZUL, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   fabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  revBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cantBadge: { backgroundColor: '#E8F5E9', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center', minWidth: 48 },
   cantBadgeRed: { backgroundColor: '#FFEBEE' },
   cantNum: { fontSize: 18, fontWeight: '800', color: '#2e7d32' },

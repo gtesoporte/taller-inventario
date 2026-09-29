@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { Menu, Wrench, Hourglass, CheckCircle2, Cog, UserCog } from 'lucide-react-native';
 import Text from '../components/UpperText';
-import TextInput from '../components/UpperTextInput';
+import SearchInput from '../components/SearchInput';
 import { suscribirAcondicionamientos } from '../config/firestore';
 import DrawerMenu from '../components/DrawerMenu';
 
@@ -11,9 +12,9 @@ const ESTADO_MAP = { 'Pendientes': 'pendiente', 'En progreso': 'en_progreso', 'C
 const normalizeEstado = (e) => (e || '').toLowerCase().replace(/[\s_-]/g, '').replace('é', 'e');
 
 const ESTADO_ESTILOS = {
-  pendiente:   { bg: '#FFF3E0', text: '#E65100', label: '⏳ Pendiente' },
-  en_progreso: { bg: '#F3F4F6', text: '#374151', label: '🔧 En progreso' },
-  completado:  { bg: '#E8F5E9', text: '#2E7D32', label: '✅ Completado' },
+  pendiente:   { bg: '#FFF3E0', text: '#E65100', icon: Hourglass, label: 'Pendiente' },
+  en_progreso: { bg: '#F3F4F6', text: '#374151', icon: Cog, label: 'En progreso' },
+  completado:  { bg: '#E8F5E9', text: '#2E7D32', icon: CheckCircle2, label: 'Completado' },
 };
 
 function formatFecha(ts) {
@@ -58,10 +59,13 @@ export default function AcondicionamientoScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-            <Text style={styles.menuBtnIcon}>☰</Text>
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>🔧🔨 Acondicionamientos</Text>
+            <View style={styles.headerTitleRow}>
+              <Wrench size={18} color="#fff" />
+              <Text style={styles.headerTitle}>Acondicionamientos</Text>
+            </View>
             <Text style={styles.headerSub}>{items.length} proyectos registrados</Text>
           </View>
         </View>
@@ -86,10 +90,9 @@ export default function AcondicionamientoScreen({ navigation }) {
       </ScrollView>
 
       {/* Buscador */}
-      <TextInput
+      <SearchInput
         style={styles.search}
-        placeholder="🔍  Buscar por equipo, ingeniero, No. serie..."
-        placeholderTextColor="#aaa"
+        placeholder="Buscar por equipo, ingeniero, No. serie..."
         value={filtro}
         onChangeText={setFiltro}
       />
@@ -105,14 +108,25 @@ export default function AcondicionamientoScreen({ navigation }) {
               <View style={styles.cardInner}>
                 <View style={styles.cardLeft}>
                   <Text style={styles.cardNombre}>{item.nombre}</Text>
-                  {item.equipo ? <Text style={styles.cardEquipo}>⚙️ {item.equipo}</Text> : null}
+                  {item.equipo ? (
+                    <View style={styles.iconTextRow}>
+                      <Cog size={13} color="#1565C0" />
+                      <Text style={styles.cardEquipo}>{item.equipo}</Text>
+                    </View>
+                  ) : null}
                   {item.numeroSerie ? <Text style={styles.cardSerie}>N/S: {item.numeroSerie}</Text> : null}
                   <View style={styles.cardFooter}>
-                    {item.ingeniero ? <Text style={styles.cardIng}>🧑‍🔧 {item.ingeniero}</Text> : null}
+                    {item.ingeniero ? (
+                      <View style={[styles.iconTextRow, { flex: 1, marginBottom: 0 }]}>
+                        <UserCog size={13} color="#555" />
+                        <Text style={styles.cardIng}>{item.ingeniero}</Text>
+                      </View>
+                    ) : null}
                     {item.creadoEn ? <Text style={styles.cardFecha}>{formatFecha(item.creadoEn)}</Text> : null}
                   </View>
                 </View>
                 <View style={[styles.estadoBadge, { backgroundColor: est.bg }]}>
+                  <est.icon size={13} color={est.text} />
                   <Text style={[styles.estadoText, { color: est.text }]}>{est.label}</Text>
                 </View>
               </View>
@@ -135,7 +149,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
-  menuBtnIcon: { fontSize: 22, color: '#fff' },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   nuevoBtn: { backgroundColor: '#F97316', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
@@ -150,12 +164,13 @@ const styles = StyleSheet.create({
   cardInner: { padding: 14, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   cardLeft: { flex: 1, marginRight: 10 },
   cardNombre: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
-  cardEquipo: { fontSize: 13, color: '#1565C0', fontWeight: '600', marginBottom: 2 },
+  iconTextRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  cardEquipo: { fontSize: 13, color: '#1565C0', fontWeight: '600' },
   cardSerie: { fontSize: 12, color: '#666', marginBottom: 4 },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
-  cardIng: { fontSize: 12, color: '#555', flex: 1 },
+  cardIng: { fontSize: 12, color: '#555' },
   cardFecha: { fontSize: 12, color: '#999' },
-  estadoBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignSelf: 'flex-start' },
+  estadoBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignSelf: 'flex-start' },
   estadoText: { fontSize: 12, fontWeight: '700' },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 14 },
 });

@@ -3,6 +3,7 @@ import {
   View, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
+import { Wrench, AlertTriangle, CheckCircle2, KeyRound } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
@@ -112,7 +113,9 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={styles.bg} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.icon}>🔧</Text>
+        <View style={styles.iconBox}>
+          <Wrench size={32} color={AZUL} />
+        </View>
         <Text style={styles.title}>Taller Soporte</Text>
         <Text style={styles.subtitle}>Sistema de gestión de refacciones</Text>
 
@@ -173,8 +176,9 @@ export default function LoginScreen() {
 
         {/* Error inline */}
         {!!error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+          <View style={[styles.errorBox, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+            <AlertTriangle size={16} color="#C62828" />
+            <Text style={[styles.errorText, { flex: 1 }]}>{error}</Text>
           </View>
         )}
 
@@ -193,9 +197,12 @@ export default function LoginScreen() {
             <Text style={styles.recuperarTitulo}>Recuperar contraseña</Text>
             {exitoRecuperar ? (
               <View style={styles.exitoBox}>
-                <Text style={styles.exitoText}>
-                  ✅ Correo enviado a {emailRecuperar || email}. Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.
-                </Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <CheckCircle2 size={16} color="#2E7D32" style={{ marginTop: 2 }} />
+                  <Text style={[styles.exitoText, { flex: 1 }]}>
+                    Correo enviado a {emailRecuperar || email}. Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.
+                  </Text>
+                </View>
                 <TouchableOpacity onPress={() => { setRecuperar(false); setExitoRecuperar(false); setEmailRecuperar(''); }}>
                   <Text style={[styles.forgotText, { textAlign: 'center', marginTop: 12 }]}>Volver al inicio de sesión</Text>
                 </TouchableOpacity>
@@ -238,7 +245,12 @@ export default function LoginScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.btnText}>🔑 {tab === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</Text>
+              : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <KeyRound size={16} color="#fff" />
+                  <Text style={styles.btnText}>{tab === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</Text>
+                </View>
+              )
             }
           </TouchableOpacity>
         )}
@@ -255,7 +267,7 @@ const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   bg: { flex: 1, backgroundColor: '#EEF2F7' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 28 },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: 12 },
+  iconBox: { width: 72, height: 72, borderRadius: 20, backgroundColor: '#E6F0F7', alignSelf: 'center', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   title: { fontSize: 28, fontWeight: '800', color: AZUL, textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 32 },
   tabRow: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 4, marginBottom: 24 },

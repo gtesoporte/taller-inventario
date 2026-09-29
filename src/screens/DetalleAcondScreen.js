@@ -3,6 +3,10 @@ import {
   View, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import {
+  ArrowLeft, Pencil, Cog, Hourglass, CheckCircle2, Nut, Archive, Package,
+  ClipboardList, Bolt, FileText, Check,
+} from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import {
@@ -13,9 +17,9 @@ import { useAuth } from '../context/AuthContext';
 import { mostrarAlerta } from '../utils/confirmar';
 
 const ESTADO_ESTILOS = {
-  pendiente:   { bg: '#FFF3E0', text: '#E65100', label: '⏳ Pendiente' },
-  en_progreso: { bg: '#F3F4F6', text: '#374151', label: '🔧 En progreso' },
-  completado:  { bg: '#E8F5E9', text: '#2E7D32', label: '✅ Completado' },
+  pendiente:   { bg: '#FFF3E0', text: '#E65100', icon: Hourglass, label: 'Pendiente' },
+  en_progreso: { bg: '#F3F4F6', text: '#374151', icon: Cog, label: 'En progreso' },
+  completado:  { bg: '#E8F5E9', text: '#2E7D32', icon: CheckCircle2, label: 'Completado' },
 };
 
 function formatFecha(ts) {
@@ -79,23 +83,36 @@ export default function DetalleAcondScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.volver}>← Volver</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={16} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.volver}>Volver</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.editarBtn}>
-            <Text style={styles.editarText}>✏️ Editar</Text>
+            <Pencil size={13} color="#fff" />
+            <Text style={styles.editarText}>Editar</Text>
           </TouchableOpacity>
         </View>
         <Text style={styles.titulo}>{item.nombre}</Text>
-        <Text style={styles.subinfo}>
-          {item.equipo ? `⚙️ ${item.equipo}` : ''}
-          {item.numeroSerie ? `  •  N/S: ${item.numeroSerie}` : ''}
-        </Text>
+        <View style={styles.subinfoRow}>
+          {item.equipo ? (
+            <View style={styles.subinfoItem}>
+              <Cog size={13} color="rgba(255,255,255,0.8)" />
+              <Text style={styles.subinfo}>{item.equipo}</Text>
+            </View>
+          ) : null}
+          {item.numeroSerie ? <Text style={styles.subinfo}>N/S: {item.numeroSerie}</Text> : null}
+        </View>
         <View style={styles.metaRow}>
           <View style={[styles.estadoBadge, { backgroundColor: est.bg }]}>
+            <est.icon size={13} color={est.text} />
             <Text style={[styles.estadoText, { color: est.text }]}>{est.label}</Text>
           </View>
-          {item.ingeniero ? <Text style={styles.ing}>🧑‍🔧 {item.ingeniero}</Text> : null}
+          {item.ingeniero ? (
+            <View style={styles.subinfoItem}>
+              <UserCog size={14} color="rgba(255,255,255,0.85)" />
+              <Text style={styles.ing}>{item.ingeniero}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -103,19 +120,25 @@ export default function DetalleAcondScreen({ route, navigation }) {
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Instaladas', emoji: '🔩', val: item.instaladas ?? 0 },
-            { label: 'Retiradas',  emoji: '🗃️', val: item.retiradas ?? 0 },
-            { label: 'Movimientos', emoji: '📦', val: item.movimientos ?? 0 },
+            { label: 'Instaladas', icon: Nut, val: item.instaladas ?? 0 },
+            { label: 'Retiradas',  icon: Archive, val: item.retiradas ?? 0 },
+            { label: 'Movimientos', icon: Package, val: item.movimientos ?? 0 },
           ].map(s => (
             <View key={s.label} style={styles.statCard}>
               <Text style={styles.statNum}>{s.val}</Text>
-              <Text style={styles.statLabel}>{s.emoji} {s.label}</Text>
+              <View style={styles.statLabelRow}>
+                <s.icon size={12} color="#888" />
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
             </View>
           ))}
         </View>
 
         {/* Descripción */}
-        <Text style={styles.seccionTitulo}>📋 DESCRIPCIÓN</Text>
+        <View style={styles.seccionTituloRow}>
+          <ClipboardList size={14} color="#555" />
+          <Text style={styles.seccionTitulo}>DESCRIPCIÓN</Text>
+        </View>
         <View style={styles.descBox}>
           <Text style={styles.descText}>{item.descripcion || 'Sin descripción.'}</Text>
         </View>
@@ -123,13 +146,17 @@ export default function DetalleAcondScreen({ route, navigation }) {
         {/* Marcar completado */}
         {estadoKey !== 'completado' && (
           <TouchableOpacity style={styles.completarBtn} onPress={marcarCompletado}>
-            <Text style={styles.completarText}>✅ Marcar completado</Text>
+            <CheckCircle2 size={16} color="#fff" />
+            <Text style={styles.completarText}>Marcar completado</Text>
           </TouchableOpacity>
         )}
 
         {/* Refacciones del proyecto */}
         <View style={styles.seccionHeader}>
-          <Text style={styles.seccionTitulo}>🔩 REFACCIONES DEL PROYECTO</Text>
+          <View style={styles.seccionTituloRow}>
+            <Bolt size={14} color="#555" />
+            <Text style={styles.seccionTitulo}>REFACCIONES DEL PROYECTO</Text>
+          </View>
           <TouchableOpacity style={styles.agregarBtn}>
             <Text style={styles.agregarText}>+ Agregar</Text>
           </TouchableOpacity>
@@ -138,7 +165,10 @@ export default function DetalleAcondScreen({ route, navigation }) {
 
         {/* Bitácora */}
         <View style={styles.seccionHeader}>
-          <Text style={styles.seccionTitulo}>📝 BITÁCORA DE PROGRESO</Text>
+          <View style={styles.seccionTituloRow}>
+            <FileText size={14} color="#555" />
+            <Text style={styles.seccionTitulo}>BITÁCORA DE PROGRESO</Text>
+          </View>
           <TouchableOpacity style={styles.agregarBtn} onPress={agregarNota} disabled={guardando}>
             <Text style={styles.agregarText}>+ Nota</Text>
           </TouchableOpacity>
@@ -154,7 +184,7 @@ export default function DetalleAcondScreen({ route, navigation }) {
           />
           {nota.trim() ? (
             <TouchableOpacity style={styles.notaEnviar} onPress={agregarNota} disabled={guardando}>
-              <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text>
+              <Check size={18} color="#fff" />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -184,24 +214,29 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: PURPLE, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   volver: { color: 'rgba(255,255,255,0.8)', fontSize: 15 },
-  editarBtn: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  editarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   editarText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 6 },
-  subinfo: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 12 },
+  subinfoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  subinfoItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  subinfo: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  estadoBadge: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+  estadoBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   estadoText: { fontSize: 12, fontWeight: '700' },
   ing: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, elevation: 2 },
   statNum: { fontSize: 26, fontWeight: '800', color: '#1a1a2e' },
-  statLabel: { fontSize: 11, color: '#888', marginTop: 4, textAlign: 'center' },
-  seccionTitulo: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5, marginBottom: 10, marginTop: 4 },
+  statLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  statLabel: { fontSize: 11, color: '#888' },
+  seccionTituloRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginTop: 4 },
+  seccionTitulo: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
   seccionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10 },
   descBox: { backgroundColor: '#fff', borderRadius: 12, padding: 14, shadowColor: '#000', shadowOpacity: 0.04, elevation: 1 },
   descText: { fontSize: 14, color: '#333', lineHeight: 22 },
-  completarBtn: { backgroundColor: '#2E7D32', borderRadius: 14, padding: 16, alignItems: 'center', marginVertical: 16 },
+  completarBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, backgroundColor: '#2E7D32', borderRadius: 14, padding: 16, marginVertical: 16 },
   completarText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   agregarBtn: { backgroundColor: PURPLE, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   agregarText: { color: '#fff', fontWeight: '700', fontSize: 13 },

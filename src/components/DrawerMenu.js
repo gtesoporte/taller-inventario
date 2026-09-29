@@ -1,20 +1,23 @@
 import React from 'react';
 import { Modal, View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Package, Wrench, ClipboardList, Wrench as ToolboxIcon, Image as ImageIcon, Contact, Settings, Crown, LogOut, ChevronRight } from 'lucide-react-native';
 import Text from './UpperText';
 import { useAuth } from '../context/AuthContext';
 import { esAdmin } from '../utils/permisos';
 import { VERSION } from '../config/version';
 
+const AZUL = '#085686'; // DISA blue
+
 const SECCIONES = [
-  { tab: 'Inventario', icon: '📦', label: 'Inventario' },
-  { tab: 'Proyectos', icon: '🔧', label: 'Proyectos' },
-  { tab: 'Movimientos', icon: '📋', label: 'Movimientos' },
-  { tab: 'Cajuelas', icon: '🧰', label: 'Cajuelas' },
-  { tab: 'Galería', icon: '🖼️', label: 'Galería' },
-  { tab: 'Contactos', icon: '📇', label: 'Contactos' },
-  { tab: 'Config', icon: '⚙️', label: 'Configuración' },
-  { tab: 'Admin', icon: '👑', label: 'Administración' },
+  { tab: 'Inventario', icon: Package, label: 'Inventario' },
+  { tab: 'Proyectos', icon: Wrench, label: 'Proyectos' },
+  { tab: 'Movimientos', icon: ClipboardList, label: 'Movimientos' },
+  { tab: 'Cajuelas', icon: ToolboxIcon, label: 'Cajuelas' },
+  { tab: 'Galería', icon: ImageIcon, label: 'Galería' },
+  { tab: 'Contactos', icon: Contact, label: 'Contactos' },
+  { tab: 'Config', icon: Settings, label: 'Configuración' },
+  { tab: 'Admin', icon: Crown, label: 'Administración' },
 ];
 
 export default function DrawerMenu({ visible, onClose }) {
@@ -52,9 +55,9 @@ export default function DrawerMenu({ visible, onClose }) {
           <ScrollView style={styles.lista} contentContainerStyle={styles.listaContent} showsVerticalScrollIndicator={false}>
             {SECCIONES.map(s => (
               <TouchableOpacity key={s.tab} style={styles.item} onPress={() => ir(s.tab)}>
-                <Text style={styles.itemIcon}>{s.icon}</Text>
+                <View style={styles.itemIcon}><s.icon size={18} color={AZUL} /></View>
                 <Text style={styles.itemLabel}>{s.label}</Text>
-                <Text style={styles.itemArrow}>›</Text>
+                <ChevronRight size={16} color="#ccc" />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -62,7 +65,7 @@ export default function DrawerMenu({ visible, onClose }) {
           <View style={styles.divider} />
 
           <TouchableOpacity style={styles.salirBtn} onPress={salir}>
-            <Text style={styles.salirIcon}>🚪</Text>
+            <View style={styles.salirIcon}><LogOut size={18} color="#C62828" /></View>
             <Text style={styles.salirText}>Cerrar sesión</Text>
           </TouchableOpacity>
           <Text style={styles.version}>Versión {VERSION}</Text>
@@ -74,7 +77,6 @@ export default function DrawerMenu({ visible, onClose }) {
   );
 }
 
-const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   overlay: { flex: 1, flexDirection: 'row' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
@@ -92,11 +94,10 @@ const styles = StyleSheet.create({
   lista: { flex: 1 },
   listaContent: { paddingVertical: 4 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 9 },
-  itemIcon: { fontSize: 18, width: 24, textAlign: 'center' },
+  itemIcon: { width: 24, alignItems: 'center' },
   itemLabel: { flex: 1, fontSize: 13, fontWeight: '700', color: '#1a1a2e' },
-  itemArrow: { fontSize: 16, color: '#ccc' },
   salirBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 16 },
-  salirIcon: { fontSize: 18, width: 24, textAlign: 'center' },
+  salirIcon: { width: 24, alignItems: 'center' },
   salirText: { fontSize: 13, fontWeight: '700', color: '#C62828' },
   version: { fontSize: 10, color: '#aaa', textAlign: 'center', paddingBottom: 12 },
 });
