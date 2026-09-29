@@ -109,6 +109,7 @@ export default function EquiposScreen({ navigation }) {
           style={styles.filtroDropdown}
           value={clasificacion}
           titulo="FILTRAR POR CLASIFICACIÓN"
+          label="Clasificación"
           placeholder="Todas las clasificaciones"
           opciones={[
             { value: '', label: 'Todas las clasificaciones' },
@@ -120,6 +121,7 @@ export default function EquiposScreen({ navigation }) {
           style={styles.filtroDropdown}
           value={revision}
           titulo="FILTRAR POR REVISIÓN"
+          label="Revisión"
           opciones={[
             { value: 'todas', label: 'Todas' },
             { value: 'pendiente', label: '⏳ Pendientes de revisar' },
@@ -210,7 +212,7 @@ export default function EquiposScreen({ navigation }) {
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

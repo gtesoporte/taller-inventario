@@ -1,10 +1,11 @@
 import React from 'react';
 import { Text } from 'react-native';
 
-// Fuerza mayúsculas en todo texto de la app (estandarización visual de textos).
+// Fuerza mayúsculas (estandarización visual) y la tipografía de marca (Montserrat)
+// en todo texto de la app. `style` puede sobreescribir fontFamily si hace falta.
 export default function UpperText({ style, children, ...rest }) {
   return (
-    <Text style={[{ textTransform: 'uppercase' }, style]} {...rest}>
+    <Text style={[{ textTransform: 'uppercase', fontFamily: 'Montserrat' }, style]} {...rest}>
       {children}
     </Text>
   );

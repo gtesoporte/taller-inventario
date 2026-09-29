@@ -74,7 +74,7 @@ export default function DrawerMenu({ visible, onClose }) {
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   overlay: { flex: 1, flexDirection: 'row' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },

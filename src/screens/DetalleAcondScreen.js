@@ -177,8 +177,8 @@ export default function DetalleAcondScreen({ route, navigation }) {
   );
 }
 
-const PURPLE = '#6D28D9';
-const AZUL = '#0B2447';
+const PURPLE = '#085686'; // DISA blue (unificado, ya no morado)
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

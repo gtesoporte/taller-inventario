@@ -3,7 +3,9 @@ import { Modal, View, TouchableOpacity, ScrollView, StyleSheet } from 'react-nat
 import Text from './UpperText';
 
 // Lista desplegable. `opciones` es un arreglo de strings o de { value, label }.
-export default function Dropdown({ value, opciones, onChange, placeholder = 'Seleccionar...', titulo, style }) {
+// `label`, si se da, se muestra fijo arriba del control (para que siempre se sepa
+// a qué corresponde, no solo al abrirlo). `titulo` es el encabezado del modal.
+export default function Dropdown({ value, opciones, onChange, placeholder = 'Seleccionar...', titulo, label, style }) {
   const [abierto, setAbierto] = useState(false);
 
   const items = opciones.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
@@ -15,8 +17,9 @@ export default function Dropdown({ value, opciones, onChange, placeholder = 'Sel
   };
 
   return (
-    <>
-      <TouchableOpacity style={[styles.trigger, style]} onPress={() => setAbierto(true)}>
+    <View style={style}>
+      {!!label && <Text style={styles.label}>{label}</Text>}
+      <TouchableOpacity style={styles.trigger} onPress={() => setAbierto(true)}>
         <Text style={[styles.triggerText, !actual && styles.placeholder]} numberOfLines={1}>
           {actual ? actual.label : placeholder}
         </Text>
@@ -41,12 +44,13 @@ export default function Dropdown({ value, opciones, onChange, placeholder = 'Sel
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </>
+    </View>
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
+  label: { fontSize: 11, fontWeight: '800', color: '#888', letterSpacing: 0.5, marginBottom: 6 },
   trigger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#e0e0e0' },
   triggerText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
   placeholder: { color: '#aaa', fontWeight: '400' },

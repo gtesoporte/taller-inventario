@@ -129,6 +129,7 @@ export default function PartesScreen({ navigation }) {
           style={styles.filtroDropdown}
           value={fabricante}
           titulo="FILTRAR POR MARCA"
+          label="Marca"
           opciones={[...fabricantes, 'Sin fabricante']}
           onChange={setFabricante}
         />
@@ -136,6 +137,7 @@ export default function PartesScreen({ navigation }) {
           style={styles.filtroDropdown}
           value={revision}
           titulo="FILTRAR POR REVISIÓN"
+          label="Revisión"
           opciones={[
             { value: 'todas', label: 'Todas' },
             { value: 'pendiente', label: '⏳ Pendientes de revisar' },
@@ -149,6 +151,7 @@ export default function PartesScreen({ navigation }) {
         style={styles.filtroUbicacion}
         value={ubicacion}
         titulo="FILTRAR POR UBICACIÓN"
+        label="Ubicación"
         opciones={['Todas', 'Sin ubicación', ...ubicacionesDisponibles]}
         onChange={setUbicacion}
       />
@@ -212,7 +215,7 @@ export default function PartesScreen({ navigation }) {
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

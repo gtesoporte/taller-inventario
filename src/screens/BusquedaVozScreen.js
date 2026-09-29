@@ -193,7 +193,7 @@ export default function BusquedaVozScreen({ navigation }) {
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: AZUL },
   header: { padding: 18, paddingTop: 50 },

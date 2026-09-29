@@ -251,7 +251,7 @@ export default function LoginScreen() {
   );
 }
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   bg: { flex: 1, backgroundColor: '#EEF2F7' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 28 },

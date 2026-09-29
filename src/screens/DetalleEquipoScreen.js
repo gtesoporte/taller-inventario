@@ -444,7 +444,7 @@ const filaStyles = StyleSheet.create({
   valor: { fontSize: 14, color: '#1a1a2e', fontWeight: '700', flex: 2, textAlign: 'right' },
 });
 
-const AZUL = '#0B2447';
+const AZUL = '#085686'; // DISA blue
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },

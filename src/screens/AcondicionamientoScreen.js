@@ -128,7 +128,7 @@ export default function AcondicionamientoScreen({ navigation }) {
   );
 }
 
-const PURPLE = '#6D28D9';
+const PURPLE = '#085686'; // DISA blue (unificado, ya no morado)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
