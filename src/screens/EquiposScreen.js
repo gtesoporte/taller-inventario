@@ -64,24 +64,24 @@ export default function EquiposScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <View>
+          <View style={styles.headerTitleBlock}>
             <View style={styles.headerTitleRow}>
               <Wrench size={18} color="#fff" />
               <Text style={styles.headerTitle}>Taller Soporte</Text>
             </View>
             <Text style={styles.headerSub}>{equipos.length} equipos registrados</Text>
           </View>
-          <View style={styles.headerBtns}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Camera size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <MapPin size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Mic size={18} color="#fff" />
-            </TouchableOpacity>
-          </View>
+        </View>
+        <View style={styles.headerBtns}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
+            <Camera size={18} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
+            <MapPin size={18} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
+            <Mic size={18} color="#fff" />
+          </TouchableOpacity>
         </View>
         {/* Tab toggle */}
         <View style={styles.invTabs}>
@@ -214,8 +214,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerBtns: { flexDirection: 'row', gap: 12 },
+  headerTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  headerTitleBlock: { flex: 1, flexShrink: 1 },
+  headerBtns: { flexDirection: 'row', gap: 12, marginTop: 16 },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },

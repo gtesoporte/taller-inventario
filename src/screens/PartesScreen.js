@@ -77,29 +77,27 @@ export default function PartesScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
-              <Menu size={22} color="#fff" />
-            </TouchableOpacity>
-            <View>
-              <View style={styles.headerTitleRow}>
-                <Wrench size={18} color="#fff" />
-                <Text style={styles.headerTitle}>Taller Soporte</Text>
-              </View>
-              <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setMenuAbierto(true)}>
+            <Menu size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleBlock}>
+            <View style={styles.headerTitleRow}>
+              <Wrench size={18} color="#fff" />
+              <Text style={styles.headerTitle}>Taller Soporte</Text>
             </View>
+            <Text style={styles.headerSub}>{partes.length} refacciones registradas</Text>
           </View>
-          <View style={styles.headerBtns}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Camera size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <MapPin size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Mic size={18} color="#fff" />
-            </TouchableOpacity>
-          </View>
+        </View>
+        <View style={styles.headerBtns}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
+            <Camera size={18} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
+            <MapPin size={18} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
+            <Mic size={18} color="#fff" />
+          </TouchableOpacity>
         </View>
         {/* Tab toggle */}
         <View style={styles.invTabs}>
@@ -231,9 +229,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
+  headerTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  headerTitleBlock: { flex: 1, flexShrink: 1 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+  headerBtns: { flexDirection: 'row', gap: 12, marginTop: 16 },
   invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
@@ -243,7 +242,6 @@ const styles = StyleSheet.create({
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  headerBtns: { flexDirection: 'row', gap: 12 },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
