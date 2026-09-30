@@ -23,13 +23,17 @@ export const seleccionarFoto = (onFoto, fuente = 'galeria') => {
     reader.onload = (ev) => {
       const img = new window.Image();
       img.onload = () => {
-        const MAX = 1000;
+        // 700px/0.6 en vez de 1000px/0.78: las fotos se guardan incrustadas en el
+        // documento de Firestore (no en Storage), así que cada lista que las lee
+        // descarga y decodifica esto aunque solo muestre una miniatura de 50-60px.
+        // Este tamaño reduce el peso ~60% sin perder nitidez notoria en pantalla.
+        const MAX = 700;
         const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * ratio);
         canvas.height = Math.round(img.height * ratio);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        onFoto(canvas.toDataURL('image/jpeg', 0.78));
+        onFoto(canvas.toDataURL('image/jpeg', 0.6));
       };
       img.src = ev.target.result;
     };

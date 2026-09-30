@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
@@ -34,15 +34,15 @@ export default function PartesScreen({ navigation }) {
   // Todas las ubicaciones posibles: las registradas en Ubicaciones + las que
   // alguna refacción trae escritas a mano (así no "desaparecen" del filtro
   // aunque nunca se hayan dado de alta formalmente).
-  const ubicacionesDisponibles = [...new Set([
+  const ubicacionesDisponibles = useMemo(() => [...new Set([
     ...ubicacionesRegistradas.map(u => u.nombre).filter(Boolean),
     ...partes.map(p => p.ubicacion).filter(Boolean),
-  ])].sort((a, b) => String(a).localeCompare(String(b), 'es'));
-  const ubicacionesSinRegistrar = ubicacionesDisponibles.filter(
+  ])].sort((a, b) => String(a).localeCompare(String(b), 'es')), [ubicacionesRegistradas, partes]);
+  const ubicacionesSinRegistrar = useMemo(() => ubicacionesDisponibles.filter(
     u => !ubicacionesRegistradas.some(r => r.nombre === u)
-  );
+  ), [ubicacionesDisponibles, ubicacionesRegistradas]);
 
-  const partesFiltradas = partes.filter(p => {
+  const partesFiltradas = useMemo(() => partes.filter(p => {
     const q = filtro.toLowerCase();
     const matchTexto = !filtro || p.nombre?.toLowerCase().includes(q) || p.codigo?.toLowerCase().includes(q) || p.ubicacion?.toLowerCase().includes(q);
     const matchFab = fabricante === 'Todos'
@@ -61,14 +61,14 @@ export default function PartesScreen({ navigation }) {
         ? !p.ubicacion
         : p.ubicacion === ubicacion;
     return matchTexto && matchFab && matchRev && matchUbic;
-  });
+  }), [partes, filtro, fabricante, revision, ubicacion]);
 
-  const grupos = partesFiltradas.reduce((acc, p) => {
+  const grupos = useMemo(() => partesFiltradas.reduce((acc, p) => {
     const fab = p.fabricante?.toUpperCase() || 'SIN FABRICANTE';
     if (!acc[fab]) acc[fab] = [];
     acc[fab].push(p);
     return acc;
-  }, {});
+  }, {}), [partesFiltradas]);
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
 
@@ -177,6 +177,9 @@ export default function PartesScreen({ navigation }) {
       <FlatList
         data={Object.entries(grupos)}
         keyExtractor={([fab]) => fab}
+        removeClippedSubviews
+        maxToRenderPerBatch={8}
+        windowSize={8}
         renderItem={({ item: [fab, items] }) => (
           <View>
             <View style={styles.grupoHeader}>

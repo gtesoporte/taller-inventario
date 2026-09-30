@@ -73,9 +73,13 @@ export default function DetalleEquipoScreen({ navigation, route }) {
       .then(setEquipo)
       .catch(() => setError('No se pudo cargar el equipo.'))
       .finally(() => setLoading(false));
-    const unsub = suscribirEquipoMovimientos(id, setMovimientos);
-    return unsub;
   }, [id]);
+
+  // Refacciones del equipo: no aplica a equipos de Validación, así que ni se suscribe.
+  useEffect(() => {
+    if (!id || equipo?.area === 'validacion') return;
+    return suscribirEquipoMovimientos(id, setMovimientos);
+  }, [id, equipo?.area]);
 
   useEffect(() => {
     if (!id || equipo?.area !== 'validacion') return;
@@ -278,30 +282,32 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           </View>
         )}
 
-        {/* Revisión */}
-        <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.revEstadoRow}>
-              {revisada ? <CheckCircle2 size={15} color="#2E7D32" /> : <Hourglass size={15} color="#E65100" />}
-              <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
-                {revisada ? 'Revisado' : 'Pendiente de revisar'}
-              </Text>
+        {/* Revisión (no aplica a equipos de Validación: ahí el estado es Validado/No validado) */}
+        {equipo.area !== 'validacion' && (
+          <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.revEstadoRow}>
+                {revisada ? <CheckCircle2 size={15} color="#2E7D32" /> : <Hourglass size={15} color="#E65100" />}
+                <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
+                  {revisada ? 'Revisado' : 'Pendiente de revisar'}
+                </Text>
+              </View>
+              {revisada && equipo.revisadaPor ? (
+                <Text style={styles.revSub}>{equipo.revisadaPor} · {formatFecha(equipo.revisadaEn)}</Text>
+              ) : null}
             </View>
-            {revisada && equipo.revisadaPor ? (
-              <Text style={styles.revSub}>{equipo.revisadaPor} · {formatFecha(equipo.revisadaEn)}</Text>
-            ) : null}
+            <TouchableOpacity
+              style={[styles.revBtn, revisada ? styles.revBtnPend : styles.revBtnOk]}
+              onPress={() => cambiarRevision(!revisada)}
+              disabled={guardandoRev}
+            >
+              {guardandoRev
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.revBtnText}>{revisada ? 'Marcar pendiente' : 'Marcar revisado'}</Text>
+              }
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={[styles.revBtn, revisada ? styles.revBtnPend : styles.revBtnOk]}
-            onPress={() => cambiarRevision(!revisada)}
-            disabled={guardandoRev}
-          >
-            {guardandoRev
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <Text style={styles.revBtnText}>{revisada ? 'Marcar pendiente' : 'Marcar revisado'}</Text>
-            }
-          </TouchableOpacity>
-        </View>
+        )}
 
         {/* Validación (solo equipos del área Validación) */}
         {equipo.area === 'validacion' && (
@@ -400,7 +406,8 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           ) : null}
         </View>
 
-        {/* Refacciones en este equipo */}
+        {/* Refacciones en este equipo (no aplica a equipos de Validación) */}
+        {equipo.area !== 'validacion' && (
         <View style={styles.seccion}>
           <View style={styles.movHeader}>
             <View style={styles.panelTitRow}>
@@ -523,6 +530,7 @@ export default function DetalleEquipoScreen({ navigation, route }) {
             })
           }
         </View>
+        )}
 
         {/* Botones de acción */}
         {!equipo.estadoSalida && !salidaPanelAbierto && (

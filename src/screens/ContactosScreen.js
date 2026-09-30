@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
@@ -49,12 +49,12 @@ export default function ContactosScreen({ navigation }) {
     return unsub;
   }, []);
 
-  const contactosFiltrados = contactos.filter(c => {
+  const contactosFiltrados = useMemo(() => contactos.filter(c => {
     if (!filtro) return true;
     const q = filtro.toLowerCase();
     return [c.nombre, c.activoFracttal, c.ciudad, c.contacto, c.codigo, c.email]
       .some(v => (v || '').toLowerCase().includes(q));
-  });
+  }), [contactos, filtro]);
 
   const importarExcel = () => {
     const input = document.createElement('input');
@@ -132,6 +132,9 @@ export default function ContactosScreen({ navigation }) {
       <FlatList
         data={contactosFiltrados}
         keyExtractor={item => item.id}
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        windowSize={10}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}

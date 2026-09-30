@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image,
@@ -21,6 +21,7 @@ export default function EquiposScreen({ navigation, route }) {
   const [clasificacion, setClasificacion] = useState('');
   const [ubicacion, setUbicacion] = useState('Todas');
   const [revision, setRevision] = useState('todas');
+  const [validacionFiltro, setValidacionFiltro] = useState('todas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +37,12 @@ export default function EquiposScreen({ navigation, route }) {
     prestamo: { label: 'Préstamo', icon: Handshake, color: '#2E7D32' },
   };
 
-  const equiposDelArea = equipos.filter(e => e.area === area || !e.area);
+  const equiposDelArea = useMemo(
+    () => equipos.filter(e => e.area === area || !e.area),
+    [equipos, area]
+  );
 
-  const equiposFiltrados = equiposDelArea.filter(e => {
+  const equiposFiltrados = useMemo(() => equiposDelArea.filter(e => {
     const q = filtro.toLowerCase();
     const matchTexto = !filtro
       || e.modelo?.toLowerCase().includes(q)
@@ -55,20 +59,26 @@ export default function EquiposScreen({ navigation, route }) {
       : ubicacion === 'Sin ubicación'
         ? !e.ubicacion
         : e.ubicacion === ubicacion;
-    const matchRev = revision === 'todas'
-      ? true
-      : revision === 'revisada'
-        ? e.estadoRevision === 'revisada'
-        : e.estadoRevision !== 'revisada';
+    const matchRev = esValidacion
+      ? (validacionFiltro === 'todas'
+        ? true
+        : validacionFiltro === 'validado'
+          ? e.estadoValidacion === 'validado'
+          : e.estadoValidacion !== 'validado')
+      : (revision === 'todas'
+        ? true
+        : revision === 'revisada'
+          ? e.estadoRevision === 'revisada'
+          : e.estadoRevision !== 'revisada');
     return matchTexto && matchFab && matchClasif && matchUbic && matchRev;
-  });
+  }), [equiposDelArea, filtro, fabricante, clasificacion, ubicacion, esValidacion, validacionFiltro, revision]);
 
-  const grupos = equiposFiltrados.reduce((acc, e) => {
+  const grupos = useMemo(() => equiposFiltrados.reduce((acc, e) => {
     const fab = e.fabricante?.toUpperCase() || 'SIN FABRICANTE';
     if (!acc[fab]) acc[fab] = [];
     acc[fab].push(e);
     return acc;
-  }, {});
+  }, {}), [equiposFiltrados]);
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
 
@@ -141,18 +151,33 @@ export default function EquiposScreen({ navigation, route }) {
           opciones={[...fabricantes, 'Sin fabricante']}
           onChange={setFabricante}
         />
-        <Dropdown
-          style={styles.filtroDropdown}
-          value={revision}
-          titulo="FILTRAR POR REVISIÓN"
-          label="Revisión"
-          opciones={[
-            { value: 'todas', label: 'Todas' },
-            { value: 'pendiente', label: 'Pendientes de revisar' },
-            { value: 'revisada', label: 'Revisadas' },
-          ]}
-          onChange={setRevision}
-        />
+        {esValidacion ? (
+          <Dropdown
+            style={styles.filtroDropdown}
+            value={validacionFiltro}
+            titulo="FILTRAR POR VALIDACIÓN"
+            label="Validación"
+            opciones={[
+              { value: 'todas', label: 'Todas' },
+              { value: 'no_validado', label: 'No validados' },
+              { value: 'validado', label: 'Validados' },
+            ]}
+            onChange={setValidacionFiltro}
+          />
+        ) : (
+          <Dropdown
+            style={styles.filtroDropdown}
+            value={revision}
+            titulo="FILTRAR POR REVISIÓN"
+            label="Revisión"
+            opciones={[
+              { value: 'todas', label: 'Todas' },
+              { value: 'pendiente', label: 'Pendientes de revisar' },
+              { value: 'revisada', label: 'Revisadas' },
+            ]}
+            onChange={setRevision}
+          />
+        )}
       </View>
 
       {/* Filtros: clasificación y ubicación */}
@@ -183,6 +208,9 @@ export default function EquiposScreen({ navigation, route }) {
       <FlatList
         data={Object.entries(grupos)}
         keyExtractor={([fab]) => fab}
+        removeClippedSubviews
+        maxToRenderPerBatch={8}
+        windowSize={8}
         renderItem={({ item: [fab, items] }) => (
           <View>
             <View style={styles.grupoHeader}>
@@ -220,10 +248,11 @@ export default function EquiposScreen({ navigation, route }) {
                         <Text style={styles.fabBadgeText}>{equipo.estadoSalida === 'desecho' ? 'Desecho' : 'Almacén'}</Text>
                       </View>
                     )}
-                    {equipo.estadoRevision === 'revisada'
-                      ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Revisado</Text></View>
-                      : <View style={[styles.revBadge, styles.revBadgePend, styles.fabBadgeRow]}><Hourglass size={11} color="#E65100" /><Text style={[styles.revBadgeText, { color: '#E65100' }]}>Pendiente</Text></View>
-                    }
+                    {!esValidacion && (
+                      equipo.estadoRevision === 'revisada'
+                        ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Revisado</Text></View>
+                        : <View style={[styles.revBadge, styles.revBadgePend, styles.fabBadgeRow]}><Hourglass size={11} color="#E65100" /><Text style={[styles.revBadgeText, { color: '#E65100' }]}>Pendiente</Text></View>
+                    )}
                     {esValidacion && (
                       equipo.estadoValidacion === 'validado'
                         ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Validado</Text></View>
