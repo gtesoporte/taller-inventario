@@ -3,10 +3,10 @@ import {
   View, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image,
 } from 'react-native';
-import { ArrowLeft, MapPin, Trash2, Camera, Image as ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Camera, Image as ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
-import { addEquipo, updateEquipo, suscribirFabricantes, getUbicaciones } from '../config/firestore';
+import { addEquipo, updateEquipo, suscribirFabricantes, getUbicaciones, AREAS_EQUIPO } from '../config/firestore';
 import { seleccionarFoto } from '../utils/fotoHelper';
 import ImagenViewer from '../components/ImagenViewer';
 import Dropdown from '../components/Dropdown';
@@ -18,10 +18,11 @@ const CLASIFICACIONES = [
 ];
 
 export default function FormEquipoScreen({ navigation, route }) {
-  const { id, equipo } = route?.params || {};
+  const { id, equipo, areaPreseleccionada } = route?.params || {};
   const esEdicion = !!id && !!equipo;
 
   const [modelo, setModelo] = useState(equipo?.modelo || '');
+  const [area, setArea] = useState(equipo?.area || areaPreseleccionada || '');
   const [fabricante, setFabricante] = useState(equipo?.fabricante || '');
   const [clasificacion, setClasificacion] = useState(equipo?.clasificacion || '');
   const [numeroSerie, setNumeroSerie] = useState(equipo?.numeroSerie || '');
@@ -50,6 +51,7 @@ export default function FormEquipoScreen({ navigation, route }) {
     try {
       const data = {
         modelo: modelo.trim(),
+        area: area || null,
         fabricante: fabricante || null,
         clasificacion: clasificacion || null,
         numeroSerie: numeroSerie.trim() || null,
@@ -71,6 +73,20 @@ export default function FormEquipoScreen({ navigation, route }) {
     }
   };
 
+  const ubicacionesNombres = ubicaciones.map(u => u.nombre).filter(Boolean).map(String)
+    .sort((a, b) => a.localeCompare(b, 'es'));
+  const chipUbicActivo = ubicacionesNombres.includes(ubicacion);
+  // Las subdivisiones (A1.1…) se marcan con ↳ para distinguirlas de su ubicación principal.
+  const esSubdivision = (n) => {
+    const i = n.lastIndexOf('.');
+    return i > 0 && ubicacionesNombres.includes(n.slice(0, i));
+  };
+  const opcionesUbicacion = [
+    { value: '', label: 'Sin ubicación' },
+    ...(ubicacion && !chipUbicActivo ? [{ value: ubicacion, label: ubicacion }] : []),
+    ...ubicacionesNombres.map(n => ({ value: n, label: esSubdivision(n) ? `↳ ${n}` : n })),
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -90,6 +106,16 @@ export default function FormEquipoScreen({ navigation, route }) {
             onChangeText={v => { setModelo(v); setError(''); }}
             placeholder="Ej: BC-5150"
             placeholderTextColor="#bbb"
+          />
+        </Campo>
+
+        <Campo label="ÁREA">
+          <Dropdown
+            value={area}
+            titulo="SELECCIONA UN ÁREA"
+            placeholder="Sin clasificar"
+            opciones={[{ value: '', label: 'Sin clasificar' }, ...AREAS_EQUIPO.map(a => ({ value: a.id, label: a.label }))]}
+            onChange={setArea}
           />
         </Campo>
 
@@ -139,29 +165,18 @@ export default function FormEquipoScreen({ navigation, route }) {
         </Campo>
 
         <Campo label="UBICACIÓN">
-          {ubicaciones.length > 0 && (
-            <View style={styles.chipsWrap}>
-              {ubicaciones.map(u => (
-                <TouchableOpacity
-                  key={u.id}
-                  style={[styles.chip, ubicacion === u.nombre && styles.chipActive]}
-                  onPress={() => setUbicacion(prev => prev === u.nombre ? '' : u.nombre)}
-                >
-                  <View style={styles.chipContentRow}>
-                    <MapPin size={11} color={ubicacion === u.nombre ? '#fff' : '#555'} />
-                    <Text style={[styles.chipText, ubicacion === u.nombre && styles.chipTextActive]}>
-                      {u.nombre}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <Dropdown
+            value={ubicacion}
+            titulo="SELECCIONA UNA UBICACIÓN"
+            placeholder="Sin ubicación"
+            opciones={opcionesUbicacion}
+            onChange={setUbicacion}
+          />
           <TextInput
             style={[styles.input, { marginTop: 8 }]}
             value={ubicacion}
             onChangeText={setUbicacion}
-            placeholder={ubicaciones.length > 0 ? 'O escribe una nueva ubicación...' : 'Ej: Rack A · Cajón 3'}
+            placeholder="O escribe una ubicación que no esté en la lista..."
             placeholderTextColor="#bbb"
           />
         </Campo>

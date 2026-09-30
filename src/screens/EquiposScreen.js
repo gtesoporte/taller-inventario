@@ -3,24 +3,30 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
-import { Wrench, Camera, MapPin, Mic, Package, Monitor, Skull, Handshake, Trash2, CheckCircle2, Hourglass } from 'lucide-react-native';
+import { Wrench, Camera, MapPin, Mic, Package, Monitor, Skull, Handshake, Trash2, CheckCircle2, Hourglass, ClipboardCheck, XCircle } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import SearchInput from '../components/SearchInput';
-import { suscribirEquipos, suscribirFabricantes } from '../config/firestore';
+import { suscribirEquipos, suscribirFabricantes, getUbicaciones } from '../config/firestore';
 import Dropdown from '../components/Dropdown';
 
-export default function EquiposScreen({ navigation }) {
+export default function EquiposScreen({ navigation, route }) {
+  const area = route?.params?.area || 'ingenieria';
+  const esValidacion = area === 'validacion';
+
   const [equipos, setEquipos] = useState([]);
   const [fabricantes, setFabricantes] = useState(['Todos']);
+  const [ubicaciones, setUbicaciones] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [fabricante, setFabricante] = useState('Todos');
   const [clasificacion, setClasificacion] = useState('');
+  const [ubicacion, setUbicacion] = useState('Todas');
   const [revision, setRevision] = useState('todas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubFab = suscribirFabricantes(lista => setFabricantes(['Todos', ...lista]));
     const unsubEq = suscribirEquipos((data) => { setEquipos(data); setLoading(false); });
+    getUbicaciones().then(lista => setUbicaciones(lista.map(u => u.nombre).filter(Boolean))).catch(() => {});
     return () => { unsubFab(); unsubEq(); };
   }, []);
 
@@ -30,7 +36,9 @@ export default function EquiposScreen({ navigation }) {
     prestamo: { label: 'Préstamo', icon: Handshake, color: '#2E7D32' },
   };
 
-  const equiposFiltrados = equipos.filter(e => {
+  const equiposDelArea = equipos.filter(e => e.area === area || !e.area);
+
+  const equiposFiltrados = equiposDelArea.filter(e => {
     const q = filtro.toLowerCase();
     const matchTexto = !filtro
       || e.modelo?.toLowerCase().includes(q)
@@ -42,12 +50,17 @@ export default function EquiposScreen({ navigation }) {
         ? !e.fabricante || e.fabricante.trim() === ''
         : e.fabricante?.toUpperCase() === fabricante;
     const matchClasif = !clasificacion || e.clasificacion === clasificacion;
+    const matchUbic = ubicacion === 'Todas'
+      ? true
+      : ubicacion === 'Sin ubicación'
+        ? !e.ubicacion
+        : e.ubicacion === ubicacion;
     const matchRev = revision === 'todas'
       ? true
       : revision === 'revisada'
         ? e.estadoRevision === 'revisada'
         : e.estadoRevision !== 'revisada';
-    return matchTexto && matchFab && matchClasif && matchRev;
+    return matchTexto && matchFab && matchClasif && matchUbic && matchRev;
   });
 
   const grupos = equiposFiltrados.reduce((acc, e) => {
@@ -66,10 +79,10 @@ export default function EquiposScreen({ navigation }) {
         <View style={styles.headerTop}>
           <View style={styles.headerTitleBlock}>
             <View style={styles.headerTitleRow}>
-              <Wrench size={18} color="#fff" />
-              <Text style={styles.headerTitle}>Taller Soporte</Text>
+              {esValidacion ? <ClipboardCheck size={18} color="#fff" /> : <Wrench size={18} color="#fff" />}
+              <Text style={styles.headerTitle}>{esValidacion ? 'Equipos Validación' : 'Equipos Ingeniería'}</Text>
             </View>
-            <Text style={styles.headerSub}>{equipos.length} equipos registrados</Text>
+            <Text style={styles.headerSub}>{equiposDelArea.length} equipos registrados</Text>
           </View>
         </View>
         <View style={styles.headerBtns}>
@@ -86,17 +99,27 @@ export default function EquiposScreen({ navigation }) {
         {/* Tab toggle */}
         <View style={styles.invTabs}>
           <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('PartesLista')}>
-            <Package size={14} color="rgba(255,255,255,0.65)" />
+            <Package size={13} color="rgba(255,255,255,0.65)" />
             <Text style={styles.invTabText}>Refacciones</Text>
           </TouchableOpacity>
-          <View style={[styles.invTab, styles.invTabActive, styles.invTabRow]}>
-            <Monitor size={14} color={AZUL} />
-            <Text style={[styles.invTabText, styles.invTabTextActive]}>Equipos</Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.invTab, styles.invTabRow, !esValidacion && styles.invTabActive]}
+            onPress={() => navigation.replace('EquiposIngenieria')}
+          >
+            <Wrench size={13} color={!esValidacion ? AZUL : 'rgba(255,255,255,0.65)'} />
+            <Text style={[styles.invTabText, !esValidacion && styles.invTabTextActive]}>Ing.</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.invTab, styles.invTabRow, esValidacion && styles.invTabActive]}
+            onPress={() => navigation.replace('EquiposValidacion')}
+          >
+            <ClipboardCheck size={13} color={esValidacion ? AZUL : 'rgba(255,255,255,0.65)'} />
+            <Text style={[styles.invTabText, esValidacion && styles.invTabTextActive]}>Val.</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.nuevaBtn} onPress={() => navigation.navigate('FormEquipo')}>
+      <TouchableOpacity style={styles.nuevaBtn} onPress={() => navigation.navigate('FormEquipo', { areaPreseleccionada: area })}>
         <Text style={styles.nuevaBtnText}>+ Nuevo equipo</Text>
       </TouchableOpacity>
 
@@ -132,19 +155,29 @@ export default function EquiposScreen({ navigation }) {
         />
       </View>
 
-      {/* Filtro: clasificación */}
-      <Dropdown
-        style={styles.filtroClasificacion}
-        value={clasificacion}
-        titulo="FILTRAR POR CLASIFICACIÓN"
-        label="Clasificación"
-        placeholder="Todas las clasificaciones"
-        opciones={[
-          { value: '', label: 'Todas las clasificaciones' },
-          ...Object.entries(CLASIF_MAP).map(([id, { label }]) => ({ value: id, label })),
-        ]}
-        onChange={setClasificacion}
-      />
+      {/* Filtros: clasificación y ubicación */}
+      <View style={styles.filtrosRow}>
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={clasificacion}
+          titulo="FILTRAR POR CLASIFICACIÓN"
+          label="Clasificación"
+          placeholder="Todas"
+          opciones={[
+            { value: '', label: 'Todas las clasificaciones' },
+            ...Object.entries(CLASIF_MAP).map(([id, { label }]) => ({ value: id, label })),
+          ]}
+          onChange={setClasificacion}
+        />
+        <Dropdown
+          style={styles.filtroDropdown}
+          value={ubicacion}
+          titulo="FILTRAR POR UBICACIÓN"
+          label="Ubicación"
+          opciones={['Todas', 'Sin ubicación', ...ubicaciones]}
+          onChange={setUbicacion}
+        />
+      </View>
 
       {/* Lista agrupada */}
       <FlatList
@@ -191,6 +224,16 @@ export default function EquiposScreen({ navigation }) {
                       ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Revisado</Text></View>
                       : <View style={[styles.revBadge, styles.revBadgePend, styles.fabBadgeRow]}><Hourglass size={11} color="#E65100" /><Text style={[styles.revBadgeText, { color: '#E65100' }]}>Pendiente</Text></View>
                     }
+                    {esValidacion && (
+                      equipo.estadoValidacion === 'validado'
+                        ? <View style={[styles.revBadge, styles.revBadgeOk, styles.fabBadgeRow]}><CheckCircle2 size={11} color="#2E7D32" /><Text style={[styles.revBadgeText, { color: '#2E7D32' }]}>Validado</Text></View>
+                        : <View style={[styles.revBadge, styles.revBadgeNoValidado, styles.fabBadgeRow]}><XCircle size={11} color="#C62828" /><Text style={[styles.revBadgeText, { color: '#C62828' }]}>No validado</Text></View>
+                    )}
+                    {!equipo.area && (
+                      <View style={[styles.revBadge, styles.revBadgeSinArea, styles.fabBadgeRow]}>
+                        <Text style={[styles.revBadgeText, { color: '#616161' }]}>Sin clasificar</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <Text style={styles.cardArrow}>›</Text>
@@ -221,21 +264,22 @@ const styles = StyleSheet.create({
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
+  invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14, gap: 3 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
-  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
   invTabActive: { backgroundColor: '#fff' },
-  invTabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
+  invTabText: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   invTabTextActive: { color: AZUL },
   nuevaBtn: { backgroundColor: '#1565C0', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
   filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
   filtroDropdown: { flex: 1 },
-  filtroClasificacion: { marginHorizontal: 14, marginBottom: 12 },
   revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 6 },
   revBadgeOk: { backgroundColor: '#E8F5E9' },
   revBadgePend: { backgroundColor: '#FFF3E0' },
+  revBadgeNoValidado: { backgroundColor: '#FFEBEE' },
+  revBadgeSinArea: { backgroundColor: '#EEEEEE' },
   revBadgeText: { fontSize: 10, fontWeight: '700' },
   grupoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 6 },
   grupoNombre: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },

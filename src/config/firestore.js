@@ -502,6 +502,49 @@ export const deleteEquipo = async (id) => {
   return deleteDoc(doc(db, 'equipos', id));
 };
 
+// --- ÁREA DEL EQUIPO (Ingeniería / Validación) ---
+export const AREAS_EQUIPO = [
+  { id: 'ingenieria', label: 'Ingeniería' },
+  { id: 'validacion', label: 'Validación' },
+];
+
+// --- VALIDACIÓN DE EQUIPO (solo equipos de área "validación") ---
+// Estado: 'no_validado' (default) | 'validado'. Independiente de estadoRevision,
+// que es el check general de inventario y no dice nada sobre si el equipo pasó
+// las pruebas de validación.
+export const marcarEquipoValidado = async (id, validado, perfil) => {
+  const cambios = validado
+    ? {
+        estadoValidacion: 'validado',
+        validadoPor: perfil?.nombre || perfil?.email || 'Sistema',
+        validadoEn: new Date().toISOString(),
+      }
+    : { estadoValidacion: 'no_validado', validadoPor: null, validadoEn: null };
+  await updateDoc(doc(db, 'equipos', id), cambios);
+  return cambios;
+};
+
+// Bitácora de validación: quién revisó el equipo, cuándo, y qué pruebas o
+// comentarios dejó. Varias personas pueden ir agregando entradas en el tiempo.
+export const suscribirEquipoValidacionNotas = (equipoId, callback) => {
+  return onSnapshot(collection(db, 'equipoValidaciones'), snap => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(n => n.equipoId === equipoId);
+    const toMs = v => v?.toMillis?.() ?? (v ? new Date(v).getTime() : 0);
+    data.sort((a, b) => toMs(b.creadoEn) - toMs(a.creadoEn));
+    callback(data);
+  });
+};
+
+export const addEquipoValidacionNota = async (equipoId, texto, perfil) => {
+  return addDoc(collection(db, 'equipoValidaciones'), {
+    equipoId,
+    texto: texto.trim(),
+    usuario: perfil?.nombre || perfil?.email || 'Sistema',
+    creadoEn: new Date().toISOString(),
+  });
+};
+
 // --- SALIDA DE EQUIPO COMPLETO (desecho / almacén) ---
 export const CLASIFICACIONES_SALIDA_EQUIPO = [
   { id: 'desecho', label: 'Desecho' },

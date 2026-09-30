@@ -51,7 +51,8 @@ function PartesStack() {
       <Stack.Screen name="EscanearQR" component={EscanearQRScreen} />
       <Stack.Screen name="BusquedaVoz" component={BusquedaVozScreen} />
       <Stack.Screen name="FormParte" component={FormParteScreen} />
-      <Stack.Screen name="EquiposLista" component={EquiposScreen} />
+      <Stack.Screen name="EquiposIngenieria" component={EquiposScreen} initialParams={{ area: 'ingenieria' }} />
+      <Stack.Screen name="EquiposValidacion" component={EquiposScreen} initialParams={{ area: 'validacion' }} />
       <Stack.Screen name="FormEquipo" component={FormEquipoScreen} />
       <Stack.Screen name="DetalleEquipo" component={DetalleEquipoScreen} />
     </Stack.Navigator>

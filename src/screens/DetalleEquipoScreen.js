@@ -6,13 +6,14 @@ import {
 import {
   ArrowLeft, Monitor, Trash2, Package, Upload, CheckCircle2, Hourglass,
   Nut, Pencil, AlertTriangle, ArrowUp, ArrowDown, MessageCircle,
-  Skull, Wrench, Handshake,
+  Skull, Wrench, Handshake, ClipboardCheck, XCircle, User, Plus,
 } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import {
   getEquipo, deleteEquipo, suscribirEquipoMovimientos, addEquipoMovimiento,
   addEquipoSalidaCompleta, CLASIFICACIONES_SALIDA_EQUIPO, marcarRevisionEquipo,
+  AREAS_EQUIPO, marcarEquipoValidado, suscribirEquipoValidacionNotas, addEquipoValidacionNota,
 } from '../config/firestore';
 import { useAuth } from '../context/AuthContext';
 import ImagenViewer from '../components/ImagenViewer';
@@ -60,6 +61,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
   // Revisión
   const [guardandoRev, setGuardandoRev] = useState(false);
 
+  // Validación (solo equipos del área "validación")
+  const [guardandoValidacion, setGuardandoValidacion] = useState(false);
+  const [notasValidacion, setNotasValidacion] = useState([]);
+  const [notaValidacion, setNotaValidacion] = useState('');
+  const [guardandoNota, setGuardandoNota] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     getEquipo(id)
@@ -69,6 +76,11 @@ export default function DetalleEquipoScreen({ navigation, route }) {
     const unsub = suscribirEquipoMovimientos(id, setMovimientos);
     return unsub;
   }, [id]);
+
+  useEffect(() => {
+    if (!id || equipo?.area !== 'validacion') return;
+    return suscribirEquipoValidacionNotas(id, setNotasValidacion);
+  }, [id, equipo?.area]);
 
   const abrirPanel = (tipo) => {
     setPanelTipo(tipo);
@@ -127,6 +139,25 @@ export default function DetalleEquipoScreen({ navigation, route }) {
     setGuardandoRev(false);
   };
 
+  const cambiarValidacion = async (validado) => {
+    setGuardandoValidacion(true);
+    try {
+      const cambios = await marcarEquipoValidado(id, validado, perfil);
+      setEquipo(prev => ({ ...prev, ...cambios }));
+    } catch {}
+    setGuardandoValidacion(false);
+  };
+
+  const agregarNotaValidacion = async () => {
+    if (!notaValidacion.trim()) return;
+    setGuardandoNota(true);
+    try {
+      await addEquipoValidacionNota(id, notaValidacion, perfil);
+      setNotaValidacion('');
+    } catch {}
+    setGuardandoNota(false);
+  };
+
   const handleEliminar = async () => {
     setEliminando(true);
     try {
@@ -170,6 +201,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           </View>
           <Text style={styles.headerModelo}>{equipo.modelo}</Text>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
+            {equipo.area && (
+              <View style={[styles.fabBadge, styles.fabBadgeRow]}>
+                {equipo.area === 'validacion' ? <ClipboardCheck size={12} color="#fff" /> : <Wrench size={12} color="#fff" />}
+                <Text style={styles.fabBadgeText}>{AREAS_EQUIPO.find(a => a.id === equipo.area)?.label || equipo.area}</Text>
+              </View>
+            )}
             {equipo.fabricante && (
               <View style={styles.fabBadge}>
                 <Text style={styles.fabBadgeText}>{equipo.fabricante.toUpperCase()}</Text>
@@ -266,6 +303,77 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
+        {/* Validación (solo equipos del área Validación) */}
+        {equipo.area === 'validacion' && (
+          <>
+            <View style={[styles.revBox, equipo.estadoValidacion === 'validado' ? styles.revBoxOk : styles.revBoxPend]}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.revEstadoRow}>
+                  {equipo.estadoValidacion === 'validado'
+                    ? <CheckCircle2 size={15} color="#2E7D32" />
+                    : <XCircle size={15} color="#E65100" />
+                  }
+                  <Text style={[styles.revEstado, { color: equipo.estadoValidacion === 'validado' ? '#2E7D32' : '#E65100' }]}>
+                    {equipo.estadoValidacion === 'validado' ? 'Validado' : 'No validado'}
+                  </Text>
+                </View>
+                {equipo.estadoValidacion === 'validado' && equipo.validadoPor ? (
+                  <Text style={styles.revSub}>{equipo.validadoPor} · {formatFecha(equipo.validadoEn)}</Text>
+                ) : null}
+              </View>
+              <TouchableOpacity
+                style={[styles.revBtn, equipo.estadoValidacion === 'validado' ? styles.revBtnPend : styles.revBtnOk]}
+                onPress={() => cambiarValidacion(equipo.estadoValidacion !== 'validado')}
+                disabled={guardandoValidacion}
+              >
+                {guardandoValidacion
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.revBtnText}>{equipo.estadoValidacion === 'validado' ? 'Marcar no validado' : 'Marcar validado'}</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.seccion}>
+              <View style={styles.panelTitRow}>
+                <ClipboardCheck size={14} color="#1a1a2e" />
+                <Text style={styles.movTitulo}>Pruebas realizadas / comentarios</Text>
+              </View>
+              <TextInput
+                style={[styles.panelInput, styles.notaValidacionInput]}
+                value={notaValidacion}
+                onChangeText={setNotaValidacion}
+                placeholder="Describe las pruebas realizadas o deja un comentario..."
+                placeholderTextColor="#bbb"
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.btnAgregarNota, styles.btnRow]}
+                onPress={agregarNotaValidacion}
+                disabled={guardandoNota || !notaValidacion.trim()}
+              >
+                {guardandoNota
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <><Plus size={14} color="#fff" /><Text style={styles.btnAgregarNotaText}>Agregar</Text></>
+                }
+              </TouchableOpacity>
+
+              {notasValidacion.length === 0
+                ? <Text style={styles.movVacio}>Sin comentarios registrados.</Text>
+                : notasValidacion.map(n => (
+                  <View key={n.id} style={styles.notaCard}>
+                    <View style={styles.notaCardHeaderRow}>
+                      <User size={11} color="#666" />
+                      <Text style={styles.notaCardUsuario}>{n.usuario}</Text>
+                      <Text style={styles.notaCardFecha}>{formatFecha(n.creadoEn)}</Text>
+                    </View>
+                    <Text style={styles.notaCardTexto}>{n.texto}</Text>
+                  </View>
+                ))
+              }
+            </View>
+          </>
+        )}
+
         {/* Foto */}
         {equipo.foto ? (
           <ImagenViewer uri={equipo.foto}>
@@ -276,6 +384,7 @@ export default function DetalleEquipoScreen({ navigation, route }) {
         {/* Detalles */}
         <View style={styles.seccion}>
           <Fila label="Modelo" valor={equipo.modelo} />
+          <Fila label="Área" valor={AREAS_EQUIPO.find(a => a.id === equipo.area)?.label || 'Sin clasificar'} />
           <Fila label="Fabricante" valor={equipo.fabricante || '—'} />
           <Fila label="Número de serie" valor={equipo.numeroSerie || '—'} />
           <Fila label="Ubicación" valor={equipo.ubicacion || '—'} />
@@ -533,6 +642,15 @@ const styles = StyleSheet.create({
   movNota: { fontSize: 12, color: '#666', fontStyle: 'italic' },
   movFecha: { fontSize: 11, color: '#bbb', marginTop: 4 },
   movVacio: { color: '#aaa', fontSize: 13, textAlign: 'center', marginVertical: 12 },
+  // Validación
+  notaValidacionInput: { minHeight: 70, textAlignVertical: 'top', marginBottom: 10 },
+  btnAgregarNota: { backgroundColor: AZUL, borderRadius: 10, padding: 12, marginBottom: 14 },
+  btnAgregarNotaText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  notaCard: { backgroundColor: '#F8F9FA', borderRadius: 8, padding: 12, marginBottom: 8 },
+  notaCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
+  notaCardUsuario: { fontSize: 12, fontWeight: '700', color: '#1a1a2e', flex: 1 },
+  notaCardFecha: { fontSize: 11, color: '#aaa' },
+  notaCardTexto: { fontSize: 13, color: '#444', lineHeight: 19 },
   // Panel
   panel: { borderRadius: 12, padding: 14, marginBottom: 14 },
   panelE: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#A5D6A7' },

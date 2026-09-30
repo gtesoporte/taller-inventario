@@ -3,7 +3,7 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
-import { Menu, Wrench, Camera, MapPin, Mic, Package, Monitor, AlertTriangle, CheckCircle2, Hourglass } from 'lucide-react-native';
+import { Menu, Wrench, Camera, MapPin, Mic, Package, ClipboardCheck, AlertTriangle, CheckCircle2, Hourglass } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import SearchInput from '../components/SearchInput';
 import { suscribirPartes, suscribirFabricantes, getUbicaciones } from '../config/firestore';
@@ -102,12 +102,16 @@ export default function PartesScreen({ navigation }) {
         {/* Tab toggle */}
         <View style={styles.invTabs}>
           <View style={[styles.invTab, styles.invTabActive, styles.invTabRow]}>
-            <Package size={14} color={AZUL} />
+            <Package size={13} color={AZUL} />
             <Text style={[styles.invTabText, styles.invTabTextActive]}>Refacciones</Text>
           </View>
-          <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('EquiposLista')}>
-            <Monitor size={14} color="rgba(255,255,255,0.65)" />
-            <Text style={styles.invTabText}>Equipos</Text>
+          <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('EquiposIngenieria')}>
+            <Wrench size={13} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.invTabText}>Ing.</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.invTab, styles.invTabRow]} onPress={() => navigation.replace('EquiposValidacion')}>
+            <ClipboardCheck size={13} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.invTabText}>Val.</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -233,11 +237,11 @@ const styles = StyleSheet.create({
   headerTitleBlock: { flex: 1, flexShrink: 1 },
   menuBtn: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
   headerBtns: { flexDirection: 'row', gap: 12, marginTop: 16 },
-  invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14 },
+  invTabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 3, marginTop: 14, gap: 3 },
   invTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
-  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  invTabRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
   invTabActive: { backgroundColor: '#fff' },
-  invTabText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
+  invTabText: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   invTabTextActive: { color: AZUL },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
