@@ -91,13 +91,13 @@ export default function PartesScreen({ navigation }) {
           </View>
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Camera size={17} color="#fff" />
+              <Camera size={18} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <MapPin size={17} color="#fff" />
+              <MapPin size={18} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Mic size={17} color="#fff" />
+              <Mic size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -243,8 +243,8 @@ const styles = StyleSheet.create({
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  headerBtns: { flexDirection: 'row', gap: 8 },
-  iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  headerBtns: { flexDirection: 'row', gap: 12 },
+  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },

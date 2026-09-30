@@ -73,13 +73,13 @@ export default function EquiposScreen({ navigation }) {
           </View>
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('EscanearQR')}>
-              <Camera size={17} color="#fff" />
+              <Camera size={18} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Ubicaciones')}>
-              <MapPin size={17} color="#fff" />
+              <MapPin size={18} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('BusquedaVoz')}>
-              <Mic size={17} color="#fff" />
+              <Mic size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -108,19 +108,15 @@ export default function EquiposScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
-      {/* Filtros: clasificación y revisión */}
+      {/* Filtros: marca y revisión */}
       <View style={styles.filtrosRow}>
         <Dropdown
           style={styles.filtroDropdown}
-          value={clasificacion}
-          titulo="FILTRAR POR CLASIFICACIÓN"
-          label="Clasificación"
-          placeholder="Todas las clasificaciones"
-          opciones={[
-            { value: '', label: 'Todas las clasificaciones' },
-            ...Object.entries(CLASIF_MAP).map(([id, { label }]) => ({ value: id, label })),
-          ]}
-          onChange={setClasificacion}
+          value={fabricante}
+          titulo="FILTRAR POR MARCA"
+          label="Marca"
+          opciones={[...fabricantes, 'Sin fabricante']}
+          onChange={setFabricante}
         />
         <Dropdown
           style={styles.filtroDropdown}
@@ -136,25 +132,19 @@ export default function EquiposScreen({ navigation }) {
         />
       </View>
 
-      {/* Chips de fabricante */}
-      <View style={styles.chipsContainer}>
-        {fabricantes.map(fab => (
-          <TouchableOpacity
-            key={fab}
-            style={[styles.chip, fabricante === fab && styles.chipActive]}
-            onPress={() => setFabricante(fab)}
-          >
-            <Text style={[styles.chipText, fabricante === fab && styles.chipTextActive]}>{fab}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          key="sin-fabricante"
-          style={[styles.chip, styles.chipSinFab, fabricante === 'Sin fabricante' && styles.chipActive]}
-          onPress={() => setFabricante(fabricante === 'Sin fabricante' ? 'Todos' : 'Sin fabricante')}
-        >
-          <Text style={[styles.chipText, fabricante === 'Sin fabricante' && styles.chipTextActive]}>Sin fabricante</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Filtro: clasificación */}
+      <Dropdown
+        style={styles.filtroClasificacion}
+        value={clasificacion}
+        titulo="FILTRAR POR CLASIFICACIÓN"
+        label="Clasificación"
+        placeholder="Todas las clasificaciones"
+        opciones={[
+          { value: '', label: 'Todas las clasificaciones' },
+          ...Object.entries(CLASIF_MAP).map(([id, { label }]) => ({ value: id, label })),
+        ]}
+        onChange={setClasificacion}
+      />
 
       {/* Lista agrupada */}
       <FlatList
@@ -225,8 +215,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerBtns: { flexDirection: 'row', gap: 8 },
-  iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  headerBtns: { flexDirection: 'row', gap: 12 },
+  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
@@ -241,16 +231,11 @@ const styles = StyleSheet.create({
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
   filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
   filtroDropdown: { flex: 1 },
+  filtroClasificacion: { marginHorizontal: 14, marginBottom: 12 },
   revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 6 },
   revBadgeOk: { backgroundColor: '#E8F5E9' },
   revBadgePend: { backgroundColor: '#FFF3E0' },
   revBadgeText: { fontSize: 10, fontWeight: '700' },
-  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8, marginBottom: 12 },
-  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
-  chipSinFab: { borderStyle: 'dashed', borderColor: '#bbb' },
-  chipActive: { backgroundColor: AZUL, borderColor: AZUL },
-  chipText: { fontSize: 12, fontWeight: '600', color: '#555' },
-  chipTextActive: { color: '#fff' },
   grupoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 6 },
   grupoNombre: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
   grupoBadge: { backgroundColor: AZUL, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
