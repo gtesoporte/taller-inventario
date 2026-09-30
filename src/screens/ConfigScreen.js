@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Menu, Settings, Factory, ChevronRight, LogOut } from 'lucide-react-native';
+import { Menu, Settings, Factory, BarChart3, ChevronRight, LogOut } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import { useAuth } from '../context/AuthContext';
 import DrawerMenu from '../components/DrawerMenu';
@@ -57,9 +57,14 @@ export default function ConfigScreen({ navigation }) {
       {esAdmin && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Administración</Text>
-          <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Fabricantes')}>
+          <TouchableOpacity style={[styles.menuRow, styles.menuRowBorde]} onPress={() => navigation.navigate('Fabricantes')}>
             <Factory size={19} color="#555" style={{ marginRight: 12 }} />
             <Text style={styles.menuLabel}>Fabricantes</Text>
+            <ChevronRight size={20} color="#bbb" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Estadisticas')}>
+            <BarChart3 size={19} color="#555" style={{ marginRight: 12 }} />
+            <Text style={styles.menuLabel}>Estadísticas</Text>
             <ChevronRight size={20} color="#bbb" />
           </TouchableOpacity>
         </View>
@@ -106,6 +111,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 14, color: '#555', fontWeight: '600' },
   infoVal: { fontSize: 14, color: '#1a1a2e' },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 0 },
+  menuRowBorde: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1a1a2e' },
   logoutBtn: { margin: 16, marginTop: 12, backgroundColor: '#FFEBEE', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#FFCDD2' },
   logoutRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },

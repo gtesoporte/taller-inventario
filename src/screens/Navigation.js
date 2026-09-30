@@ -10,6 +10,7 @@ import AcondicionamientoScreen from './AcondicionamientoScreen';
 import MovimientosScreen from './MovimientosScreen';
 import AdminScreen from './AdminScreen';
 import ConfigScreen from './ConfigScreen';
+import EstadisticasScreen from './EstadisticasScreen';
 import DetalleParteScreen from './DetalleParteScreen';
 import DetalleAcondScreen from './DetalleAcondScreen';
 import UbicacionesScreen from './UbicacionesScreen';
@@ -108,6 +109,7 @@ function ConfigStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConfigMain" component={ConfigScreen} />
       <Stack.Screen name="Fabricantes" component={FabricantesScreen} />
+      <Stack.Screen name="Estadisticas" component={EstadisticasScreen} />
     </Stack.Navigator>
   );
 }

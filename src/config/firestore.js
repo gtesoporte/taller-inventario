@@ -666,6 +666,32 @@ export const deleteContacto = async (id) => {
   return deleteDoc(doc(db, 'contactos', id));
 };
 
+// --- ESTADÍSTICAS ---
+// Trae en paralelo todas las colecciones necesarias para el reporte de
+// estadísticas (una sola lectura, no realtime: es para generar un PDF).
+export const getEstadisticas = async () => {
+  const col = (nombre) => getDocs(collection(db, nombre)).then(
+    snap => snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  );
+  const [
+    partes, movimientos, equipos, equipoMovimientos,
+    cajuelaInventario, cajuelaMovimientos, cajuelaRetiros,
+    ubicaciones, contactos, usuarios,
+    galeriaCategorias, galeriaSubcategorias, galeriaImagenes,
+  ] = await Promise.all([
+    col('partes'), col('movimientos'), col('equipos'), col('equipoMovimientos'),
+    col('cajuelaInventario'), col('cajuelaMovimientos'), col('cajuelaRetiros'),
+    col('ubicaciones'), col('contactos'), col('usuarios'),
+    col('galeriaCategorias'), col('galeriaSubcategorias'), col('galeriaImagenes'),
+  ]);
+  return {
+    partes, movimientos, equipos, equipoMovimientos,
+    cajuelaInventario, cajuelaMovimientos, cajuelaRetiros,
+    ubicaciones, contactos, usuarios,
+    galeriaCategorias, galeriaSubcategorias, galeriaImagenes,
+  };
+};
+
 // Carga masiva desde un Excel importado (ver ContactosScreen). `filas` ya
 // vienen normalizadas a { activoFracttal, nombre, codigo, ciudad, email, contacto, telefono }.
 export const importarContactos = async (filas, perfil) => {
