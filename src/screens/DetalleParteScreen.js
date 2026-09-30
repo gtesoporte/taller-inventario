@@ -3,6 +3,10 @@ import {
   View, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import {
+  ArrowLeft, Pencil, Trash2, ArrowUp, ArrowDown, Camera, Search,
+  CheckCircle2, Hourglass, MapPin, Info,
+} from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import ImagenViewer from '../components/ImagenViewer';
@@ -118,7 +122,9 @@ export default function DetalleParteScreen({ route, navigation }) {
     return (
       <View style={styles.center}>
         <Text style={{ color: '#c00', textAlign: 'center', padding: 20 }}>Error: {errorMsg}</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}><Text style={{ color: '#1565C0' }}>← Volver</Text></TouchableOpacity>
+        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="#1565C0" /><Text style={{ color: '#1565C0' }}>Volver</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -126,7 +132,9 @@ export default function DetalleParteScreen({ route, navigation }) {
     return (
       <View style={styles.center}>
         <Text style={{ color: '#999', marginBottom: 16 }}>No encontrada (id: {id})</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}><Text style={{ color: '#1565C0' }}>← Volver</Text></TouchableOpacity>
+        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="#1565C0" /><Text style={{ color: '#1565C0' }}>Volver</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -142,13 +150,15 @@ export default function DetalleParteScreen({ route, navigation }) {
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.volver}>← Volver</Text>
+          <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={14} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.volver}>Volver</Text>
           </TouchableOpacity>
           <View style={styles.headerBtns}>
             {puedeEditar && (
               <TouchableOpacity style={styles.editarBtn} onPress={() => navigation.navigate('FormParte', { id, parte })}>
-                <Text style={styles.editarText}>✏️ Editar</Text>
+                <Pencil size={13} color="#fff" />
+                <Text style={styles.editarText}>Editar</Text>
               </TouchableOpacity>
             )}
             {puedeEditar && (confirmEliminar ? (
@@ -165,7 +175,7 @@ export default function DetalleParteScreen({ route, navigation }) {
               </View>
             ) : (
               <TouchableOpacity style={styles.eliminarBtn} onPress={() => setConfirmEliminar(true)}>
-                <Text style={{ fontSize: 18 }}>🗑️</Text>
+                <Trash2 size={16} color="#fff" />
               </TouchableOpacity>
             ))}
           </View>
@@ -184,16 +194,18 @@ export default function DetalleParteScreen({ route, navigation }) {
           </View>
           <View style={styles.movBtns}>
             <TouchableOpacity
-              style={[styles.movBtn, styles.entradaBtn, esEntradaActiva && styles.movBtnActive]}
+              style={[styles.movBtn, styles.movBtnRow, styles.entradaBtn, esEntradaActiva && styles.movBtnActive]}
               onPress={() => movOp === 'entrada' ? setMovOp(null) : abrirMovimiento('entrada')}
             >
-              <Text style={styles.movBtnText}>▲ Entrada</Text>
+              <ArrowUp size={13} color="#fff" />
+              <Text style={styles.movBtnText}>Entrada</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.movBtn, styles.salidaBtn, esSalidaActiva && styles.movBtnActive]}
+              style={[styles.movBtn, styles.movBtnRow, styles.salidaBtn, esSalidaActiva && styles.movBtnActive]}
               onPress={() => movOp === 'salida' ? setMovOp(null) : abrirMovimiento('salida')}
             >
-              <Text style={styles.movBtnText}>▼ Salida</Text>
+              <ArrowDown size={13} color="#fff" />
+              <Text style={styles.movBtnText}>Salida</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -202,9 +214,12 @@ export default function DetalleParteScreen({ route, navigation }) {
       {/* PANEL DE MOVIMIENTO */}
       {movOp && (
         <View style={[styles.movPanel, esEntradaActiva ? styles.movPanelEntrada : styles.movPanelSalida]}>
-          <Text style={styles.movPanelTitulo}>
-            {esEntradaActiva ? '▲ Registrar entrada' : '▼ Registrar salida'}
-          </Text>
+          <View style={styles.movPanelTituloRow}>
+            {esEntradaActiva ? <ArrowUp size={15} color="#2E7D32" /> : <ArrowDown size={15} color="#C62828" />}
+            <Text style={styles.movPanelTitulo}>
+              {esEntradaActiva ? 'Registrar entrada' : 'Registrar salida'}
+            </Text>
+          </View>
           <View style={styles.movPanelRow}>
             <View style={styles.movCantidadBox}>
               <Text style={styles.movCantidadLabel}>Cantidad</Text>
@@ -245,19 +260,28 @@ export default function DetalleParteScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
         {parte.foto ? (
           <>
-            <Text style={styles.seccion}>📷 FOTO DE REFERENCIA</Text>
+            <View style={styles.seccionRow}>
+              <Camera size={13} color="#555" />
+              <Text style={styles.seccion}>FOTO DE REFERENCIA</Text>
+            </View>
             <ImagenViewer uri={String(parte.foto)}>
               <Image source={{ uri: String(parte.foto) }} style={styles.foto} resizeMode="cover" />
             </ImagenViewer>
           </>
         ) : null}
 
-        <Text style={styles.seccion}>🔎 REVISIÓN</Text>
+        <View style={styles.seccionRow}>
+          <Search size={13} color="#555" />
+          <Text style={styles.seccion}>REVISIÓN</Text>
+        </View>
         <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
-              {revisada ? '✅ Revisada' : '⏳ Pendiente de revisar'}
-            </Text>
+            <View style={styles.revEstadoRow}>
+              {revisada ? <CheckCircle2 size={15} color="#2E7D32" /> : <Hourglass size={15} color="#E65100" />}
+              <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
+                {revisada ? 'Revisada' : 'Pendiente de revisar'}
+              </Text>
+            </View>
             {revisada && parte.revisadaPor ? (
               <Text style={styles.revSub}>{extractNombre(parte.revisadaPor)} · {formatFecha(parte.revisadaEn)}</Text>
             ) : null}
@@ -274,12 +298,18 @@ export default function DetalleParteScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.seccion}>📍 UBICACIÓN</Text>
+        <View style={styles.seccionRow}>
+          <MapPin size={13} color="#555" />
+          <Text style={styles.seccion}>UBICACIÓN</Text>
+        </View>
         <View style={styles.ubicBox}>
           <Text style={styles.ubicText}>{parte.ubicacion || '—'}</Text>
         </View>
 
-        <Text style={styles.seccion}>ℹ️ INFORMACIÓN</Text>
+        <View style={styles.seccionRow}>
+          <Info size={13} color="#555" />
+          <Text style={styles.seccion}>INFORMACIÓN</Text>
+        </View>
         <View style={styles.infoBox}>
           <InfoRow label="Fabricante"           value={parte.fabricante} />
           <InfoRow label="Código / N° de parte" value={parte.codigo} />
@@ -302,9 +332,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   volver: { color: 'rgba(255,255,255,0.8)', fontSize: 15 },
   headerBtns: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  editarBtn: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  editarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   editarText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   eliminarBtn: { padding: 6 },
   eliminarConfirm: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
@@ -319,6 +350,7 @@ const styles = StyleSheet.create({
   existenciaLabel: { fontSize: 15, color: 'rgba(255,255,255,0.75)', marginLeft: 6 },
   movBtns: { flexDirection: 'row', gap: 8 },
   movBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
+  movBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   entradaBtn: { backgroundColor: 'rgba(76,175,80,0.25)', borderWidth: 1, borderColor: 'rgba(76,175,80,0.5)' },
   salidaBtn: { backgroundColor: 'rgba(244,67,54,0.2)', borderWidth: 1, borderColor: 'rgba(244,67,54,0.4)' },
   movBtnActive: { opacity: 0.6 },
@@ -327,7 +359,8 @@ const styles = StyleSheet.create({
   movPanel: { padding: 16, borderBottomWidth: 1 },
   movPanelEntrada: { backgroundColor: '#E8F5E9', borderBottomColor: '#A5D6A7' },
   movPanelSalida: { backgroundColor: '#FFEBEE', borderBottomColor: '#EF9A9A' },
-  movPanelTitulo: { fontSize: 14, fontWeight: '800', color: '#1a1a2e', marginBottom: 10 },
+  movPanelTituloRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  movPanelTitulo: { fontSize: 14, fontWeight: '800', color: '#1a1a2e' },
   movPanelRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   movCantidadBox: { width: 80 },
   movCantidadLabel: { fontSize: 11, fontWeight: '700', color: '#666', marginBottom: 4 },
@@ -344,6 +377,7 @@ const styles = StyleSheet.create({
   revBox: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, padding: 14, borderWidth: 1 },
   revBoxOk: { backgroundColor: '#E8F5E9', borderColor: '#A5D6A7' },
   revBoxPend: { backgroundColor: '#FFF3E0', borderColor: '#FFCC80' },
+  revEstadoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   revEstado: { fontSize: 15, fontWeight: '800' },
   revSub: { fontSize: 12, color: '#666', marginTop: 3 },
   revBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, minWidth: 120, alignItems: 'center' },
@@ -351,7 +385,8 @@ const styles = StyleSheet.create({
   revBtnPend: { backgroundColor: '#E65100' },
   revBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   // Contenido
-  seccion: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5, marginBottom: 10, marginTop: 18 },
+  seccionRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginTop: 18 },
+  seccion: { fontSize: 12, fontWeight: '800', color: '#555', letterSpacing: 0.5 },
   foto: { width: '100%', height: 220, borderRadius: 14, marginBottom: 4, backgroundColor: '#e0e0e0' },
   ubicBox: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   ubicText: { fontSize: 18, fontWeight: '700', color: '#1a1a2e' },

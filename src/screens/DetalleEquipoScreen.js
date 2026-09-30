@@ -3,6 +3,11 @@ import {
   View, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image,
 } from 'react-native';
+import {
+  ArrowLeft, Monitor, Trash2, Package, Upload, CheckCircle2, Hourglass,
+  Nut, Pencil, AlertTriangle, ArrowUp, ArrowDown, MessageCircle,
+  Skull, Wrench, Handshake,
+} from 'lucide-react-native';
 import Text from '../components/UpperText';
 import TextInput from '../components/UpperTextInput';
 import {
@@ -13,9 +18,9 @@ import { useAuth } from '../context/AuthContext';
 import ImagenViewer from '../components/ImagenViewer';
 
 const CLASIF_MAP = {
-  hueso: { label: '💀 Hueso', color: '#E53935' },
-  reacondicionamiento: { label: '🔧 Reacondicionamiento', color: '#1565C0' },
-  prestamo: { label: '🤝 Préstamo', color: '#2E7D32' },
+  hueso: { label: 'Hueso', icon: Skull, color: '#E53935' },
+  reacondicionamiento: { label: 'Reacondicionamiento', icon: Wrench, color: '#1565C0' },
+  prestamo: { label: 'Préstamo', icon: Handshake, color: '#2E7D32' },
 };
 
 function formatFecha(ts) {
@@ -142,8 +147,8 @@ export default function DetalleEquipoScreen({ navigation, route }) {
     return (
       <View style={styles.center}>
         <Text style={{ color: '#C62828', fontSize: 15 }}>{error || 'Equipo no encontrado.'}</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
-          <Text style={{ color: '#1976D2' }}>← Volver</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <ArrowLeft size={14} color="#1976D2" /><Text style={{ color: '#1976D2' }}>Volver</Text>
         </TouchableOpacity>
       </View>
     );
@@ -155,12 +160,13 @@ export default function DetalleEquipoScreen({ navigation, route }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.volver}>← Equipos</Text>
+        <TouchableOpacity style={styles.volverRow} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={14} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.volver}>Equipos</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <View style={styles.equipoIconGrande}>
-            <Text style={{ fontSize: 40 }}>🖥️</Text>
+            <Monitor size={36} color="#fff" />
           </View>
           <Text style={styles.headerModelo}>{equipo.modelo}</Text>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
@@ -170,7 +176,8 @@ export default function DetalleEquipoScreen({ navigation, route }) {
               </View>
             )}
             {equipo.clasificacion && CLASIF_MAP[equipo.clasificacion] && (
-              <View style={[styles.fabBadge, { backgroundColor: CLASIF_MAP[equipo.clasificacion].color }]}>
+              <View style={[styles.fabBadge, styles.fabBadgeRow, { backgroundColor: CLASIF_MAP[equipo.clasificacion].color }]}>
+                {React.createElement(CLASIF_MAP[equipo.clasificacion].icon, { size: 12, color: '#fff' })}
                 <Text style={styles.fabBadgeText}>{CLASIF_MAP[equipo.clasificacion].label}</Text>
               </View>
             )}
@@ -183,7 +190,7 @@ export default function DetalleEquipoScreen({ navigation, route }) {
         {/* Banner de salida de equipo completo */}
         {equipo.estadoSalida && (
           <View style={[styles.salidaBanner, equipo.estadoSalida === 'desecho' ? styles.salidaBannerDesecho : styles.salidaBannerAlmacen]}>
-            <Text style={styles.salidaBannerIcon}>{equipo.estadoSalida === 'desecho' ? '🗑️' : '📦'}</Text>
+            {equipo.estadoSalida === 'desecho' ? <Trash2 size={24} color="#616161" /> : <Package size={24} color="#00838F" />}
             <View style={{ flex: 1 }}>
               <Text style={styles.salidaBannerTitle}>
                 EQUIPO DADO DE SALIDA — {equipo.estadoSalida === 'desecho' ? 'DESECHO' : 'ALMACÉN'}
@@ -198,7 +205,10 @@ export default function DetalleEquipoScreen({ navigation, route }) {
         {/* Panel salida de equipo completo */}
         {salidaPanelAbierto && (
           <View style={[styles.panel, styles.panelSalidaEquipo]}>
-            <Text style={styles.panelTit}>📤 Dar salida al equipo completo</Text>
+            <View style={styles.panelTitRow}>
+              <Upload size={14} color="#E65100" />
+              <Text style={styles.panelTit}>Dar salida al equipo completo</Text>
+            </View>
             <Text style={styles.panelLbl}>CLASIFICACIÓN *</Text>
             <View style={styles.salidaChipsWrap}>
               {CLASIFICACIONES_SALIDA_EQUIPO.map(c => (
@@ -211,7 +221,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
                 </TouchableOpacity>
               ))}
             </View>
-            {!!salidaError && <Text style={styles.panelError}>⚠️ {salidaError}</Text>}
+            {!!salidaError && (
+              <View style={styles.panelErrorRow}>
+                <AlertTriangle size={13} color="#C62828" />
+                <Text style={styles.panelError}>{salidaError}</Text>
+              </View>
+            )}
             <View style={styles.panelBtns}>
               <TouchableOpacity style={styles.panelCancelar} onPress={() => setSalidaPanelAbierto(false)} disabled={guardandoSalida}>
                 <Text style={styles.panelCancelarText}>Cancelar</Text>
@@ -229,9 +244,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
         {/* Revisión */}
         <View style={[styles.revBox, revisada ? styles.revBoxOk : styles.revBoxPend]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
-              {revisada ? '✅ Revisado' : '⏳ Pendiente de revisar'}
-            </Text>
+            <View style={styles.revEstadoRow}>
+              {revisada ? <CheckCircle2 size={15} color="#2E7D32" /> : <Hourglass size={15} color="#E65100" />}
+              <Text style={[styles.revEstado, { color: revisada ? '#2E7D32' : '#E65100' }]}>
+                {revisada ? 'Revisado' : 'Pendiente de revisar'}
+              </Text>
+            </View>
             {revisada && equipo.revisadaPor ? (
               <Text style={styles.revSub}>{equipo.revisadaPor} · {formatFecha(equipo.revisadaEn)}</Text>
             ) : null}
@@ -276,14 +294,20 @@ export default function DetalleEquipoScreen({ navigation, route }) {
         {/* Refacciones en este equipo */}
         <View style={styles.seccion}>
           <View style={styles.movHeader}>
-            <Text style={styles.movTitulo}>🔩 Refacciones del equipo</Text>
+            <View style={styles.panelTitRow}>
+              <Nut size={14} color="#1a1a2e" />
+              <Text style={styles.movTitulo}>Refacciones del equipo</Text>
+            </View>
             <Text style={styles.movCount}>{movimientos.length} mov.</Text>
           </View>
 
           {/* Panel nuevo movimiento */}
           {panelAbierto && (
             <View style={[styles.panel, panelTipo === 'entrada' ? styles.panelE : styles.panelS]}>
-              <Text style={styles.panelTit}>{panelTipo === 'entrada' ? '▲ Registrar entrada' : '▼ Registrar salida'}</Text>
+              <View style={styles.panelTitRow}>
+                {panelTipo === 'entrada' ? <ArrowUp size={14} color="#2E7D32" /> : <ArrowDown size={14} color="#C62828" />}
+                <Text style={styles.panelTit}>{panelTipo === 'entrada' ? 'Registrar entrada' : 'Registrar salida'}</Text>
+              </View>
               <Text style={styles.panelLbl}>REFACCIÓN *</Text>
               <TextInput
                 style={styles.panelInput}
@@ -309,7 +333,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
                 placeholderTextColor="#bbb"
                 multiline
               />
-              {!!movError && <Text style={styles.panelError}>⚠️ {movError}</Text>}
+              {!!movError && (
+                <View style={styles.panelErrorRow}>
+                  <AlertTriangle size={13} color="#C62828" />
+                  <Text style={styles.panelError}>{movError}</Text>
+                </View>
+              )}
               <View style={styles.panelBtns}>
                 <TouchableOpacity style={styles.panelCancelar} onPress={() => setPanelAbierto(false)} disabled={guardandoMov}>
                   <Text style={styles.panelCancelarText}>Cancelar</Text>
@@ -331,11 +360,13 @@ export default function DetalleEquipoScreen({ navigation, route }) {
           {/* FABs de movimiento */}
           {!panelAbierto && (
             <View style={styles.movFabs}>
-              <TouchableOpacity style={[styles.movFab, { backgroundColor: '#2E7D32' }]} onPress={() => abrirPanel('entrada')}>
-                <Text style={styles.movFabText}>▲ Entrada</Text>
+              <TouchableOpacity style={[styles.movFab, styles.movFabRow, { backgroundColor: '#2E7D32' }]} onPress={() => abrirPanel('entrada')}>
+                <ArrowUp size={14} color="#fff" />
+                <Text style={styles.movFabText}>Entrada</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.movFab, { backgroundColor: '#C62828' }]} onPress={() => abrirPanel('salida')}>
-                <Text style={styles.movFabText}>▼ Salida</Text>
+              <TouchableOpacity style={[styles.movFab, styles.movFabRow, { backgroundColor: '#C62828' }]} onPress={() => abrirPanel('salida')}>
+                <ArrowDown size={14} color="#fff" />
+                <Text style={styles.movFabText}>Salida</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -347,9 +378,12 @@ export default function DetalleEquipoScreen({ navigation, route }) {
               if (m.tipo === 'salida_equipo') {
                 return (
                   <View key={m.id} style={[styles.movCard, { borderLeftColor: '#E65100' }]}>
-                    <Text style={[styles.movTipo, { color: '#E65100' }]}>
-                      📤 SALIDA DE EQUIPO — {m.clasificacionSalida === 'desecho' ? 'DESECHO' : 'ALMACÉN'}
-                    </Text>
+                    <View style={styles.movTipoRow}>
+                      <Upload size={11} color="#E65100" />
+                      <Text style={[styles.movTipo, { color: '#E65100' }]}>
+                        SALIDA DE EQUIPO — {m.clasificacionSalida === 'desecho' ? 'DESECHO' : 'ALMACÉN'}
+                      </Text>
+                    </View>
                     <Text style={styles.movFecha}>{m.usuario} · {formatFecha(m.creadoEn)}</Text>
                   </View>
                 );
@@ -357,15 +391,23 @@ export default function DetalleEquipoScreen({ navigation, route }) {
               return (
                 <View key={m.id} style={[styles.movCard, { borderLeftColor: m.tipo === 'entrada' ? '#4CAF50' : '#F44336' }]}>
                   <View style={styles.movTop}>
-                    <Text style={[styles.movTipo, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
-                      {m.tipo === 'entrada' ? '▲ ENTRADA' : '▼ SALIDA'}
-                    </Text>
+                    <View style={styles.movTipoRow}>
+                      {m.tipo === 'entrada' ? <ArrowUp size={11} color="#2E7D32" /> : <ArrowDown size={11} color="#C62828" />}
+                      <Text style={[styles.movTipo, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
+                        {m.tipo === 'entrada' ? 'ENTRADA' : 'SALIDA'}
+                      </Text>
+                    </View>
                     <Text style={[styles.movCant, { color: m.tipo === 'entrada' ? '#2E7D32' : '#C62828' }]}>
                       {m.tipo === 'entrada' ? '+' : '-'}{m.cantidad} pz
                     </Text>
                   </View>
                   <Text style={styles.movNom}>{m.nombre}</Text>
-                  {m.nota ? <Text style={styles.movNota}>💬 {m.nota}</Text> : null}
+                  {m.nota ? (
+                    <View style={styles.movNotaRow}>
+                      <MessageCircle size={11} color="#666" />
+                      <Text style={styles.movNota}>{m.nota}</Text>
+                    </View>
+                  ) : null}
                   <Text style={styles.movFecha}>{formatFecha(m.creadoEn)}</Text>
                 </View>
               );
@@ -375,22 +417,25 @@ export default function DetalleEquipoScreen({ navigation, route }) {
 
         {/* Botones de acción */}
         {!equipo.estadoSalida && !salidaPanelAbierto && (
-          <TouchableOpacity style={styles.btnSalidaEquipo} onPress={abrirSalidaPanel}>
-            <Text style={styles.btnSalidaEquipoText}>📤 Dar salida al equipo completo</Text>
+          <TouchableOpacity style={[styles.btnSalidaEquipo, styles.btnRow]} onPress={abrirSalidaPanel}>
+            <Upload size={15} color="#E65100" />
+            <Text style={styles.btnSalidaEquipoText}>Dar salida al equipo completo</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
-          style={styles.btnEditar}
+          style={[styles.btnEditar, styles.btnRow]}
           onPress={() => navigation.navigate('FormEquipo', { id, equipo })}
         >
-          <Text style={styles.btnEditarText}>✏️ Editar equipo</Text>
+          <Pencil size={15} color="#fff" />
+          <Text style={styles.btnEditarText}>Editar equipo</Text>
         </TouchableOpacity>
 
         {/* Eliminar */}
         {!confirmEliminar ? (
-          <TouchableOpacity style={styles.btnEliminar} onPress={() => setConfirmEliminar(true)}>
-            <Text style={styles.btnEliminarText}>🗑️ Eliminar equipo</Text>
+          <TouchableOpacity style={[styles.btnEliminar, styles.btnRow]} onPress={() => setConfirmEliminar(true)}>
+            <Trash2 size={15} color="#C62828" />
+            <Text style={styles.btnEliminarText}>Eliminar equipo</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.confirmBox}>
@@ -449,11 +494,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EEF2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   header: { backgroundColor: AZUL, padding: 18, paddingTop: 50, paddingBottom: 24, alignItems: 'flex-start' },
-  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 16 },
+  volverRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 16 },
+  volver: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   headerContent: { alignSelf: 'stretch', alignItems: 'center' },
   equipoIconGrande: { width: 80, height: 80, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   headerModelo: { fontSize: 24, fontWeight: '800', color: '#fff', textAlign: 'center' },
   fabBadge: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5 },
+  fabBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   fabBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   foto: { width: '100%', height: 220, borderRadius: 16, marginBottom: 16, backgroundColor: '#e0e0e0' },
   seccion: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16 },
@@ -461,6 +508,7 @@ const styles = StyleSheet.create({
   revBox: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 16, borderWidth: 1 },
   revBoxOk: { backgroundColor: '#E8F5E9', borderColor: '#A5D6A7' },
   revBoxPend: { backgroundColor: '#FFF3E0', borderColor: '#FFCC80' },
+  revEstadoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   revEstado: { fontSize: 15, fontWeight: '800' },
   revSub: { fontSize: 12, color: '#666', marginTop: 3 },
   revBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, minWidth: 120, alignItems: 'center' },
@@ -473,23 +521,28 @@ const styles = StyleSheet.create({
   movCount: { fontSize: 12, color: '#888' },
   movFabs: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   movFab: { flex: 1, borderRadius: 10, padding: 10, alignItems: 'center' },
+  movFabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   movFabText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   movCard: { borderLeftWidth: 4, backgroundColor: '#F8F9FA', borderRadius: 8, padding: 12, marginBottom: 8 },
   movTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  movTipoRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   movTipo: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   movCant: { fontSize: 16, fontWeight: '900' },
   movNom: { fontSize: 13, fontWeight: '700', color: '#1a1a2e' },
-  movNota: { fontSize: 12, color: '#666', fontStyle: 'italic', marginTop: 3 },
+  movNotaRow: { flexDirection: 'row', gap: 4, marginTop: 3 },
+  movNota: { fontSize: 12, color: '#666', fontStyle: 'italic' },
   movFecha: { fontSize: 11, color: '#bbb', marginTop: 4 },
   movVacio: { color: '#aaa', fontSize: 13, textAlign: 'center', marginVertical: 12 },
   // Panel
   panel: { borderRadius: 12, padding: 14, marginBottom: 14 },
   panelE: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#A5D6A7' },
   panelS: { backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFCC80' },
-  panelTit: { fontSize: 13, fontWeight: '800', color: '#1a1a2e', marginBottom: 10 },
+  panelTitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  panelTit: { fontSize: 13, fontWeight: '800', color: '#1a1a2e' },
   panelLbl: { fontSize: 11, fontWeight: '800', color: '#666', letterSpacing: 0.5, marginBottom: 5 },
   panelInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#ddd', color: '#1a1a2e' },
-  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  panelErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  panelError: { color: '#C62828', fontSize: 13, fontWeight: '600' },
   panelBtns: { flexDirection: 'row', gap: 10, marginTop: 10 },
   panelCancelar: { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
   panelCancelarText: { color: '#555', fontWeight: '700' },
@@ -499,7 +552,6 @@ const styles = StyleSheet.create({
   salidaBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14, marginBottom: 16 },
   salidaBannerDesecho: { backgroundColor: '#F5F5F5', borderWidth: 1.5, borderColor: '#9E9E9E' },
   salidaBannerAlmacen: { backgroundColor: '#E0F7FA', borderWidth: 1.5, borderColor: '#00838F' },
-  salidaBannerIcon: { fontSize: 26 },
   salidaBannerTitle: { fontSize: 13, fontWeight: '800', color: '#1a1a2e' },
   salidaBannerSub: { fontSize: 12, color: '#666', marginTop: 2 },
   panelSalidaEquipo: { backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFCC80' },
@@ -508,6 +560,7 @@ const styles = StyleSheet.create({
   salidaChipActive: { backgroundColor: '#E65100', borderColor: '#E65100' },
   salidaChipText: { fontSize: 13, fontWeight: '700', color: '#555' },
   salidaChipTextActive: { color: '#fff' },
+  btnRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   btnSalidaEquipo: { backgroundColor: '#fff', borderRadius: 14, padding: 15, alignItems: 'center', marginBottom: 10, borderWidth: 1.5, borderColor: '#E65100', borderStyle: 'dashed' },
   btnSalidaEquipoText: { color: '#E65100', fontWeight: '700', fontSize: 15 },
   btnEditar: { backgroundColor: '#1565C0', borderRadius: 14, padding: 15, alignItems: 'center', marginBottom: 10 },

@@ -504,8 +504,8 @@ export const deleteEquipo = async (id) => {
 
 // --- SALIDA DE EQUIPO COMPLETO (desecho / almacén) ---
 export const CLASIFICACIONES_SALIDA_EQUIPO = [
-  { id: 'desecho', label: '🗑️ Desecho' },
-  { id: 'almacen', label: '📦 Almacén' },
+  { id: 'desecho', label: 'Desecho' },
+  { id: 'almacen', label: 'Almacén' },
 ];
 
 export const addEquipoSalidaCompleta = async (equipoId, clasificacion, perfil) => {

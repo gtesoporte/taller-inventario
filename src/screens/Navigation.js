@@ -36,7 +36,7 @@ const Stack = createNativeStackNavigator();
 
 const TAB_OPTS = {
   headerShown: false,
-  // La navegación entre secciones ahora vive en el menú lateral (☰), no en una
+  // La navegación entre secciones ahora vive en el menú lateral (Menu), no en una
   // barra de pestañas — con 7 secciones se veía amontonada en celular.
   tabBarStyle: { display: 'none' },
 };

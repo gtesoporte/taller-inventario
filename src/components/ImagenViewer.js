@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { X } from 'lucide-react-native';
 import Text from './UpperText';
 
 export default function ImagenViewer({ uri, children, style, resizeMode = 'cover' }) {
@@ -13,8 +14,9 @@ export default function ImagenViewer({ uri, children, style, resizeMode = 'cover
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <TouchableOpacity style={styles.overlay} onPress={() => setOpen(false)} activeOpacity={1}>
           <Image source={{ uri }} style={styles.imgFull} resizeMode="contain" />
-          <View style={styles.closeBtn}>
-            <Text style={styles.closeTxt}>✕  Cerrar</Text>
+          <View style={[styles.closeBtn, styles.closeBtnRow]}>
+            <X size={14} color="#fff" />
+            <Text style={styles.closeTxt}>Cerrar</Text>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -39,5 +41,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
+  closeBtnRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   closeTxt: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
