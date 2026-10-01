@@ -310,6 +310,7 @@ export const CAJUELAS_LISTA = [
   { id: 'minividas',    nombre: 'MINIVIDAS' },
   { id: 'micros',       nombre: 'MICROS' },
   { id: 'sc-120',       nombre: 'SC-120' },
+  { id: 'walkaway',     nombre: 'WALKAWAY' },
 ];
 
 export const RAZONES_CAJUELA = [

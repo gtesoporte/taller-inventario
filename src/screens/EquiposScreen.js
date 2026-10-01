@@ -3,7 +3,7 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
-import { Wrench, Camera, MapPin, Mic, Package, Monitor, Skull, Handshake, Trash2, CheckCircle2, Hourglass, ClipboardCheck, XCircle } from 'lucide-react-native';
+import { Wrench, Camera, MapPin, Mic, Package, Monitor, Skull, Handshake, Trash2, CheckCircle2, Hourglass, ClipboardCheck, XCircle, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import SearchInput from '../components/SearchInput';
 import { suscribirEquipos, suscribirFabricantes, getUbicaciones } from '../config/firestore';
@@ -22,6 +22,7 @@ export default function EquiposScreen({ navigation, route }) {
   const [ubicacion, setUbicacion] = useState('Todas');
   const [revision, setRevision] = useState('todas');
   const [validacionFiltro, setValidacionFiltro] = useState('todas');
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,6 +80,13 @@ export default function EquiposScreen({ navigation, route }) {
     acc[fab].push(e);
     return acc;
   }, {}), [equiposFiltrados]);
+
+  const filtrosActivos = [
+    fabricante !== 'Todos',
+    !!clasificacion,
+    ubicacion !== 'Todas',
+    esValidacion ? validacionFiltro !== 'todas' : revision !== 'todas',
+  ].filter(Boolean).length;
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
 
@@ -141,7 +149,15 @@ export default function EquiposScreen({ navigation, route }) {
         onChangeText={setFiltro}
       />
 
-      {/* Filtros: marca y revisión */}
+      {/* Filtros (colapsables) */}
+      <TouchableOpacity style={styles.filtrosToggle} onPress={() => setFiltrosAbiertos(v => !v)}>
+        <SlidersHorizontal size={15} color={AZUL} />
+        <Text style={styles.filtrosToggleText}>Filtros{filtrosActivos > 0 ? ` (${filtrosActivos})` : ''}</Text>
+        {filtrosAbiertos ? <ChevronUp size={16} color={AZUL} /> : <ChevronDown size={16} color={AZUL} />}
+      </TouchableOpacity>
+
+      {filtrosAbiertos && (
+      <>
       <View style={styles.filtrosRow}>
         <Dropdown
           style={styles.filtroDropdown}
@@ -203,6 +219,8 @@ export default function EquiposScreen({ navigation, route }) {
           onChange={setUbicacion}
         />
       </View>
+      </>
+      )}
 
       {/* Lista agrupada */}
       <FlatList
@@ -302,6 +320,8 @@ const styles = StyleSheet.create({
   nuevaBtn: { backgroundColor: '#1565C0', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
+  filtrosToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 14, marginBottom: 10, alignSelf: 'flex-start', backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9, borderWidth: 1, borderColor: '#e0e0e0' },
+  filtrosToggleText: { fontSize: 13, fontWeight: '700', color: AZUL },
   filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 12 },
   filtroDropdown: { flex: 1 },
   revBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 6 },

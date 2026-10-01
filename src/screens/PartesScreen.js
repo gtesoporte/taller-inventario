@@ -3,7 +3,7 @@ import {
   View, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
-import { Menu, Wrench, Camera, MapPin, Mic, Package, ClipboardCheck, AlertTriangle, CheckCircle2, Hourglass } from 'lucide-react-native';
+import { Menu, Wrench, Camera, MapPin, Mic, Package, ClipboardCheck, AlertTriangle, CheckCircle2, Hourglass, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react-native';
 import Text from '../components/UpperText';
 import SearchInput from '../components/SearchInput';
 import { suscribirPartes, suscribirFabricantes, getUbicaciones } from '../config/firestore';
@@ -21,6 +21,7 @@ export default function PartesScreen({ navigation }) {
   const [fabricante, setFabricante] = useState('Todos');
   const [revision, setRevision] = useState('todas');
   const [ubicacion, setUbicacion] = useState('Todas');
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [ubicacionesRegistradas, setUbicacionesRegistradas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,6 +70,8 @@ export default function PartesScreen({ navigation }) {
     acc[fab].push(p);
     return acc;
   }, {}), [partesFiltradas]);
+
+  const filtrosActivos = [fabricante !== 'Todos', revision !== 'todas', ubicacion !== 'Todas'].filter(Boolean).length;
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1565C0" /></View>;
 
@@ -130,38 +133,48 @@ export default function PartesScreen({ navigation }) {
         onChangeText={setFiltro}
       />
 
-      {/* Filtros: marca y estado de revisión */}
-      <View style={styles.filtrosRow}>
-        <Dropdown
-          style={styles.filtroDropdown}
-          value={fabricante}
-          titulo="FILTRAR POR MARCA"
-          label="Marca"
-          opciones={[...fabricantes, 'Sin fabricante']}
-          onChange={setFabricante}
-        />
-        <Dropdown
-          style={styles.filtroDropdown}
-          value={revision}
-          titulo="FILTRAR POR REVISIÓN"
-          label="Revisión"
-          opciones={[
-            { value: 'todas', label: 'Todas' },
-            { value: 'pendiente', label: 'Pendientes de revisar' },
-            { value: 'revisada', label: 'Revisadas' },
-          ]}
-          onChange={setRevision}
-        />
-      </View>
+      {/* Filtros (colapsables) */}
+      <TouchableOpacity style={styles.filtrosToggle} onPress={() => setFiltrosAbiertos(v => !v)}>
+        <SlidersHorizontal size={15} color={AZUL} />
+        <Text style={styles.filtrosToggleText}>Filtros{filtrosActivos > 0 ? ` (${filtrosActivos})` : ''}</Text>
+        {filtrosAbiertos ? <ChevronUp size={16} color={AZUL} /> : <ChevronDown size={16} color={AZUL} />}
+      </TouchableOpacity>
 
-      <Dropdown
-        style={styles.filtroUbicacion}
-        value={ubicacion}
-        titulo="FILTRAR POR UBICACIÓN"
-        label="Ubicación"
-        opciones={['Todas', 'Sin ubicación', ...ubicacionesDisponibles]}
-        onChange={setUbicacion}
-      />
+      {filtrosAbiertos && (
+        <>
+          <View style={styles.filtrosRow}>
+            <Dropdown
+              style={styles.filtroDropdown}
+              value={fabricante}
+              titulo="FILTRAR POR MARCA"
+              label="Marca"
+              opciones={[...fabricantes, 'Sin fabricante']}
+              onChange={setFabricante}
+            />
+            <Dropdown
+              style={styles.filtroDropdown}
+              value={revision}
+              titulo="FILTRAR POR REVISIÓN"
+              label="Revisión"
+              opciones={[
+                { value: 'todas', label: 'Todas' },
+                { value: 'pendiente', label: 'Pendientes de revisar' },
+                { value: 'revisada', label: 'Revisadas' },
+              ]}
+              onChange={setRevision}
+            />
+          </View>
+
+          <Dropdown
+            style={styles.filtroUbicacion}
+            value={ubicacion}
+            titulo="FILTRAR POR UBICACIÓN"
+            label="Ubicación"
+            opciones={['Todas', 'Sin ubicación', ...ubicacionesDisponibles]}
+            onChange={setUbicacion}
+          />
+        </>
+      )}
 
       {ubicacionesSinRegistrar.length > 0 && (
         <TouchableOpacity style={[styles.avisoSinRegistrar, { flexDirection: 'row', gap: 8 }]} onPress={() => navigation.navigate('Ubicaciones')}>
@@ -253,6 +266,8 @@ const styles = StyleSheet.create({
   nuevaBtn: { backgroundColor: '#1976D2', margin: 14, marginBottom: 10, borderRadius: 12, padding: 14, alignItems: 'center' },
   nuevaBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   search: { marginHorizontal: 14, marginBottom: 10, backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 14, color: '#222', borderWidth: 1, borderColor: '#e0e0e0' },
+  filtrosToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 14, marginBottom: 10, alignSelf: 'flex-start', backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9, borderWidth: 1, borderColor: '#e0e0e0' },
+  filtrosToggleText: { fontSize: 13, fontWeight: '700', color: AZUL },
   filtrosRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginBottom: 10 },
   filtroDropdown: { flex: 1 },
   filtroUbicacion: { marginHorizontal: 14, marginBottom: 12 },
